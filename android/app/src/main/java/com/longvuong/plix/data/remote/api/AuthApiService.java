@@ -16,7 +16,7 @@ public interface AuthApiService {
 
     @POST("auth/v1/token")
     Call<AuthResponseDto> login(
-            @Query("grant_type") String grantType, 
+            @Query("grant_type") String grantType,
             @Body LoginRequestDto body
     );
 }

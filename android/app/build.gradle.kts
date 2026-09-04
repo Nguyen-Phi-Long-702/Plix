@@ -49,8 +49,8 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
 
     //Lifecycle-viewmodel & livedata
-    implementation("androidx.lifecycle:lifecycle-viewmodel:2.9.8")
-    implementation("androidx.lifecycle:lifecycle-livedata:2.9.8")
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.8.7")
 
     //Jetpack navigation component
     implementation("androidx.navigation:navigation-fragment:2.9.8")
