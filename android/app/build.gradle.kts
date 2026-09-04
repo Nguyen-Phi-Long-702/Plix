@@ -19,6 +19,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "SUPABASE_URL", "\"https://sfyrczbpecskjuyhctip.supabase.co/\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_7SbslVyr_3iiPCXMaMxFLQ_f6hKNJuQ\"")
     }
 
     buildTypes {
