@@ -2,10 +2,12 @@ package com.longvuong.plix.core.auth;
 
 import com.longvuong.plix.BuildConfig;
 import com.longvuong.plix.data.remote.api.AuthApiService;
+import com.longvuong.plix.data.remote.api.HealthApiService;
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
 import com.longvuong.plix.data.remote.dto.LoginRequestDto;
 import com.longvuong.plix.data.remote.dto.RefreshRequestDto;
 import com.longvuong.plix.data.remote.dto.SignupRequestDto;
+import com.longvuong.plix.data.remote.dto.WhoamiResponseDto;
 
 import java.io.IOException;
 
@@ -25,24 +27,46 @@ public class AuthManager {
         void onError(String message);
     }
 
+    public interface TestCallback {
+        void onResult(String message);
+    }
+
     private final AuthApiService authApiService;
+    private final HealthApiService healthApiService;
+
+    //Lưu tạm access/refresh token trong RAM
     private volatile String accessToken;
     private volatile String refreshToken;
 
+    //Cờ đánh dấu phiên đăng nhập cần đăng nhập lại(refresh cũng thất bại).
     private volatile boolean sessionExpired = false;
 
     public AuthManager() {
-        OkHttpClient client = new OkHttpClient.Builder()
+        OkHttpClient supabaseClient = new OkHttpClient.Builder()
                 .addInterceptor(new ApiKeyInterceptor())
                 .build();
 
-        Retrofit retrofit = new Retrofit.Builder()
+        Retrofit supabaseRetrofit = new Retrofit.Builder()
                 .baseUrl(BuildConfig.SUPABASE_URL)
-                .client(client)
+                .client(supabaseClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        this.authApiService = retrofit.create(AuthApiService.class);
+        this.authApiService = supabaseRetrofit.create(AuthApiService.class);
+
+        //Retrofit client tạm thời gọi backend của dự án
+        OkHttpClient backendClient = new OkHttpClient.Builder()
+                .addInterceptor(new AuthInterceptor(this))
+                .authenticator(new AuthAuthenticator(this))
+                .build();
+
+        Retrofit backendRetrofit = new Retrofit.Builder()
+                .baseUrl(BuildConfig.BACKEND_BASE_URL)
+                .client(backendClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        this.healthApiService = backendRetrofit.create(HealthApiService.class);
     }
 
     public void register(String email, String password, AuthCallback callback) {
@@ -54,7 +78,6 @@ public class AuthManager {
         authApiService.login("password", new LoginRequestDto(email, password))
                 .enqueue(new SimpleCallback(callback));
     }
-
     public boolean refreshSync() {
         String currentRefreshToken = this.refreshToken;
         if (currentRefreshToken == null) {
@@ -73,6 +96,38 @@ public class AuthManager {
             //Lỗi mạng khi refresh thì coi như thất bại, để AuthAuthenticator xử lý tiếp
             return false;
         }
+    }
+
+    public void testBackendAuth(TestCallback callback) {
+        healthApiService.health().enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, retrofit2.Response<Void> healthResponse) {
+                if (!healthResponse.isSuccessful()) {
+                    callback.onResult("health thất bại (mã lỗi " + healthResponse.code() + ")");
+                    return;
+                }
+                healthApiService.whoami().enqueue(new Callback<WhoamiResponseDto>() {
+                    @Override
+                    public void onResponse(Call<WhoamiResponseDto> call, retrofit2.Response<WhoamiResponseDto> whoamiResponse) {
+                        if (whoamiResponse.isSuccessful() && whoamiResponse.body() != null) {
+                            callback.onResult("health ok. whoami ok, user_id = " + whoamiResponse.body().userId);
+                        } else {
+                            callback.onResult("health ok. whoami thất bại(mã lỗi " + whoamiResponse.code() + ")");
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<WhoamiResponseDto> call, Throwable t) {
+                        callback.onResult("health ok. Không gọi được whoami: " + t.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                callback.onResult("Không gọi được health: " + t.getMessage());
+            }
+        });
     }
 
     public String getAccessToken() {
@@ -110,13 +165,13 @@ public class AuthManager {
                 saveSession(response.body());
                 callback.onSuccess(response.body());
             } else {
-                callback.onError("That bai (ma loi " + response.code() + ")");
+                callback.onError("Thất bại(mã lỗi " + response.code() + ")");
             }
         }
 
         @Override
         public void onFailure(Call<AuthResponseDto> call, Throwable t) {
-            callback.onError("Khong the ket noi den Supabase: " + t.getMessage());
+            callback.onError("không thể kết nối đến supabase: " + t.getMessage());
         }
     }
 

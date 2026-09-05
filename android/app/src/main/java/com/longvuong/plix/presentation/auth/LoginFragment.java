@@ -37,6 +37,7 @@ public class LoginFragment extends Fragment {
         EditText editPassword = view.findViewById(R.id.editPassword);
         TextView textResult = view.findViewById(R.id.textResult);
         Button buttonLogin = view.findViewById(R.id.buttonLogin);
+        Button buttonTestJwtPoc = view.findViewById(R.id.buttonTestJwtPoc);
         TextView textGoRegister = view.findViewById(R.id.textGoRegister);
 
         buttonLogin.setOnClickListener(v -> {
@@ -44,6 +45,11 @@ public class LoginFragment extends Fragment {
             String password = editPassword.getText().toString().trim();
             textResult.setText("Đang đăng nhập...");
             viewModel.login(email, password);
+        });
+
+        buttonTestJwtPoc.setOnClickListener(v -> {
+            textResult.setText("Đang kiểm tra JWT...");
+            viewModel.testJwtPoc();
         });
 
         textGoRegister.setOnClickListener(v ->
@@ -54,5 +60,7 @@ public class LoginFragment extends Fragment {
 
         viewModel.getAuthError().observe(getViewLifecycleOwner(), error ->
                 textResult.setText("Lỗi: " + error));
+
+        viewModel.getJwtPocResult().observe(getViewLifecycleOwner(), textResult::setText);
     }
 }

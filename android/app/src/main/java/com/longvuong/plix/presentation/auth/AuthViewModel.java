@@ -12,6 +12,7 @@ public class AuthViewModel extends ViewModel {
 
     private final MutableLiveData<String> authSuccessToken = new MutableLiveData<>();
     private final MutableLiveData<String> authError = new MutableLiveData<>();
+    private final MutableLiveData<String> jwtPocResult = new MutableLiveData<>();
 
     public LiveData<String> getAuthSuccessToken() {
         return authSuccessToken;
@@ -19,6 +20,10 @@ public class AuthViewModel extends ViewModel {
 
     public LiveData<String> getAuthError() {
         return authError;
+    }
+
+    public LiveData<String> getJwtPocResult() {
+        return jwtPocResult;
     }
 
     public void login(String email, String password) {
@@ -47,5 +52,10 @@ public class AuthViewModel extends ViewModel {
                 authError.postValue(message);
             }
         });
+    }
+
+    public void testJwtPoc() {
+        jwtPocResult.postValue("Đang kiểm tra JWT...");
+        authManager.testBackendAuth(jwtPocResult::postValue);
     }
 }
