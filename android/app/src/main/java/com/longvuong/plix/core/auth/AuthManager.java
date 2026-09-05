@@ -4,6 +4,7 @@ import com.longvuong.plix.BuildConfig;
 import com.longvuong.plix.data.remote.api.AuthApiService;
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
 import com.longvuong.plix.data.remote.dto.LoginRequestDto;
+import com.longvuong.plix.data.remote.dto.RefreshRequestDto;
 import com.longvuong.plix.data.remote.dto.SignupRequestDto;
 
 import java.io.IOException;
@@ -25,6 +26,10 @@ public class AuthManager {
     }
 
     private final AuthApiService authApiService;
+    private volatile String accessToken;
+    private volatile String refreshToken;
+
+    private volatile boolean sessionExpired = false;
 
     public AuthManager() {
         OkHttpClient client = new OkHttpClient.Builder()
@@ -50,7 +55,49 @@ public class AuthManager {
                 .enqueue(new SimpleCallback(callback));
     }
 
-    private static class SimpleCallback implements Callback<AuthResponseDto> {
+    public boolean refreshSync() {
+        String currentRefreshToken = this.refreshToken;
+        if (currentRefreshToken == null) {
+            return false;
+        }
+        try {
+            retrofit2.Response<AuthResponseDto> response = authApiService
+                    .refresh("refresh_token", new RefreshRequestDto(currentRefreshToken))
+                    .execute();
+            if (response.isSuccessful() && response.body() != null) {
+                saveSession(response.body());
+                return true;
+            }
+            return false;
+        } catch (IOException e) {
+            //Lỗi mạng khi refresh thì coi như thất bại, để AuthAuthenticator xử lý tiếp
+            return false;
+        }
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public boolean isSessionExpired() {
+        return sessionExpired;
+    }
+
+    public void notifySessionExpired() {
+        this.sessionExpired = true;
+    }
+
+    private void saveSession(AuthResponseDto response) {
+        this.accessToken = response.accessToken;
+        this.refreshToken = response.refreshToken;
+        this.sessionExpired = false;
+    }
+
+    private class SimpleCallback implements Callback<AuthResponseDto> {
         private final AuthCallback callback;
 
         SimpleCallback(AuthCallback callback) {
@@ -60,6 +107,7 @@ public class AuthManager {
         @Override
         public void onResponse(Call<AuthResponseDto> call, retrofit2.Response<AuthResponseDto> response) {
             if (response.isSuccessful() && response.body() != null) {
+                saveSession(response.body());
                 callback.onSuccess(response.body());
             } else {
                 callback.onError("That bai (ma loi " + response.code() + ")");
@@ -71,6 +119,7 @@ public class AuthManager {
             callback.onError("Khong the ket noi den Supabase: " + t.getMessage());
         }
     }
+
     private static class ApiKeyInterceptor implements Interceptor {
         @Override
         public Response intercept(Chain chain) throws IOException {

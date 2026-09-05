@@ -2,6 +2,7 @@ package com.longvuong.plix.data.remote.api;
 
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
 import com.longvuong.plix.data.remote.dto.LoginRequestDto;
+import com.longvuong.plix.data.remote.dto.RefreshRequestDto;
 import com.longvuong.plix.data.remote.dto.SignupRequestDto;
 
 import retrofit2.Call;
@@ -18,5 +19,11 @@ public interface AuthApiService {
     Call<AuthResponseDto> login(
             @Query("grant_type") String grantType,
             @Body LoginRequestDto body
+    );
+
+    @POST("auth/v1/token")
+    Call<AuthResponseDto> refresh(
+            @Query("grant_type") String grantType,
+            @Body RefreshRequestDto body
     );
 }
