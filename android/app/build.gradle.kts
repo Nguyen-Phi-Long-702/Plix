@@ -22,6 +22,11 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"https://sfyrczbpecskjuyhctip.supabase.co/\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"sb_publishable_7SbslVyr_3iiPCXMaMxFLQ_f6hKNJuQ\"")
         buildConfigField("String", "BACKEND_BASE_URL", "\"http://100.82.23.48:8000/\"")
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["room.schemaLocation"] = "$projectDir/schemas"
+            }
+        }
     }
 
     buildTypes {
