@@ -3,4 +3,5 @@ uvicorn[standard]
 python-dotenv
 pyjwt[crypto]
 asyncpg
+httpx
 pytest
