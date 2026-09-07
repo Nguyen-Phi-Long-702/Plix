@@ -19,7 +19,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class AuthManager {
 
     public interface AuthCallback {
@@ -41,6 +44,7 @@ public class AuthManager {
     //Cờ đánh dấu phiên đăng nhập cần đăng nhập lại(refresh cũng thất bại).
     private volatile boolean sessionExpired = false;
 
+    @Inject
     public AuthManager() {
         OkHttpClient supabaseClient = new OkHttpClient.Builder()
                 .addInterceptor(new ApiKeyInterceptor())

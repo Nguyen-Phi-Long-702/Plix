@@ -15,7 +15,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.longvuong.plix.R;
+import dagger.hilt.android.AndroidEntryPoint;
 
+@AndroidEntryPoint
 public class LoginFragment extends Fragment {
 
     private AuthViewModel viewModel;

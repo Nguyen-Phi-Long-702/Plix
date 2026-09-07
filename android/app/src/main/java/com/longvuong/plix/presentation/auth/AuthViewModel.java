@@ -6,9 +6,17 @@ import androidx.lifecycle.ViewModel;
 
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
+import javax.inject.Inject;
+import dagger.hilt.android.lifecycle.HiltViewModel;
 
+@HiltViewModel
 public class AuthViewModel extends ViewModel {
-    private final AuthManager authManager = new AuthManager();
+    private final AuthManager authManager;
+
+    @Inject
+    public AuthViewModel(AuthManager authManager) {
+        this.authManager = authManager;
+    }
 
     private final MutableLiveData<String> authSuccessToken = new MutableLiveData<>();
     private final MutableLiveData<String> authError = new MutableLiveData<>();
