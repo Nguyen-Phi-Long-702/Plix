@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import DATABASE_URL
+from app.core.middleware import MaxBodySizeMiddleware
 from app.core.security import verify_jwt
 from app.models.error_response import ErrorResponse
 from app.routers import health
@@ -35,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Plix API", lifespan=lifespan)
-
+app.add_middleware(MaxBodySizeMiddleware)
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
