@@ -77,4 +77,11 @@ dependencies {
 
     //Jetpack Security
     implementation("androidx.security:security-crypto:1.1.0")
+
+    //WorkManager + Hilt integration
+    implementation("androidx.work:work-runtime:2.11.2")
+    implementation("androidx.hilt:hilt-work:1.4.0")
+
+    //Timber
+    implementation("com.jakewharton.timber:timber:5.0.1")
 }
