@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeGraph"
+        android:icon="@drawable/ic_tab_home"
+        android:title="Trang chủ" />
+
+    <item
+        android:id="@+id/budgetGoalGraph"
+        android:icon="@drawable/ic_tab_budget_goal"
+        android:title="Ngân sách &amp; Mục tiêu" />
+
+    <item
+        android:id="@+id/analyticsGraph"
+        android:icon="@drawable/ic_tab_analytics"
+        android:title="Thống kê" />
+
+    <item
+        android:id="@+id/settingsGraph"
+        android:icon="@drawable/ic_tab_settings"
+        android:title="Cài đặt" />
+
+</menu>
