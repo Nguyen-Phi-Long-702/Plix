@@ -21,6 +21,8 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 @Singleton
 public class AuthManager {
@@ -41,8 +43,8 @@ public class AuthManager {
     private volatile String accessToken;
     private volatile String refreshToken;
 
-    //Cờ đánh dấu phiên đăng nhập cần đăng nhập lại(refresh cũng thất bại).
-    private volatile boolean sessionExpired = false;
+    //livedata phát tín hiệu khi phiên đăng nhập cần đăng nhập lại (refresh cũng thất bại)
+    private final MutableLiveData<Boolean> sessionExpiredLiveData = new MutableLiveData<>(false);
 
     @Inject
     public AuthManager() {
@@ -142,18 +144,22 @@ public class AuthManager {
         return refreshToken;
     }
 
-    public boolean isSessionExpired() {
-        return sessionExpired;
+    public LiveData<Boolean> getSessionExpiredLiveData() {
+        return sessionExpiredLiveData;
     }
 
     public void notifySessionExpired() {
-        this.sessionExpired = true;
+        sessionExpiredLiveData.postValue(true);
+    }
+
+    public void onSessionExpiredHandled() {
+        sessionExpiredLiveData.postValue(false);
     }
 
     private void saveSession(AuthResponseDto response) {
         this.accessToken = response.accessToken;
         this.refreshToken = response.refreshToken;
-        this.sessionExpired = false;
+        sessionExpiredLiveData.postValue(false);
     }
 
     private class SimpleCallback implements Callback<AuthResponseDto> {
