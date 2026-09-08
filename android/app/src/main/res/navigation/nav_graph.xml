@@ -33,11 +33,38 @@
 
     <navigation
         android:id="@+id/mainGraph"
-        app:startDestination="@id/placeholderMainFragment">
-        <fragment
-            android:id="@+id/placeholderMainFragment"
-            android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
-            android:label="Trang chủ (placeholder)" />
+        app:startDestination="@id/homeGraph">
+        <navigation
+            android:id="@+id/homeGraph"
+            app:startDestination="@id/homeFragment">
+            <fragment
+                android:id="@+id/homeFragment"
+                android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
+                android:label="Trang chủ" />
+        </navigation>
+        <navigation
+            android:id="@+id/budgetGoalGraph"
+            app:startDestination="@id/budgetGoalFragment">
+            <fragment
+                android:id="@+id/budgetGoalFragment"
+                android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
+                android:label="Ngân sách &amp; Mục tiêu" />
+        </navigation>
+        <navigation
+            android:id="@+id/analyticsGraph"
+            app:startDestination="@id/analyticsFragment">
+            <fragment
+                android:id="@+id/analyticsFragment"
+                android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
+                android:label="Thống kê" />
+        </navigation>
+        <navigation
+            android:id="@+id/settingsGraph"
+            app:startDestination="@id/settingsFragment">
+            <fragment
+                android:id="@+id/settingsFragment"
+                android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
+                android:label="Cài đặt" />
+        </navigation>
     </navigation>
-
 </navigation>
