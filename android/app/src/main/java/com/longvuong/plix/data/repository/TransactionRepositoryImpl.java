@@ -67,4 +67,17 @@ public class TransactionRepositoryImpl implements TransactionRepository {
         Result<Void> error = errorMapper.mapThrowable(e);
         appExecutors.mainThread().execute(() -> callback.onResult(error));
     }
+    @Override
+    public void getById(String id, RepositoryCallback<TransactionEntity> callback) {
+        appExecutors.diskIO().execute(() -> {
+            try {
+                TransactionEntity entity = transactionDao.getById(id);
+                appExecutors.mainThread().execute(() ->
+                        callback.onResult(new Result.Success<>(entity)));
+            } catch (Exception e) {
+                Result<TransactionEntity> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
 }

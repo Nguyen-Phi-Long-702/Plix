@@ -87,4 +87,10 @@ dependencies {
 
     //Timber
     implementation("com.jakewharton.timber:timber:5.0.1")
+
+    //SavedStateHandle cho viewmodel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7")
+
+    //Test livedata đồng bộ trong unit test
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
 }

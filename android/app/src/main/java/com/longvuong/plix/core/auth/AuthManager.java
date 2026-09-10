@@ -23,6 +23,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.annotation.Nullable;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Singleton
 public class AuthManager {
@@ -142,6 +149,26 @@ public class AuthManager {
 
     public String getRefreshToken() {
         return refreshToken;
+    }
+
+    @Nullable
+    public String getCurrentUserId() {
+        String token = this.accessToken;
+        if (token == null) {
+            return null;
+        }
+        String[] parts = token.split("\\.");
+        if (parts.length < 2) {
+            return null;
+        }
+        try {
+            byte[] decodedPayload = Base64.getUrlDecoder().decode(parts[1]);
+            JsonObject payload = JsonParser.parseString(
+                    new String(decodedPayload, StandardCharsets.UTF_8)).getAsJsonObject();
+            return payload.has("sub") ? payload.get("sub").getAsString() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public LiveData<Boolean> getSessionExpiredLiveData() {

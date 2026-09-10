@@ -16,6 +16,9 @@ import dagger.Provides;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import dagger.hilt.components.SingletonComponent;
+import com.longvuong.plix.data.local.dao.CategoryDao;
+import com.longvuong.plix.data.repository.CategoryRepository;
+import com.longvuong.plix.data.repository.CategoryRepositoryImpl;
 
 @Module
 @InstallIn(SingletonComponent.class)
@@ -40,6 +43,18 @@ public class DataModule {
     @Provides
     @Singleton
     public TransactionRepository provideTransactionRepository(TransactionRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public CategoryDao provideCategoryDao(AppDatabase appDatabase) {
+        return appDatabase.categoryDao();
+    }
+
+    @Provides
+    @Singleton
+    public CategoryRepository provideCategoryRepository(CategoryRepositoryImpl impl) {
         return impl;
     }
 }

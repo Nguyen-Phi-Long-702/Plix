@@ -1,10 +1,13 @@
 package com.longvuong.plix.data.local.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
 
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+
+import java.util.List;
 
 @Dao
 public interface CategoryDao {
@@ -17,4 +20,7 @@ public interface CategoryDao {
 
     @Query("SELECT COUNT(*) FROM categories")
     int countAll();
+
+    @Query("SELECT * FROM categories WHERE is_deleted = 0 ORDER BY type, name")
+    LiveData<List<CategoryEntity>> getActiveCategories();
 }

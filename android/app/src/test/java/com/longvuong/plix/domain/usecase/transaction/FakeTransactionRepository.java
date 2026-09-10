@@ -34,4 +34,8 @@ class FakeTransactionRepository implements TransactionRepository {
         lastUpdated = entity;
         callback.onResult(new Result.Success<>(null));
     }
+    @Override
+    public void getById(String id, RepositoryCallback<TransactionEntity> callback) {
+
+    }
 }

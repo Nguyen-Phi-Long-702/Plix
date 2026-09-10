@@ -14,4 +14,6 @@ public interface TransactionRepository {
     void insert(TransactionEntity entity, RepositoryCallback<Void> callback);
 
     void update(TransactionEntity entity, RepositoryCallback<Void> callback);
+
+    void getById(String id, RepositoryCallback<TransactionEntity> callback);
 }
