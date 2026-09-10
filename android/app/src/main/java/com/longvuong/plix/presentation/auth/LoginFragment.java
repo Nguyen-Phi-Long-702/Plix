@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.navigation.NavOptions;
 
 import com.longvuong.plix.R;
 import dagger.hilt.android.AndroidEntryPoint;
@@ -57,8 +58,13 @@ public class LoginFragment extends Fragment {
         textGoRegister.setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_login_to_register));
 
-        viewModel.getAuthSuccessToken().observe(getViewLifecycleOwner(), token ->
-                textResult.setText("Đăng nhập thành công!\nJWT: " + token));
+        viewModel.getAuthSuccessToken().observe(getViewLifecycleOwner(), token -> {
+            textResult.setText("Đăng nhập thành công!\nJWT: " + token);
+            Navigation.findNavController(view).navigate(
+                    R.id.mainGraph,
+                    null,
+                    new NavOptions.Builder().setPopUpTo(R.id.authGraph, true).build());
+        });
 
         viewModel.getAuthError().observe(getViewLifecycleOwner(), error ->
                 textResult.setText("Lỗi: " + error));
