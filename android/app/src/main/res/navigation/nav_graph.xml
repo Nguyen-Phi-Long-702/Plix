@@ -39,8 +39,24 @@
             app:startDestination="@id/homeFragment">
             <fragment
                 android:id="@+id/homeFragment"
-                android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
-                android:label="Trang chủ" />
+                android:name="com.longvuong.plix.presentation.transaction.HomeFragment"
+                android:label="Trang chủ"
+                tools:layout="@layout/fragment_home">
+                <action
+                    android:id="@+id/action_homeFragment_to_addEditTransactionFragment"
+                    app:destination="@id/addEditTransactionFragment" />
+            </fragment>
+            <fragment
+                android:id="@+id/addEditTransactionFragment"
+                android:name="com.longvuong.plix.presentation.transaction.AddEditTransactionFragment"
+                android:label="Thêm giao dịch"
+                tools:layout="@layout/fragment_add_edit_transaction">
+                <argument
+                    android:name="transactionId"
+                    app:argType="string"
+                    app:nullable="true"
+                    android:defaultValue="@null" />
+            </fragment>
         </navigation>
         <navigation
             android:id="@+id/budgetGoalGraph"
