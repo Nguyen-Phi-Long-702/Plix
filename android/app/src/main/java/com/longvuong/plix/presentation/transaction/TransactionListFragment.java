@@ -7,7 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.text.Editable;
+import android.text.TextWatcher;
 
+import com.google.android.material.textfield.TextInputEditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -44,6 +47,7 @@ public class TransactionListFragment extends Fragment {
     private ChipGroup chipGroupCategory;
     private Chip chipCategoryAll;
     private Chip chipDateRange;
+    private TextInputEditText editSearch;
     private Long selectedStartDate;
     private Long selectedEndDate;
 
@@ -64,6 +68,7 @@ public class TransactionListFragment extends Fragment {
         setupRecyclerView();
         setupCategoryChips();
         setupDateRangeChip();
+        setupSearchField();
 
         viewModel.getTransactionListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(), categories -> {
@@ -79,6 +84,7 @@ public class TransactionListFragment extends Fragment {
         chipGroupCategory = view.findViewById(R.id.chipGroupCategory);
         chipCategoryAll = view.findViewById(R.id.chipCategoryAll);
         chipDateRange = view.findViewById(R.id.chipDateRange);
+        editSearch = view.findViewById(R.id.editSearch);
     }
 
     private void setupRecyclerView() {
@@ -156,6 +162,21 @@ public class TransactionListFragment extends Fragment {
 
     private LocalDate toLocalDate(long epochMs) {
         return Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    private void setupSearchField() {
+        editSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+            @Override
+            public void afterTextChanged(Editable s) {
+                viewModel.setSearchQuery(s.toString());
+            }
+        });
     }
 
     private void renderState(UiState<List<TransactionEntity>> state) {

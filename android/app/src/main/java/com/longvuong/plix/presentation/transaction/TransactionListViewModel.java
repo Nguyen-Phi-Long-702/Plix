@@ -3,6 +3,8 @@ package com.longvuong.plix.presentation.transaction;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import com.longvuong.plix.data.local.entity.CategoryEntity;
@@ -21,13 +23,19 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class TransactionListViewModel extends ViewModel {
+
     private final CategoryRepository categoryRepository;
     private final FilterTransactionsUseCase filterTransactionsUseCase;
-    private final MediatorLiveData<UiState<List<TransactionEntity>>> transactionListState = new MediatorLiveData<>();
+
+    private final MediatorLiveData<UiState<List<TransactionEntity>>> transactionListState =
+            new MediatorLiveData<>();
+    private final MutableLiveData<String> searchQueryTrigger = new MutableLiveData<>("");
+
     private List<TransactionEntity> latestRawTransactions = new ArrayList<>();
     private String selectedCategoryId;
     private Long selectedStartDate;
     private Long selectedEndDate;
+    private String currentSearchQuery = "";
 
     @Inject
     public TransactionListViewModel(TransactionRepository transactionRepository,
@@ -40,7 +48,24 @@ public class TransactionListViewModel extends ViewModel {
 
         transactionListState.addSource(transactionRepository.getAll(), transactions -> {
             latestRawTransactions = transactions != null ? transactions : new ArrayList<>();
-            publishFilteredResult();
+            if (currentSearchQuery.isEmpty()) {
+                publishFilteredResult();
+            }
+        });
+
+        LiveData<List<TransactionEntity>> searchResultsSource = Transformations.switchMap(
+                searchQueryTrigger,
+                query -> {
+                    if (query == null || query.trim().isEmpty()) {
+                        return new MutableLiveData<List<TransactionEntity>>(new ArrayList<>());
+                    }
+                    return transactionRepository.searchByNote(query.trim());
+                });
+
+        transactionListState.addSource(searchResultsSource, results -> {
+            if (!currentSearchQuery.isEmpty()) {
+                publish(results);
+            }
         });
     }
 
@@ -54,13 +79,25 @@ public class TransactionListViewModel extends ViewModel {
 
     public void setSelectedCategory(@Nullable String categoryId) {
         this.selectedCategoryId = categoryId;
-        publishFilteredResult();
+        if (currentSearchQuery.isEmpty()) {
+            publishFilteredResult();
+        }
     }
 
     public void setDateRange(@Nullable Long startDate, @Nullable Long endDate) {
         this.selectedStartDate = startDate;
         this.selectedEndDate = endDate;
-        publishFilteredResult();
+        if (currentSearchQuery.isEmpty()) {
+            publishFilteredResult();
+        }
+    }
+
+    public void setSearchQuery(@Nullable String query) {
+        currentSearchQuery = query != null ? query.trim() : "";
+        searchQueryTrigger.setValue(currentSearchQuery);
+        if (currentSearchQuery.isEmpty()) {
+            publishFilteredResult();
+        }
     }
 
     private void publishFilteredResult() {
