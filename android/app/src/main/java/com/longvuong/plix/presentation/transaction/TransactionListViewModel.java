@@ -21,15 +21,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class TransactionListViewModel extends ViewModel {
-
     private final CategoryRepository categoryRepository;
     private final FilterTransactionsUseCase filterTransactionsUseCase;
-
-    private final MediatorLiveData<UiState<List<TransactionEntity>>> transactionListState =
-            new MediatorLiveData<>();
-
+    private final MediatorLiveData<UiState<List<TransactionEntity>>> transactionListState = new MediatorLiveData<>();
     private List<TransactionEntity> latestRawTransactions = new ArrayList<>();
     private String selectedCategoryId;
+    private Long selectedStartDate;
+    private Long selectedEndDate;
 
     @Inject
     public TransactionListViewModel(TransactionRepository transactionRepository,
@@ -59,9 +57,15 @@ public class TransactionListViewModel extends ViewModel {
         publishFilteredResult();
     }
 
+    public void setDateRange(@Nullable Long startDate, @Nullable Long endDate) {
+        this.selectedStartDate = startDate;
+        this.selectedEndDate = endDate;
+        publishFilteredResult();
+    }
+
     private void publishFilteredResult() {
         List<TransactionEntity> filtered = filterTransactionsUseCase.execute(
-                latestRawTransactions, selectedCategoryId, null, null);
+                latestRawTransactions, selectedCategoryId, selectedStartDate, selectedEndDate);
         publish(filtered);
     }
 
