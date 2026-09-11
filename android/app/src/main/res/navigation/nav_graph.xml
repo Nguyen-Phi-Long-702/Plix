@@ -45,6 +45,9 @@
                 <action
                     android:id="@+id/action_homeFragment_to_addEditTransactionFragment"
                     app:destination="@id/addEditTransactionFragment" />
+                <action
+                    android:id="@+id/action_homeFragment_to_transactionListFragment"
+                    app:destination="@id/transactionListFragment" />
             </fragment>
             <fragment
                 android:id="@+id/addEditTransactionFragment"
@@ -57,6 +60,11 @@
                     app:nullable="true"
                     android:defaultValue="@null" />
             </fragment>
+            <fragment
+                android:id="@+id/transactionListFragment"
+                android:name="com.longvuong.plix.presentation.transaction.TransactionListFragment"
+                android:label="Danh sách giao dịch"
+                tools:layout="@layout/fragment_transaction_list" />
         </navigation>
         <navigation
             android:id="@+id/budgetGoalGraph"

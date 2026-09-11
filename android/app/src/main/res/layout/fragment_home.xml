@@ -4,14 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonViewTransactionList"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:gravity="center"
-        android:padding="24dp"
-        android:text="Trang chủ (danh sách giao dịch sẽ hoàn thiện ở các ngày sau)" />
-
+        android:text="Xem danh sách giao dịch" />
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddTransaction"
         android:layout_width="wrap_content"

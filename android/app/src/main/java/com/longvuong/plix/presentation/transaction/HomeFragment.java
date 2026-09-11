@@ -32,5 +32,10 @@ public class HomeFragment extends Fragment {
         fabAddTransaction.setOnClickListener(v ->
                 Navigation.findNavController(view)
                         .navigate(R.id.action_homeFragment_to_addEditTransactionFragment));
+
+        View buttonViewTransactionList = view.findViewById(R.id.buttonViewTransactionList);
+        buttonViewTransactionList.setOnClickListener(v ->
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_homeFragment_to_transactionListFragment));
     }
 }
