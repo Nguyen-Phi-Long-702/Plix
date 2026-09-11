@@ -24,4 +24,7 @@ public interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE id = :id")
     TransactionEntity getById(String id);
+
+    @Query("SELECT * FROM transactions WHERE is_deleted = 0 " + "AND note LIKE '%' || :query || '%' ORDER BY occurred_at DESC")
+    LiveData<List<TransactionEntity>> searchByNote(String query);
 }

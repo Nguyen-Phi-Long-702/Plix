@@ -22,6 +22,11 @@ class FakeTransactionRepository implements TransactionRepository {
     }
 
     @Override
+    public LiveData<List<TransactionEntity>> searchByNote(String query) {
+        return null; //Không dùng trong test usecase
+    }
+
+    @Override
     public void insert(TransactionEntity entity, RepositoryCallback<Void> callback) {
         insertCalled = true;
         lastInserted = entity;

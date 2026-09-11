@@ -11,6 +11,8 @@ public interface TransactionRepository {
 
     LiveData<List<TransactionEntity>> getAll();
 
+    LiveData<List<TransactionEntity>> searchByNote(String query);
+
     void insert(TransactionEntity entity, RepositoryCallback<Void> callback);
 
     void update(TransactionEntity entity, RepositoryCallback<Void> callback);

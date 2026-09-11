@@ -36,6 +36,11 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     }
 
     @Override
+    public LiveData<List<TransactionEntity>> searchByNote(String query) {
+        return transactionDao.searchByNote(query);
+    }
+
+    @Override
     public void insert(TransactionEntity entity, RepositoryCallback<Void> callback) {
         appExecutors.diskIO().execute(() -> {
             try {
