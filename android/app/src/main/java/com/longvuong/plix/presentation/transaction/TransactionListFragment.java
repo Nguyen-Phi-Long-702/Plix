@@ -1,6 +1,7 @@
 package com.longvuong.plix.presentation.transaction;
 
 import android.os.Bundle;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,11 +15,16 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.longvuong.plix.R;
+import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.presentation.common.UiState;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -31,6 +37,11 @@ public class TransactionListFragment extends Fragment {
     private RecyclerView recyclerTransactions;
     private ProgressBar progressLoading;
     private TextView textEmptyState;
+    private ChipGroup chipGroupCategory;
+    private Chip chipCategoryAll;
+
+    private final Map<Integer, String> chipIdToCategoryId = new HashMap<>();
+    private boolean categoryChipsBuilt = false;
 
     @Nullable
     @Override
@@ -47,20 +58,53 @@ public class TransactionListFragment extends Fragment {
 
         bindViews(view);
         setupRecyclerView();
+        setupCategoryChips();
 
         viewModel.getTransactionListState().observe(getViewLifecycleOwner(), this::renderState);
+        viewModel.getActiveCategories().observe(getViewLifecycleOwner(), categories -> {
+            adapter.submitCategories(categories);
+            buildCategoryChips(categories);
+        });
     }
 
     private void bindViews(View view) {
         recyclerTransactions = view.findViewById(R.id.recyclerTransactions);
         progressLoading = view.findViewById(R.id.progressLoading);
         textEmptyState = view.findViewById(R.id.textEmptyState);
+        chipGroupCategory = view.findViewById(R.id.chipGroupCategory);
+        chipCategoryAll = view.findViewById(R.id.chipCategoryAll);
     }
 
     private void setupRecyclerView() {
         adapter = new TransactionAdapter();
         recyclerTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerTransactions.setAdapter(adapter);
+    }
+
+    private void setupCategoryChips() {
+        chipIdToCategoryId.put(chipCategoryAll.getId(), null);
+        chipGroupCategory.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) {
+                return;
+            }
+            viewModel.setSelectedCategory(chipIdToCategoryId.get(checkedIds.get(0)));
+        });
+    }
+
+    private void buildCategoryChips(List<CategoryEntity> categories) {
+        if (categoryChipsBuilt || categories == null) {
+            return;
+        }
+        categoryChipsBuilt = true;
+
+        for (CategoryEntity category : categories) {
+            Chip chip = new Chip(new ContextThemeWrapper(requireContext(), com.google.android.material.R.style.Widget_MaterialComponents_Chip_Choice));
+            chip.setId(View.generateViewId());
+            chip.setText(category.name);
+            chip.setCheckable(true);
+            chipGroupCategory.addView(chip);
+            chipIdToCategoryId.put(chip.getId(), category.id);
+        }
     }
 
     private void renderState(UiState<List<TransactionEntity>> state) {
