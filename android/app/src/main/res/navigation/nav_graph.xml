@@ -64,7 +64,11 @@
                 android:id="@+id/transactionListFragment"
                 android:name="com.longvuong.plix.presentation.transaction.TransactionListFragment"
                 android:label="Danh sách giao dịch"
-                tools:layout="@layout/fragment_transaction_list" />
+                tools:layout="@layout/fragment_transaction_list">
+                <action
+                    android:id="@+id/action_transactionListFragment_to_addEditTransactionFragment"
+                    app:destination="@id/addEditTransactionFragment" />
+            </fragment>
         </navigation>
         <navigation
             android:id="@+id/budgetGoalGraph"
