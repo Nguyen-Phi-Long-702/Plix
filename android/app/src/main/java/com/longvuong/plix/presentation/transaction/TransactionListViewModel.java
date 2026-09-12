@@ -7,10 +7,12 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
+import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.repository.CategoryRepository;
 import com.longvuong.plix.data.repository.TransactionRepository;
+import com.longvuong.plix.domain.usecase.transaction.DeleteTransactionUseCase;
 import com.longvuong.plix.domain.usecase.transaction.FilterTransactionsUseCase;
 import com.longvuong.plix.presentation.common.UiState;
 
@@ -23,14 +25,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class TransactionListViewModel extends ViewModel {
-
     private final CategoryRepository categoryRepository;
     private final FilterTransactionsUseCase filterTransactionsUseCase;
-
-    private final MediatorLiveData<UiState<List<TransactionEntity>>> transactionListState =
-            new MediatorLiveData<>();
+    private final DeleteTransactionUseCase deleteTransactionUseCase;
+    private final MediatorLiveData<UiState<List<TransactionEntity>>> transactionListState = new MediatorLiveData<>();
     private final MutableLiveData<String> searchQueryTrigger = new MutableLiveData<>("");
-
+    private final MutableLiveData<UiState<Void>> deleteState = new MutableLiveData<>();
     private List<TransactionEntity> latestRawTransactions = new ArrayList<>();
     private String selectedCategoryId;
     private Long selectedStartDate;
@@ -40,9 +40,11 @@ public class TransactionListViewModel extends ViewModel {
     @Inject
     public TransactionListViewModel(TransactionRepository transactionRepository,
                                     CategoryRepository categoryRepository,
-                                    FilterTransactionsUseCase filterTransactionsUseCase) {
+                                    FilterTransactionsUseCase filterTransactionsUseCase,
+                                    DeleteTransactionUseCase deleteTransactionUseCase) {
         this.categoryRepository = categoryRepository;
         this.filterTransactionsUseCase = filterTransactionsUseCase;
+        this.deleteTransactionUseCase = deleteTransactionUseCase;
 
         transactionListState.setValue(new UiState.Loading<>());
 
@@ -112,5 +114,20 @@ public class TransactionListViewModel extends ViewModel {
         } else {
             transactionListState.setValue(new UiState.Success<>(list));
         }
+    }
+
+    public LiveData<UiState<Void>> getDeleteState() {
+        return deleteState;
+    }
+
+    public void deleteTransaction(TransactionEntity transaction) {
+        deleteTransactionUseCase.execute(transaction, result -> {
+            if (result instanceof Result.Success) {
+                deleteState.setValue(new UiState.Success<>(null));
+            } else {
+                Result.Error<Void> error = (Result.Error<Void>) result;
+                deleteState.setValue(new UiState.Error<>(error.message));
+            }
+        });
     }
 }
