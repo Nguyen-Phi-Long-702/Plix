@@ -3,6 +3,7 @@ package com.longvuong.plix.presentation.transaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,11 +25,19 @@ import java.util.Locale;
 import java.util.Map;
 
 public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.TransactionViewHolder> {
+    public interface OnTransactionActionListener {
+        void onEditTransaction(TransactionEntity transaction);
+        void onDeleteTransaction(TransactionEntity transaction);
+    }
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
+    private final OnTransactionActionListener actionListener;
     private List<TransactionEntity> transactions = new ArrayList<>();
     private Map<String, String> categoryNamesById = new HashMap<>();
+
+    public TransactionAdapter(OnTransactionActionListener actionListener) {
+        this.actionListener = actionListener;
+    }
 
     public void submitList(List<TransactionEntity> newTransactions) {
         this.transactions = newTransactions != null ? newTransactions : new ArrayList<>();
@@ -56,7 +65,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull TransactionViewHolder holder, int position) {
-        holder.bind(transactions.get(position), categoryNamesById);
+        holder.bind(transactions.get(position), categoryNamesById, actionListener);
     }
 
     @Override
@@ -68,15 +77,18 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         private final TextView textCategoryName;
         private final TextView textNoteAndDate;
         private final TextView textAmount;
+        private final ImageButton buttonDelete;
 
         TransactionViewHolder(@NonNull View itemView) {
             super(itemView);
             textCategoryName = itemView.findViewById(R.id.textCategoryName);
             textNoteAndDate = itemView.findViewById(R.id.textNoteAndDate);
             textAmount = itemView.findViewById(R.id.textAmount);
+            buttonDelete = itemView.findViewById(R.id.buttonDeleteTransaction);
         }
 
-        void bind(TransactionEntity transaction, Map<String, String> categoryNamesById) {
+        void bind(TransactionEntity transaction, Map<String, String> categoryNamesById,
+                  OnTransactionActionListener actionListener) {
             String categoryName = transaction.categoryId != null
                     ? categoryNamesById.get(transaction.categoryId) : null;
             textCategoryName.setText(categoryName != null ? categoryName : "Chưa phân loại");
@@ -92,6 +104,9 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             textAmount.setText((isIncome ? "+" : "-") + formatCurrency(transaction.amount));
             textAmount.setTextColor(ContextCompat.getColor(itemView.getContext(),
                     isIncome ? R.color.color_income : R.color.color_expense));
+
+            itemView.setOnClickListener(v -> actionListener.onEditTransaction(transaction));
+            buttonDelete.setOnClickListener(v -> actionListener.onDeleteTransaction(transaction));
         }
 
         private String formatCurrency(long amount) {

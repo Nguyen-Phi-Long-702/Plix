@@ -13,13 +13,16 @@ import android.text.TextWatcher;
 import com.google.android.material.textfield.TextInputEditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
@@ -75,6 +78,7 @@ public class TransactionListFragment extends Fragment {
             adapter.submitCategories(categories);
             buildCategoryChips(categories);
         });
+        viewModel.getDeleteState().observe(getViewLifecycleOwner(), this::renderDeleteState);
     }
 
     private void bindViews(View view) {
@@ -88,9 +92,47 @@ public class TransactionListFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        adapter = new TransactionAdapter();
+        adapter = new TransactionAdapter(new TransactionAdapter.OnTransactionActionListener() {
+            @Override
+            public void onEditTransaction(TransactionEntity transaction) {
+                navigateToEdit(transaction);
+            }
+
+            @Override
+            public void onDeleteTransaction(TransactionEntity transaction) {
+                showDeleteConfirmationDialog(transaction);
+            }
+        });
         recyclerTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerTransactions.setAdapter(adapter);
+    }
+
+    private void navigateToEdit(TransactionEntity transaction) {
+        Bundle args = new Bundle();
+        args.putString(AddEditTransactionViewModel.ARG_TRANSACTION_ID, transaction.id);
+        Navigation.findNavController(requireView())
+                .navigate(R.id.action_transactionListFragment_to_addEditTransactionFragment, args);
+    }
+
+    private void showDeleteConfirmationDialog(TransactionEntity transaction) {
+        String label = transaction.note != null && !transaction.note.isEmpty()
+                ? transaction.note : "giao dịch này";
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Xoá giao dịch?")
+                .setMessage("Giao dịch \"" + label + "\" sẽ bị xoá. Hành động này không thể hoàn tác.")
+                .setNegativeButton("Huỷ", null)
+                .setPositiveButton("Xoá", (dialog, which) -> viewModel.deleteTransaction(transaction))
+                .show();
+    }
+
+    private void renderDeleteState(UiState<Void> state) {
+        if (state instanceof UiState.Success) {
+            Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                    "Đã xoá giao dịch", Snackbar.LENGTH_SHORT).show();
+        } else if (state instanceof UiState.Error) {
+            Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                    ((UiState.Error<Void>) state).message, Snackbar.LENGTH_LONG).show();
+        }
     }
 
     private void setupCategoryChips() {
