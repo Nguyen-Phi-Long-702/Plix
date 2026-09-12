@@ -5,6 +5,9 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
     android:paddingHorizontal="16dp"
     android:paddingVertical="12dp">
 
@@ -40,5 +43,16 @@
         android:textSize="15sp"
         android:textStyle="bold"
         tools:text="-50.000đ" />
+
+    <ImageButton
+        android:id="@+id/buttonDeleteTransaction"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Xoá giao dịch"
+        android:padding="12dp"
+        android:src="@drawable/ic_delete"
+        android:tint="@android:color/darker_gray" />
 
 </LinearLayout>
