@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 
@@ -15,6 +16,9 @@ public interface CategoryDao {
     @Insert
     void insert(CategoryEntity entity);
 
+    @Update
+    void update(CategoryEntity entity);
+
     @Query("SELECT * FROM categories WHERE id = :id")
     CategoryEntity getById(String id);
 
@@ -23,4 +27,8 @@ public interface CategoryDao {
 
     @Query("SELECT * FROM categories WHERE is_deleted = 0 ORDER BY type, name")
     LiveData<List<CategoryEntity>> getActiveCategories();
+
+    @Query("SELECT * FROM categories WHERE user_id IS NULL AND is_deleted = 0 " +
+            "AND name = :name AND type = :type LIMIT 1")
+    CategoryEntity findSystemCategoryByNameAndType(String name, String type);
 }
