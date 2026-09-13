@@ -9,7 +9,7 @@ from app.core.config import DATABASE_URL
 from app.core.middleware import MaxBodySizeMiddleware
 from app.core.security import verify_jwt
 from app.models.error_response import ErrorResponse
-from app.routers import health
+from app.routers import categories, health
 
 
 API_PREFIX = "/api/v1"
@@ -44,7 +44,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     body = ErrorResponse(error_code=error_code, message=str(exc.detail))
     return JSONResponse(status_code=exc.status_code, content=body.model_dump())
 
-
+app.include_router(categories.router, prefix=API_PREFIX)
 app.include_router(health.router, prefix=API_PREFIX)
 
 
