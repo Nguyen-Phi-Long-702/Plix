@@ -5,19 +5,27 @@ import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.repository.CategoryRepository;
+import com.longvuong.plix.domain.validation.FormValidator;
 
 import javax.inject.Inject;
 
-public class CategoryUseCase {
 
+public class CategoryUseCase {
     private final CategoryRepository categoryRepository;
+    private final FormValidator formValidator;
 
     @Inject
-    public CategoryUseCase(CategoryRepository categoryRepository) {
+    public CategoryUseCase(CategoryRepository categoryRepository, FormValidator formValidator) {
         this.categoryRepository = categoryRepository;
+        this.formValidator = formValidator;
     }
 
     public void addCategory(CategoryEntity entity, RepositoryCallback<Void> callback) {
+        Result<Void> nameValidation = formValidator.validateCategoryName(entity.name);
+        if (nameValidation instanceof Result.Error) {
+            callback.onResult(nameValidation);
+            return;
+        }
         categoryRepository.findSystemCategoryByNameAndType(entity.name, entity.type, result -> {
             if (result instanceof Result.Error) {
                 callback.onResult(propagateError((Result.Error<CategoryEntity>) result));
@@ -34,6 +42,11 @@ public class CategoryUseCase {
     }
 
     public void updateCategory(CategoryEntity entity, String currentUserId, RepositoryCallback<Void> callback) {
+        Result<Void> nameValidation = formValidator.validateCategoryName(entity.name);
+        if (nameValidation instanceof Result.Error) {
+            callback.onResult(nameValidation);
+            return;
+        }
         Result<Void> ownership = validateOwnership(entity, currentUserId);
         if (ownership instanceof Result.Error) {
             callback.onResult(ownership);

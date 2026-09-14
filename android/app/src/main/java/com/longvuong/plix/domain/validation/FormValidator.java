@@ -15,6 +15,7 @@ public class FormValidator {
 
     public static final long MAX_AMOUNT = 999_999_999_999L; //999 tỷ vnd, chặn tràn số
     public static final int MAX_NOTE_LENGTH = 500;
+    public static final int MAX_CATEGORY_NAME_LENGTH = 50;
     private static final int MAX_PAST_YEARS = 5;
 
     @Inject
@@ -74,5 +75,17 @@ public class FormValidator {
             return noteResult;
         }
         return validateOccurredAt(occurredAtEpochMs);
+    }
+
+    public Result<Void> validateCategoryName(String name) {
+        String trimmed = name != null ? name.trim() : "";
+        if (trimmed.isEmpty()) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Tên danh mục không được để trống", null);
+        }
+        if (trimmed.length() > MAX_CATEGORY_NAME_LENGTH) {
+            return new Result.Error<>(ErrorType.VALIDATION,
+                    "Tên danh mục không được vượt quá " + MAX_CATEGORY_NAME_LENGTH + " ký tự", null);
+        }
+        return new Result.Success<>(null);
     }
 }

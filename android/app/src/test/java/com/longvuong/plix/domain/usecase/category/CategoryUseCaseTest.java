@@ -6,12 +6,15 @@ import static org.junit.Assert.assertTrue;
 
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+import com.longvuong.plix.domain.validation.FormValidator;
 
 import org.junit.Test;
 
 public class CategoryUseCaseTest {
     private final FakeCategoryRepository fakeRepository = new FakeCategoryRepository();
-    private final CategoryUseCase useCase = new CategoryUseCase(fakeRepository);
+    private final FormValidator formValidator = new FormValidator();
+    private final CategoryUseCase useCase = new CategoryUseCase(fakeRepository, formValidator);
+
     private CategoryEntity systemCategory(String name, String type) {
         CategoryEntity entity = new CategoryEntity();
         entity.id = "sys_1";
@@ -61,6 +64,22 @@ public class CategoryUseCaseTest {
     }
 
     @Test
+    public void addCategory_emptyName_rejectsBeforeInsert() {
+        CategoryEntity entity = customCategory("user-1");
+        entity.name = "   ";
+        useCase.addCategory(entity, result -> assertTrue(result instanceof Result.Error));
+        assertFalse(fakeRepository.insertCalled);
+    }
+
+    @Test
+    public void addCategory_nameLongerThan50Chars_rejectsBeforeInsert() {
+        CategoryEntity entity = customCategory("user-1");
+        entity.name = "A".repeat(51);
+        useCase.addCategory(entity, result -> assertTrue(result instanceof Result.Error));
+        assertFalse(fakeRepository.insertCalled);
+    }
+
+    @Test
     public void updateCategory_ownedByCurrentUser_updatesAndReturnsSuccess() {
         CategoryEntity entity = customCategory("user-1");
         useCase.updateCategory(entity, "user-1", result -> assertTrue(result instanceof Result.Success));
@@ -77,6 +96,22 @@ public class CategoryUseCaseTest {
     @Test
     public void updateCategory_ownedByAnotherUser_rejectsBeforeUpdate() {
         CategoryEntity entity = customCategory("user-2");
+        useCase.updateCategory(entity, "user-1", result -> assertTrue(result instanceof Result.Error));
+        assertFalse(fakeRepository.updateCalled);
+    }
+
+    @Test
+    public void updateCategory_emptyName_rejectsBeforeUpdate() {
+        CategoryEntity entity = customCategory("user-1");
+        entity.name = "";
+        useCase.updateCategory(entity, "user-1", result -> assertTrue(result instanceof Result.Error));
+        assertFalse(fakeRepository.updateCalled);
+    }
+
+    @Test
+    public void updateCategory_nameLongerThan50Chars_rejectsBeforeUpdate() {
+        CategoryEntity entity = customCategory("user-1");
+        entity.name = "A".repeat(51);
         useCase.updateCategory(entity, "user-1", result -> assertTrue(result instanceof Result.Error));
         assertFalse(fakeRepository.updateCalled);
     }
