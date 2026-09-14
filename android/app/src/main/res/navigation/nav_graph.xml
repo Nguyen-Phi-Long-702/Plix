@@ -91,8 +91,18 @@
             app:startDestination="@id/settingsFragment">
             <fragment
                 android:id="@+id/settingsFragment"
-                android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
-                android:label="Cài đặt" />
+                android:name="com.longvuong.plix.presentation.settings.SettingsFragment"
+                android:label="Cài đặt"
+                tools:layout="@layout/fragment_settings">
+                <action
+                    android:id="@+id/action_settingsFragment_to_categoryManagementFragment"
+                    app:destination="@id/categoryManagementFragment" />
+            </fragment>
+            <fragment
+                android:id="@+id/categoryManagementFragment"
+                android:name="com.longvuong.plix.presentation.category.CategoryManagementFragment"
+                android:label="Quản lý danh mục"
+                tools:layout="@layout/fragment_category_management" />
         </navigation>
     </navigation>
 </navigation>
