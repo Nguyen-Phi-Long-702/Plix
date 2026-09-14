@@ -24,3 +24,14 @@ def test_other_user_category_is_rejected():
     record = FakeCategoryRecord(user_id="user-2")
 
     assert validate_category_write(record, current_user_id="user-1") is False
+
+def test_case_sensitive_user_id_is_rejected():
+    record = FakeCategoryRecord(user_id="USER-1")
+
+    assert validate_category_write(record, current_user_id="user-1") is False
+
+
+def test_current_user_id_with_stray_whitespace_is_rejected():
+    record = FakeCategoryRecord(user_id="user-1")
+
+    assert validate_category_write(record, current_user_id=" user-1") is False
