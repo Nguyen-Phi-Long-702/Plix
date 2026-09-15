@@ -27,4 +27,10 @@ public interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE is_deleted = 0 " + "AND note LIKE '%' || :query || '%' ORDER BY occurred_at DESC")
     LiveData<List<TransactionEntity>> searchByNote(String query);
+
+    @Query("SELECT * FROM transactions WHERE is_recurring = 1 AND recurrence_parent_id IS NULL AND is_deleted = 0")
+    List<TransactionEntity> getActiveRecurringTemplates();
+
+    @Query("SELECT * FROM transactions WHERE recurrence_parent_id = :templateId AND is_deleted = 0")
+    List<TransactionEntity> getInstancesByRecurrenceParentId(String templateId);
 }
