@@ -57,7 +57,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    //Lifecycle-viewmodel & livedata
+    //Lifecycle-viewmodel và livedata
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.7")
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.7")
 
@@ -84,6 +84,7 @@ dependencies {
     //WorkManager + Hilt integration
     implementation("androidx.work:work-runtime:2.11.2")
     implementation("androidx.hilt:hilt-work:1.4.0")
+    annotationProcessor("androidx.hilt:hilt-compiler:1.4.0")
 
     //Timber
     implementation("com.jakewharton.timber:timber:5.0.1")
