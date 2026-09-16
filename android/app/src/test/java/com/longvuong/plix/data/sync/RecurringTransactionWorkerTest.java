@@ -221,4 +221,17 @@ public class RecurringTransactionWorkerTest {
         field.setAccessible(true);
         field.set(manager, token);
     }
+
+    @Test
+    public void isEligibleToRun_noSession_returnsFalse() {
+        AuthManager loggedOutAuthManager = new AuthManager(null);
+        assertFalse(RecurringTransactionWorker.isEligibleToRun(loggedOutAuthManager));
+    }
+
+    @Test
+    public void isEligibleToRun_hasAccessTokenInMemory_returnsTrue() throws Exception {
+        AuthManager loggedInAuthManager = new AuthManager(null);
+        setFakeAccessToken(loggedInAuthManager, "fake-jwt-token");
+        assertTrue(RecurringTransactionWorker.isEligibleToRun(loggedInAuthManager));
+    }
 }
