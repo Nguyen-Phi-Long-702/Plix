@@ -6,8 +6,10 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.hilt.work.HiltWorker;
 import androidx.work.Worker;
+import androidx.work.WorkManager;
 import androidx.work.WorkerParameters;
 
+import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.data.local.dao.TransactionDao;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 
@@ -29,19 +31,26 @@ public class RecurringTransactionWorker extends Worker {
     private static final int MONTHS_PER_YEAR = 12;
 
     private final TransactionDao transactionDao;
+    private final AuthManager authManager;
 
     @AssistedInject
     public RecurringTransactionWorker(
             @Assisted @NonNull Context context,
             @Assisted @NonNull WorkerParameters workerParameters,
-            TransactionDao transactionDao) {
+            TransactionDao transactionDao,
+            AuthManager authManager) {
         super(context, workerParameters);
         this.transactionDao = transactionDao;
+        this.authManager = authManager;
     }
 
     @NonNull
     @Override
     public Result doWork() {
+        if (!isEligibleToRun(authManager)) {
+            WorkManager.getInstance(getApplicationContext()).cancelUniqueWork(UNIQUE_WORK_NAME);
+            return Result.success();
+        }
         try {
             generateMissingInstances(transactionDao, System.currentTimeMillis());
             return Result.success();
@@ -49,6 +58,10 @@ public class RecurringTransactionWorker extends Worker {
             Log.e(TAG, "Sinh giao dich dinh ky that bai", e);
             return Result.retry();
         }
+    }
+
+    static boolean isEligibleToRun(AuthManager authManager) {
+        return authManager != null && authManager.isLoggedIn();
     }
 
     static void generateMissingInstances(TransactionDao transactionDao, long now) {
@@ -76,7 +89,7 @@ public class RecurringTransactionWorker extends Worker {
             }
             TransactionEntity instance = buildInstance(template, period, dayOfMonth, now);
             transactionDao.insert(instance);
-            existingInstances.add(instance); //để các kỳ tiếp theo trong cùng vòng lặp nhận biết đúng
+            existingInstances.add(instance); //để các kì tiếp theo trong cùng vòng lặp nhận biết đúng
         }
     }
 

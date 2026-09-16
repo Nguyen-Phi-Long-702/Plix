@@ -44,7 +44,7 @@ public class AddEditTransactionViewModelTest {
                 category("sys_luong", "Lương", "income")
         ));
         formValidator = new FormValidator();
-        authManager = new AuthManager();
+        authManager = new AuthManager(null);
         setFakeAccessToken(authManager, fakeJwtWithSub("user-1"));
     }
 
