@@ -11,6 +11,7 @@ import androidx.work.WorkerParameters;
 import com.longvuong.plix.data.local.dao.TransactionDao;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ public class RecurringTransactionWorker extends Worker {
 
     private static final String TAG = "RecurringTxWorker";
     private static final String RECURRENCE_PREFIX = "MONTHLY:";
+    private static final int MONTHS_PER_YEAR = 12;
 
     private final TransactionDao transactionDao;
 
@@ -41,7 +43,7 @@ public class RecurringTransactionWorker extends Worker {
     @Override
     public Result doWork() {
         try {
-            generateForCurrentPeriod(transactionDao, System.currentTimeMillis());
+            generateMissingInstances(transactionDao, System.currentTimeMillis());
             return Result.success();
         } catch (Exception e) {
             Log.e(TAG, "Sinh giao dich dinh ky that bai", e);
@@ -49,46 +51,71 @@ public class RecurringTransactionWorker extends Worker {
         }
     }
 
-    static void generateForCurrentPeriod(TransactionDao transactionDao, long now) {
+    static void generateMissingInstances(TransactionDao transactionDao, long now) {
         List<TransactionEntity> templates = transactionDao.getActiveRecurringTemplates();
         for (TransactionEntity template : templates) {
-            generateForTemplate(transactionDao, template, now);
+            generateMissingInstancesForTemplate(transactionDao, template, now);
         }
     }
 
-    private static void generateForTemplate(TransactionDao transactionDao, TransactionEntity template, long now) {
+    private static void generateMissingInstancesForTemplate(TransactionDao transactionDao, TransactionEntity template, long now) {
         int dayOfMonth = parseDayOfMonth(template.recurrenceRule);
         if (dayOfMonth <= 0) {
-            return; //quy tắc lặp lại k hợp lệ, bỏ qua template này
+            return; //quy tắc lặp lại không hợp lệ, bỏ qua mẫu này
         }
 
-        Calendar nowCalendar = Calendar.getInstance();
-        nowCalendar.setTimeInMillis(now);
-        int targetYear = nowCalendar.get(Calendar.YEAR);
-        int targetMonth = nowCalendar.get(Calendar.MONTH);
+        List<TransactionEntity> existingInstances = new ArrayList<>(
+                transactionDao.getInstancesByRecurrenceParentId(template.id));
 
-        if (instanceExistsForPeriod(transactionDao, template.id, targetYear, targetMonth)) {
-            return; //chống trùng: kì này đã có giao dịch sinh ra rồi
+        int currentPeriod = periodOf(now);
+        int startPeriod = firstMissingPeriod(template, existingInstances);
+
+        for (int period = startPeriod; period <= currentPeriod; period++) {
+            if (periodHasInstance(existingInstances, period)) {
+                continue; //chống trùng: kì này đã có giao dịch sinh ra rồi
+            }
+            TransactionEntity instance = buildInstance(template, period, dayOfMonth, now);
+            transactionDao.insert(instance);
+            existingInstances.add(instance); //để các kỳ tiếp theo trong cùng vòng lặp nhận biết đúng
         }
-
-        transactionDao.insert(buildInstance(template, targetYear, targetMonth, dayOfMonth, now));
     }
 
-    private static boolean instanceExistsForPeriod(TransactionDao transactionDao, String templateId, int year, int month) {
-        List<TransactionEntity> existingInstances = transactionDao.getInstancesByRecurrenceParentId(templateId);
-        Calendar calendar = Calendar.getInstance();
+    private static int firstMissingPeriod(TransactionEntity template, List<TransactionEntity> existingInstances) {
+        int lastGeneratedPeriod = -1;
         for (TransactionEntity instance : existingInstances) {
-            calendar.setTimeInMillis(instance.occurredAt);
-            if (calendar.get(Calendar.YEAR) == year && calendar.get(Calendar.MONTH) == month) {
+            int period = periodOf(instance.occurredAt);
+            if (period > lastGeneratedPeriod) {
+                lastGeneratedPeriod = period;
+            }
+        }
+        if (lastGeneratedPeriod >= 0) {
+            return lastGeneratedPeriod + 1;
+        }
+        return periodOf(template.occurredAt);
+    }
+
+    private static boolean periodHasInstance(List<TransactionEntity> instances, int period) {
+        for (TransactionEntity instance : instances) {
+            if (periodOf(instance.occurredAt) == period) {
                 return true;
             }
         }
         return false;
     }
 
-    private static TransactionEntity buildInstance(TransactionEntity template, int year, int month, int dayOfMonth, long now) {
+    private static int periodOf(long timeMillis) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(timeMillis);
+        return calendar.get(Calendar.YEAR) * MONTHS_PER_YEAR + calendar.get(Calendar.MONTH);
+    }
+
+    private static TransactionEntity buildInstance(TransactionEntity template, int period, int dayOfMonth, long now) {
+        int year = period / MONTHS_PER_YEAR;
+        int month = period % MONTHS_PER_YEAR;
+        int clampedDay = Math.min(dayOfMonth, lastDayOfMonth(year, month));
+
         Calendar occurredCalendar = Calendar.getInstance();
-        occurredCalendar.set(year, month, dayOfMonth, 0, 0, 0);
+        occurredCalendar.set(year, month, clampedDay, 0, 0, 0);
         occurredCalendar.set(Calendar.MILLISECOND, 0);
 
         TransactionEntity instance = new TransactionEntity();
@@ -107,6 +134,13 @@ public class RecurringTransactionWorker extends Worker {
         instance.syncStatus = "pending";
         instance.isDeleted = false;
         return instance;
+    }
+
+    private static int lastDayOfMonth(int year, int month) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.clear();
+        calendar.set(year, month, 1);
+        return calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
     }
 
     static int parseDayOfMonth(String recurrenceRule) {

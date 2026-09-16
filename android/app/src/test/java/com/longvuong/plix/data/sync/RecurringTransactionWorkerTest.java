@@ -42,9 +42,7 @@ public class RecurringTransactionWorkerTest {
     @Test
     public void generateForCurrentPeriod_templateWithoutInstanceYet_insertsExactlyOneInstance() {
         fakeTransactionDao.insert(monthlyTemplate("template-1", 15));
-
-        RecurringTransactionWorker.generateForCurrentPeriod(fakeTransactionDao, currentPeriodNow());
-
+        RecurringTransactionWorker.generateMissingInstances(fakeTransactionDao, currentPeriodNow());
         List<TransactionEntity> instances = fakeTransactionDao.getInstancesByRecurrenceParentId("template-1");
         assertEquals(1, instances.size());
     }
@@ -52,19 +50,15 @@ public class RecurringTransactionWorkerTest {
     public void generateForCurrentPeriod_calledTwiceSamePeriod_doesNotCreateDuplicate() {
         fakeTransactionDao.insert(monthlyTemplate("template-1", 15));
         long now = currentPeriodNow();
-
-        RecurringTransactionWorker.generateForCurrentPeriod(fakeTransactionDao, now);
-        RecurringTransactionWorker.generateForCurrentPeriod(fakeTransactionDao, now);
-
+        RecurringTransactionWorker.generateMissingInstances(fakeTransactionDao, now);
+        RecurringTransactionWorker.generateMissingInstances(fakeTransactionDao, now); //chạy lại lần 2, cùng kì
         List<TransactionEntity> instances = fakeTransactionDao.getInstancesByRecurrenceParentId("template-1");
         assertEquals(1, instances.size());
     }
     @Test
     public void generateForCurrentPeriod_generatedInstance_isNotItselfRecurringAndLinksToTemplate() {
         fakeTransactionDao.insert(monthlyTemplate("template-1", 15));
-
-        RecurringTransactionWorker.generateForCurrentPeriod(fakeTransactionDao, currentPeriodNow());
-
+        RecurringTransactionWorker.generateMissingInstances(fakeTransactionDao, currentPeriodNow());
         TransactionEntity instance = fakeTransactionDao.getInstancesByRecurrenceParentId("template-1").get(0);
         assertEquals("template-1", instance.recurrenceParentId);
         assertFalse(instance.isRecurring);
@@ -74,9 +68,7 @@ public class RecurringTransactionWorkerTest {
         TransactionEntity invalidTemplate = monthlyTemplate("template-2", 15);
         invalidTemplate.recurrenceRule = "WEEKLY:2";
         fakeTransactionDao.insert(invalidTemplate);
-
-        RecurringTransactionWorker.generateForCurrentPeriod(fakeTransactionDao, currentPeriodNow());
-
+        RecurringTransactionWorker.generateMissingInstances(fakeTransactionDao, currentPeriodNow());
         assertEquals(0, fakeTransactionDao.getInstancesByRecurrenceParentId("template-2").size());
     }
     @Test
