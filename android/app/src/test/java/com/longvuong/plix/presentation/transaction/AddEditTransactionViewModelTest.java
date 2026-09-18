@@ -74,10 +74,21 @@ public class AddEditTransactionViewModelTest {
 
     private AddEditTransactionViewModel createViewModel(Map<String, Object> initialState) {
         SavedStateHandle savedStateHandle = new SavedStateHandle(initialState);
-        AddTransactionUseCase addUseCase = new AddTransactionUseCase(fakeTransactionRepository, formValidator);
-        UpdateTransactionUseCase updateUseCase = new UpdateTransactionUseCase(fakeTransactionRepository, formValidator);
+        AddTransactionUseCase addUseCase = new AddTransactionUseCase(
+                fakeTransactionRepository, formValidator, fakeCheckBudgetThresholdUseCase());
+        UpdateTransactionUseCase updateUseCase = new UpdateTransactionUseCase(
+                fakeTransactionRepository, formValidator, fakeCheckBudgetThresholdUseCase());
         return new AddEditTransactionViewModel(savedStateHandle, fakeTransactionRepository,
                 fakeCategoryRepository, addUseCase, updateUseCase, formValidator, authManager);
+    }
+
+    private com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase fakeCheckBudgetThresholdUseCase() {
+        return new com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase(
+                new FakeBudgetRepository(),
+                fakeTransactionRepository,
+                new com.longvuong.plix.domain.usecase.budget.CalculateBudgetProgressUseCase(),
+                new com.longvuong.plix.domain.usecase.budget.BudgetThresholdChecker(),
+                (budget, spentAfterAmount) -> { });
     }
 
     @Test

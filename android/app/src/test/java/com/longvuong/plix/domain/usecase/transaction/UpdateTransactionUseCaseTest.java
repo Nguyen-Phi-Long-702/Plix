@@ -11,10 +11,19 @@ import com.longvuong.plix.domain.validation.FormValidator;
 import org.junit.Test;
 
 public class UpdateTransactionUseCaseTest {
-
     private final FakeTransactionRepository fakeRepository = new FakeTransactionRepository();
     private final FormValidator formValidator = new FormValidator();
-    private final UpdateTransactionUseCase useCase = new UpdateTransactionUseCase(fakeRepository, formValidator);
+    private final UpdateTransactionUseCase useCase = new UpdateTransactionUseCase(
+            fakeRepository, formValidator, fakeCheckBudgetThresholdUseCase());
+
+    private com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase fakeCheckBudgetThresholdUseCase() {
+        return new com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase(
+                new FakeBudgetRepository(),
+                fakeRepository,
+                new com.longvuong.plix.domain.usecase.budget.CalculateBudgetProgressUseCase(),
+                new com.longvuong.plix.domain.usecase.budget.BudgetThresholdChecker(),
+                (budget, spentAfterAmount) -> { });
+    }
 
     private TransactionEntity existingEntity() {
         TransactionEntity entity = new TransactionEntity();
