@@ -10,7 +10,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 public class FormValidatorTest {
-
     private final FormValidator formValidator = new FormValidator();
 
     @Test
@@ -73,5 +72,25 @@ public class FormValidatorTest {
     public void validateOccurredAt_today_returnsSuccess() {
         long now = System.currentTimeMillis();
         assertTrue(formValidator.validateOccurredAt(now) instanceof Result.Success);
+    }
+
+    @Test
+    public void validatePeriod_correctFormat_returnsSuccess() {
+        assertTrue(formValidator.validatePeriod("2026-09") instanceof Result.Success);
+    }
+
+    @Test
+    public void validatePeriod_invalidMonth_returnsError() {
+        assertTrue(formValidator.validatePeriod("2026-13") instanceof Result.Error);
+    }
+
+    @Test
+    public void validatePeriod_wrongOrderFormat_returnsError() {
+        assertTrue(formValidator.validatePeriod("09-2026") instanceof Result.Error);
+    }
+
+    @Test
+    public void validatePeriod_null_returnsError() {
+        assertTrue(formValidator.validatePeriod(null) instanceof Result.Error);
     }
 }
