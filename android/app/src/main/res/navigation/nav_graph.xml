@@ -75,8 +75,24 @@
             app:startDestination="@id/budgetGoalFragment">
             <fragment
                 android:id="@+id/budgetGoalFragment"
-                android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
-                android:label="Ngân sách &amp; Mục tiêu" />
+                android:name="com.longvuong.plix.presentation.budget.BudgetListFragment"
+                android:label="Ngân sách &amp; Mục tiêu"
+                tools:layout="@layout/fragment_budget_list">
+                <action
+                    android:id="@+id/action_budgetGoalFragment_to_addEditBudgetFragment"
+                    app:destination="@id/addEditBudgetFragment" />
+            </fragment>
+            <fragment
+                android:id="@+id/addEditBudgetFragment"
+                android:name="com.longvuong.plix.presentation.budget.AddEditBudgetFragment"
+                android:label="Ngân sách"
+                tools:layout="@layout/fragment_add_edit_budget">
+                <argument
+                    android:name="budgetId"
+                    app:argType="string"
+                    app:nullable="true"
+                    android:defaultValue="@null" />
+            </fragment>
         </navigation>
         <navigation
             android:id="@+id/analyticsGraph"
