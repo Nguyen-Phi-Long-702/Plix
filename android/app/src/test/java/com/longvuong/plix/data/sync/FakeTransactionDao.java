@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 class FakeTransactionDao implements TransactionDao {
-
     private final List<TransactionEntity> storage = new ArrayList<>();
 
     @Override
@@ -63,6 +62,17 @@ class FakeTransactionDao implements TransactionDao {
         List<TransactionEntity> result = new ArrayList<>();
         for (TransactionEntity entity : storage) {
             if (templateId.equals(entity.recurrenceParentId) && !entity.isDeleted) {
+                result.add(entity);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<TransactionEntity> getAllOnce() {
+        List<TransactionEntity> result = new ArrayList<>();
+        for (TransactionEntity entity : storage) {
+            if (!entity.isDeleted) {
                 result.add(entity);
             }
         }

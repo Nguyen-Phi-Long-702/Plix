@@ -8,7 +8,6 @@ import com.longvuong.plix.data.local.entity.TransactionEntity;
 import java.util.List;
 
 public interface TransactionRepository {
-
     LiveData<List<TransactionEntity>> getAll();
 
     LiveData<List<TransactionEntity>> searchByNote(String query);
@@ -18,4 +17,6 @@ public interface TransactionRepository {
     void update(TransactionEntity entity, RepositoryCallback<Void> callback);
 
     void getById(String id, RepositoryCallback<TransactionEntity> callback);
+
+    void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback);
 }

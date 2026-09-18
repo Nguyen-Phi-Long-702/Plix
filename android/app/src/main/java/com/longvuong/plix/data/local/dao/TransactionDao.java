@@ -12,7 +12,6 @@ import java.util.List;
 
 @Dao
 public interface TransactionDao {
-
     @Insert
     void insert(TransactionEntity entity);
 
@@ -33,4 +32,7 @@ public interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE recurrence_parent_id = :templateId AND is_deleted = 0")
     List<TransactionEntity> getInstancesByRecurrenceParentId(String templateId);
+
+    @Query("SELECT * FROM transactions WHERE is_deleted = 0")
+    List<TransactionEntity> getAllOnce();
 }

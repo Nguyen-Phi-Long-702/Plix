@@ -90,4 +90,17 @@ public class BudgetRepositoryImpl implements BudgetRepository {
         Result<Void> error = errorMapper.mapThrowable(e);
         appExecutors.mainThread().execute(() -> callback.onResult(error));
     }
+
+    @Override
+    public void findCategoryBudgetByUserAndPeriod(String userId, String period, String categoryId, RepositoryCallback<BudgetEntity> callback) {
+        appExecutors.diskIO().execute(() -> {
+            try {
+                BudgetEntity found = budgetDao.findCategoryBudgetByUserAndPeriod(userId, period, categoryId);
+                appExecutors.mainThread().execute(() -> callback.onResult(new Result.Success<>(found)));
+            } catch (Exception e) {
+                Result<BudgetEntity> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
 }

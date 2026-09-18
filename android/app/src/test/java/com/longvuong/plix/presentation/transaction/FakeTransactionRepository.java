@@ -7,6 +7,7 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.repository.TransactionRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,5 +50,10 @@ class FakeTransactionRepository implements TransactionRepository {
     @Override
     public void getById(String id, RepositoryCallback<TransactionEntity> callback) {
         callback.onResult(new Result.Success<>(storage.get(id)));
+    }
+
+    @Override
+    public void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback) {
+        callback.onResult(new Result.Success<>(new ArrayList<>(storage.values())));
     }
 }

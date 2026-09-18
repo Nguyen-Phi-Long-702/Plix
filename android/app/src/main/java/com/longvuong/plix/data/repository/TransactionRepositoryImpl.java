@@ -16,15 +16,12 @@ import javax.inject.Singleton;
 
 @Singleton
 public class TransactionRepositoryImpl implements TransactionRepository {
-
     private final TransactionDao transactionDao;
     private final AppExecutors appExecutors;
     private final ErrorMapper errorMapper;
 
     @Inject
-    public TransactionRepositoryImpl(TransactionDao transactionDao,
-                                     AppExecutors appExecutors,
-                                     ErrorMapper errorMapper) {
+    public TransactionRepositoryImpl(TransactionDao transactionDao, AppExecutors appExecutors, ErrorMapper errorMapper) {
         this.transactionDao = transactionDao;
         this.appExecutors = appExecutors;
         this.errorMapper = errorMapper;
@@ -77,10 +74,22 @@ public class TransactionRepositoryImpl implements TransactionRepository {
         appExecutors.diskIO().execute(() -> {
             try {
                 TransactionEntity entity = transactionDao.getById(id);
-                appExecutors.mainThread().execute(() ->
-                        callback.onResult(new Result.Success<>(entity)));
+                appExecutors.mainThread().execute(() -> callback.onResult(new Result.Success<>(entity)));
             } catch (Exception e) {
                 Result<TransactionEntity> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
+
+    @Override
+    public void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback) {
+        appExecutors.diskIO().execute(() -> {
+            try {
+                List<TransactionEntity> all = transactionDao.getAllOnce();
+                appExecutors.mainThread().execute(() -> callback.onResult(new Result.Success<>(all)));
+            } catch (Exception e) {
+                Result<List<TransactionEntity>> error = errorMapper.mapThrowable(e);
                 appExecutors.mainThread().execute(() -> callback.onResult(error));
             }
         });

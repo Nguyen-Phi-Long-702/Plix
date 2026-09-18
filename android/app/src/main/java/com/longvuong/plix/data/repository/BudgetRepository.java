@@ -17,4 +17,6 @@ public interface BudgetRepository {
     void getById(String id, RepositoryCallback<BudgetEntity> callback);
 
     void findOverallBudgetByUserAndPeriod(String userId, String period, RepositoryCallback<BudgetEntity> callback);
+
+    void findCategoryBudgetByUserAndPeriod(String userId, String period, String categoryId, RepositoryCallback<BudgetEntity> callback);
 }

@@ -7,10 +7,10 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.repository.TransactionRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 class FakeTransactionRepository implements TransactionRepository {
-
     boolean insertCalled;
     boolean updateCalled;
     TransactionEntity lastInserted;
@@ -18,12 +18,12 @@ class FakeTransactionRepository implements TransactionRepository {
 
     @Override
     public LiveData<List<TransactionEntity>> getAll() {
-        return null; //Không dùng trong test usecase
+        return null;
     }
 
     @Override
     public LiveData<List<TransactionEntity>> searchByNote(String query) {
-        return null; //Không dùng trong test usecase
+        return null;
     }
 
     @Override
@@ -41,6 +41,10 @@ class FakeTransactionRepository implements TransactionRepository {
     }
     @Override
     public void getById(String id, RepositoryCallback<TransactionEntity> callback) {
+    }
 
+    @Override
+    public void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback) {
+        callback.onResult(new Result.Success<>(new ArrayList<>()));
     }
 }

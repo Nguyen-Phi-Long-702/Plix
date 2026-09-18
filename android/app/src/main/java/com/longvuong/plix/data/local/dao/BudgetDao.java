@@ -26,4 +26,7 @@ public interface BudgetDao {
 
     @Query("SELECT * FROM budgets WHERE user_id = :userId AND period = :period AND category_id IS NULL AND is_deleted = 0 LIMIT 1")
     BudgetEntity findOverallBudgetByUserAndPeriod(String userId, String period);
+
+    @Query("SELECT * FROM budgets WHERE user_id = :userId AND period = :period AND category_id = :categoryId AND is_deleted = 0 LIMIT 1")
+    BudgetEntity findCategoryBudgetByUserAndPeriod(String userId, String period, String categoryId);
 }

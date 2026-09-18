@@ -54,6 +54,17 @@ class FakeBudgetRepository implements BudgetRepository {
         callback.onResult(new Result.Success<>(null));
     }
 
+    @Override
+    public void findCategoryBudgetByUserAndPeriod(String userId, String period, String categoryId, RepositoryCallback<BudgetEntity> callback) {
+        for (BudgetEntity budget : insertedBudgets) {
+            if (budget.userId.equals(userId) && budget.period.equals(period) && categoryId.equals(budget.categoryId)) {
+                callback.onResult(new Result.Success<>(budget));
+                return;
+            }
+        }
+        callback.onResult(new Result.Success<>(null));
+    }
+
     List<BudgetEntity> getInsertedBudgets() {
         return insertedBudgets;
     }
