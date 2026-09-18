@@ -6,6 +6,8 @@ import com.longvuong.plix.core.error.Result;
 import java.time.LocalDate;
 import java.time.Year;
 import java.time.ZoneId;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -85,6 +87,18 @@ public class FormValidator {
         if (trimmed.length() > MAX_CATEGORY_NAME_LENGTH) {
             return new Result.Error<>(ErrorType.VALIDATION,
                     "Tên danh mục không được vượt quá " + MAX_CATEGORY_NAME_LENGTH + " ký tự", null);
+        }
+        return new Result.Success<>(null);
+    }
+
+    public Result<Void> validatePeriod(String period) {
+        if (period == null) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Vui lòng chọn tháng cho ngân sách", null);
+        }
+        try {
+            YearMonth.parse(period);
+        } catch (DateTimeParseException e) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Kỳ ngân sách không hợp lệ", null);
         }
         return new Result.Success<>(null);
     }
