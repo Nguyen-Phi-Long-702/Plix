@@ -22,11 +22,12 @@ import com.longvuong.plix.data.repository.CategoryRepositoryImpl;
 import com.longvuong.plix.data.local.dao.BudgetDao;
 import com.longvuong.plix.data.repository.BudgetRepository;
 import com.longvuong.plix.data.repository.BudgetRepositoryImpl;
+import com.longvuong.plix.core.notification.NotificationHelper;
+import com.longvuong.plix.domain.usecase.budget.BudgetThresholdNotifier;
 
 @Module
 @InstallIn(SingletonComponent.class)
 public class DataModule {
-
     private static final String DATABASE_NAME = "plix_database";
 
     @Provides
@@ -71,5 +72,11 @@ public class DataModule {
     @Singleton
     public BudgetRepository provideBudgetRepository(BudgetRepositoryImpl impl) {
         return impl;
+    }
+
+    @Provides
+    @Singleton
+    public BudgetThresholdNotifier provideBudgetThresholdNotifier(NotificationHelper notificationHelper) {
+        return notificationHelper;
     }
 }
