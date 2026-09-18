@@ -5,7 +5,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.content.res.ColorStateList;
 
+import androidx.core.content.ContextCompat;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -59,8 +61,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
     @NonNull
     @Override
     public BudgetViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_budget, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_budget, parent, false);
         return new BudgetViewHolder(view);
     }
 
@@ -90,8 +91,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             textSpentOverLimit = itemView.findViewById(R.id.textSpentOverLimit);
         }
 
-        void bind(BudgetEntity budget, Map<String, String> categoryNamesById,
-                  Map<String, BudgetProgress> progressByBudgetId, OnBudgetClickListener clickListener) {
+        void bind(BudgetEntity budget, Map<String, String> categoryNamesById, Map<String, BudgetProgress> progressByBudgetId, OnBudgetClickListener clickListener) {
             String name;
             if (budget.categoryId == null) {
                 name = "Ngân sách tổng";
@@ -106,6 +106,15 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             int percent = progress != null ? progress.percent : 0;
             textPercent.setText(percent + "%");
             progressBudget.setProgress(Math.min(percent, 100));
+            int colorRes;
+            if (percent >= 100) {
+                colorRes = R.color.budget_progress_danger;
+            } else if (percent >= budget.thresholdPercent) {
+                colorRes = R.color.budget_progress_warning;
+            } else {
+                colorRes = R.color.budget_progress_normal;
+            }
+            progressBudget.setProgressTintList(ColorStateList.valueOf(ContextCompat.getColor(itemView.getContext(), colorRes)));
             textSpentOverLimit.setText("Đã chi " + formatCurrency(spentAmount) + " / " + formatCurrency(budget.limitAmount));
             itemView.setOnClickListener(v -> clickListener.onBudgetClick(budget));
         }
