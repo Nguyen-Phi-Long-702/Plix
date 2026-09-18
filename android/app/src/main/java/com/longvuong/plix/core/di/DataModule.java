@@ -19,6 +19,9 @@ import dagger.hilt.components.SingletonComponent;
 import com.longvuong.plix.data.local.dao.CategoryDao;
 import com.longvuong.plix.data.repository.CategoryRepository;
 import com.longvuong.plix.data.repository.CategoryRepositoryImpl;
+import com.longvuong.plix.data.local.dao.BudgetDao;
+import com.longvuong.plix.data.repository.BudgetRepository;
+import com.longvuong.plix.data.repository.BudgetRepositoryImpl;
 
 @Module
 @InstallIn(SingletonComponent.class)
@@ -55,6 +58,18 @@ public class DataModule {
     @Provides
     @Singleton
     public CategoryRepository provideCategoryRepository(CategoryRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public BudgetDao provideBudgetDao(AppDatabase appDatabase) {
+        return appDatabase.budgetDao();
+    }
+
+    @Provides
+    @Singleton
+    public BudgetRepository provideBudgetRepository(BudgetRepositoryImpl impl) {
         return impl;
     }
 }
