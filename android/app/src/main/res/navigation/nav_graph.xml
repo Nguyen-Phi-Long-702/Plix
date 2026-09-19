@@ -81,6 +81,9 @@
                 <action
                     android:id="@+id/action_budgetGoalFragment_to_addEditBudgetFragment"
                     app:destination="@id/addEditBudgetFragment" />
+                <action
+                    android:id="@+id/action_budgetGoalFragment_to_addEditGoalFragment"
+                    app:destination="@id/addEditGoalFragment" />
             </fragment>
             <fragment
                 android:id="@+id/addEditBudgetFragment"
@@ -89,6 +92,17 @@
                 tools:layout="@layout/fragment_add_edit_budget">
                 <argument
                     android:name="budgetId"
+                    app:argType="string"
+                    app:nullable="true"
+                    android:defaultValue="@null" />
+            </fragment>
+            <fragment
+                android:id="@+id/addEditGoalFragment"
+                android:name="com.longvuong.plix.presentation.goal.AddEditGoalFragment"
+                android:label="Mục tiêu tiết kiệm"
+                tools:layout="@layout/fragment_add_edit_goal">
+                <argument
+                    android:name="goalId"
                     app:argType="string"
                     app:nullable="true"
                     android:defaultValue="@null" />
