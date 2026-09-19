@@ -93,4 +93,44 @@ public class FormValidatorTest {
     public void validatePeriod_null_returnsError() {
         assertTrue(formValidator.validatePeriod(null) instanceof Result.Error);
     }
+
+    @Test
+    public void validateGoalCurrentAmount_negative_returnsError() {
+        assertTrue(formValidator.validateGoalCurrentAmount(-1000) instanceof Result.Error);
+    }
+
+    @Test
+    public void validateGoalCurrentAmount_zero_returnsSuccess() {
+        assertTrue(formValidator.validateGoalCurrentAmount(0) instanceof Result.Success);
+    }
+
+    @Test
+    public void validateGoalCurrentAmount_overMaxLimit_returnsError() {
+        assertTrue(formValidator.validateGoalCurrentAmount(FormValidator.MAX_AMOUNT + 1) instanceof Result.Error);
+    }
+
+    @Test
+    public void validateGoalCurrentAmount_validValue_returnsSuccess() {
+        assertTrue(formValidator.validateGoalCurrentAmount(3_000_000) instanceof Result.Success);
+    }
+
+    @Test
+    public void validateGoalName_empty_returnsError() {
+        assertTrue(formValidator.validateGoalName("") instanceof Result.Error);
+    }
+
+    @Test
+    public void validateGoalName_blank_returnsError() {
+        assertTrue(formValidator.validateGoalName("   ") instanceof Result.Error);
+    }
+
+    @Test
+    public void validateGoalName_null_returnsError() {
+        assertTrue(formValidator.validateGoalName(null) instanceof Result.Error);
+    }
+
+    @Test
+    public void validateGoalName_validValue_returnsSuccess() {
+        assertTrue(formValidator.validateGoalName("Mua xe máy") instanceof Result.Success);
+    }
 }

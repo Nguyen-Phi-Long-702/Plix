@@ -102,4 +102,22 @@ public class FormValidator {
         }
         return new Result.Success<>(null);
     }
+
+    public Result<Void> validateGoalName(String name) {
+        String trimmed = name != null ? name.trim() : "";
+        if (trimmed.isEmpty()) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Tên mục tiêu không được để trống", null);
+        }
+        return new Result.Success<>(null);
+    }
+
+    public Result<Void> validateGoalCurrentAmount(long amount) {
+        if (amount < 0) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Số tiền đã tiết kiệm không được nhỏ hơn 0", null);
+        }
+        if (amount > MAX_AMOUNT) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Số tiền đã tiết kiệm vượt quá giới hạn cho phép", null);
+        }
+        return new Result.Success<>(null);
+    }
 }
