@@ -24,6 +24,9 @@ import com.longvuong.plix.data.repository.BudgetRepository;
 import com.longvuong.plix.data.repository.BudgetRepositoryImpl;
 import com.longvuong.plix.core.notification.NotificationHelper;
 import com.longvuong.plix.domain.usecase.budget.BudgetThresholdNotifier;
+import com.longvuong.plix.data.local.dao.GoalDao;
+import com.longvuong.plix.data.repository.GoalRepository;
+import com.longvuong.plix.data.repository.GoalRepositoryImpl;
 
 @Module
 @InstallIn(SingletonComponent.class)
@@ -33,9 +36,7 @@ public class DataModule {
     @Provides
     @Singleton
     public AppDatabase provideAppDatabase(@ApplicationContext Context context) {
-        return Room.databaseBuilder(context, AppDatabase.class, DATABASE_NAME)
-                .addCallback(AppDatabase.SEED_CATEGORIES_CALLBACK)
-                .build();
+        return Room.databaseBuilder(context, AppDatabase.class, DATABASE_NAME).addCallback(AppDatabase.SEED_CATEGORIES_CALLBACK).build();
     }
 
     @Provides
@@ -78,5 +79,17 @@ public class DataModule {
     @Singleton
     public BudgetThresholdNotifier provideBudgetThresholdNotifier(NotificationHelper notificationHelper) {
         return notificationHelper;
+    }
+
+    @Provides
+    @Singleton
+    public GoalDao provideGoalDao(AppDatabase appDatabase) {
+        return appDatabase.goalDao();
+    }
+
+    @Provides
+    @Singleton
+    public GoalRepository provideGoalRepository(GoalRepositoryImpl impl) {
+        return impl;
     }
 }
