@@ -113,8 +113,9 @@
             app:startDestination="@id/analyticsFragment">
             <fragment
                 android:id="@+id/analyticsFragment"
-                android:name="com.longvuong.plix.presentation.common.PlaceholderMainFragment"
-                android:label="Thống kê" />
+                android:name="com.longvuong.plix.presentation.analytics.AnalyticsFragment"
+                android:label="Thống kê"
+                tools:layout="@layout/fragment_analytics" />
         </navigation>
         <navigation
             android:id="@+id/settingsGraph"
