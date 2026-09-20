@@ -92,6 +92,9 @@ dependencies {
     //SavedStateHandle cho viewmodel
     implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7")
 
+    //MPAndroidChart (biểu đồ Analytics)
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
     //Test livedata đồng bộ trong unit test
     testImplementation("androidx.arch.core:core-testing:2.2.0")
 }
