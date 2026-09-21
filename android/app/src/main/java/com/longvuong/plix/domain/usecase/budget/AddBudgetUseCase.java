@@ -32,8 +32,18 @@ public class AddBudgetUseCase {
         }
 
         if (entity.categoryId != null) {
-            //Ngân sách theo danh mục: ràng buộc unique ở db đã đủ chặn trùng nên insert thẳng
-            budgetRepository.insert(entity, callback);
+            budgetRepository.findCategoryBudgetByUserAndPeriod(entity.userId, entity.period, entity.categoryId, result -> {
+                if (result instanceof Result.Error) {
+                    callback.onResult(propagateError((Result.Error<BudgetEntity>) result));
+                    return;
+                }
+                BudgetEntity existingCategoryBudget = ((Result.Success<BudgetEntity>) result).data;
+                if (existingCategoryBudget != null) {
+                    callback.onResult(new Result.Error<>(ErrorType.VALIDATION, "Danh mục này đã có ngân sách cho tháng này.", null));
+                    return;
+                }
+                budgetRepository.insert(entity, callback);
+            });
             return;
         }
 
@@ -44,8 +54,7 @@ public class AddBudgetUseCase {
             }
             BudgetEntity existingOverallBudget = ((Result.Success<BudgetEntity>) result).data;
             if (existingOverallBudget != null) {
-                callback.onResult(new Result.Error<>(ErrorType.VALIDATION,
-                        "Đã có ngân sách tổng cho tháng này.", null));
+                callback.onResult(new Result.Error<>(ErrorType.VALIDATION, "Đã có ngân sách tổng cho tháng này.", null));
                 return;
             }
             budgetRepository.insert(entity, callback);

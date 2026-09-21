@@ -58,7 +58,7 @@ public class AddBudgetUseCaseTest {
     }
 
     @Test
-    public void execute_categoryBudget_insertsWithoutDuplicateCheckEvenIfOverallBudgetExists() {
+    public void execute_categoryBudget_insertsSuccessfullyEvenIfOverallBudgetExists() {
         addBudgetUseCase.execute(budget("budget-1", "2026-09", 5000000), result -> {});
         BudgetEntity categoryBudget = budget("budget-2", "2026-09", 2000000);
         categoryBudget.categoryId = "sys_an_uong";
@@ -76,5 +76,32 @@ public class AddBudgetUseCaseTest {
     public void execute_invalidPeriod_rejectsAndDoesNotInsert() {
         addBudgetUseCase.execute(budget("budget-1", "2026-13", 5000000), result -> assertTrue(result instanceof Result.Error));
         assertEquals(0, fakeBudgetRepository.getInsertedBudgets().size());
+    }
+
+    @Test
+    public void execute_secondCategoryBudgetSamePeriodAndCategory_rejectsWithCorrectMessage() {
+        BudgetEntity first = budget("budget-1", "2026-09", 1500000);
+        first.categoryId = "sys_an_uong";
+        addBudgetUseCase.execute(first, result -> {});
+
+        BudgetEntity duplicate = budget("budget-2", "2026-09", 2000000);
+        duplicate.categoryId = "sys_an_uong";
+        addBudgetUseCase.execute(duplicate, result -> {
+            assertTrue(result instanceof Result.Error);
+            assertEquals("Danh mục này đã có ngân sách cho tháng này.", ((Result.Error<Void>) result).message);
+        });
+        assertEquals(1, fakeBudgetRepository.getInsertedBudgets().size());
+    }
+
+    @Test
+    public void execute_categoryBudgetDifferentCategorySamePeriod_insertsSuccessfully() {
+        BudgetEntity first = budget("budget-1", "2026-09", 1500000);
+        first.categoryId = "sys_an_uong";
+        addBudgetUseCase.execute(first, result -> {});
+
+        BudgetEntity second = budget("budget-2", "2026-09", 600000);
+        second.categoryId = "sys_di_lai";
+        addBudgetUseCase.execute(second, result -> assertTrue(result instanceof Result.Success));
+        assertEquals(2, fakeBudgetRepository.getInsertedBudgets().size());
     }
 }
