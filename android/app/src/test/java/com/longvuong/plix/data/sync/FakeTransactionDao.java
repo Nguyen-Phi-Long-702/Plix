@@ -69,6 +69,17 @@ class FakeTransactionDao implements TransactionDao {
     }
 
     @Override
+    public List<TransactionEntity> getAllInstancesByRecurrenceParentId(String templateId) {
+        List<TransactionEntity> result = new ArrayList<>();
+        for (TransactionEntity entity : storage) {
+            if (templateId.equals(entity.recurrenceParentId)) {
+                result.add(entity);
+            }
+        }
+        return result;
+    }
+
+    @Override
     public List<TransactionEntity> getAllOnce() {
         List<TransactionEntity> result = new ArrayList<>();
         for (TransactionEntity entity : storage) {

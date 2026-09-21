@@ -23,7 +23,6 @@ import dagger.assisted.AssistedInject;
 
 @HiltWorker
 public class RecurringTransactionWorker extends Worker {
-
     public static final String UNIQUE_WORK_NAME = "recurring_transaction_worker";
 
     private static final String TAG = "RecurringTxWorker";
@@ -34,11 +33,7 @@ public class RecurringTransactionWorker extends Worker {
     private final AuthManager authManager;
 
     @AssistedInject
-    public RecurringTransactionWorker(
-            @Assisted @NonNull Context context,
-            @Assisted @NonNull WorkerParameters workerParameters,
-            TransactionDao transactionDao,
-            AuthManager authManager) {
+    public RecurringTransactionWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters, TransactionDao transactionDao, AuthManager authManager) {
         super(context, workerParameters);
         this.transactionDao = transactionDao;
         this.authManager = authManager;
@@ -77,8 +72,7 @@ public class RecurringTransactionWorker extends Worker {
             return; //quy tắc lặp lại không hợp lệ, bỏ qua mẫu này
         }
 
-        List<TransactionEntity> existingInstances = new ArrayList<>(
-                transactionDao.getInstancesByRecurrenceParentId(template.id));
+        List<TransactionEntity> existingInstances = new ArrayList<>(transactionDao.getAllInstancesByRecurrenceParentId(template.id));
 
         int currentPeriod = periodOf(now);
         int startPeriod = firstMissingPeriod(template, existingInstances);

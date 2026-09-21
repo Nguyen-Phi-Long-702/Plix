@@ -174,6 +174,24 @@ public class RecurringTransactionWorkerTest {
         assertEquals(1, instances.size());
     }
 
+    @Test
+    public void deletingGeneratedInstance_doesNotRegenerateOnNextWorkerRun() {
+        TransactionEntity template = monthlyTemplateAt("template-1", 15, dateMillis(2026, 6, 1));
+        fakeTransactionDao.insert(template);
+        RecurringTransactionWorker.generateMissingInstances(fakeTransactionDao, dateMillis(2026, 6, 20));
+        TransactionEntity juneInstance = fakeTransactionDao.getInstancesByRecurrenceParentId("template-1").get(0);
+
+        //Người dùng chủ động xoá giao dịch tháng 6 vì không muốn tính khoản này
+        juneInstance.isDeleted = true;
+        fakeTransactionDao.update(juneInstance);
+
+        //Worker chạy lại trong cùng kì tháng 6 (vd người dùng mở lại app)
+        RecurringTransactionWorker.generateMissingInstances(fakeTransactionDao, dateMillis(2026, 6, 25));
+
+        List<TransactionEntity> instances = fakeTransactionDao.getInstancesByRecurrenceParentId("template-1");
+        assertEquals(0, instances.size()); //không được sinh lại giao dịch tháng 6 đã xoá
+    }
+
     private static TransactionEntity monthlyTemplateAt(String id, int dayOfMonth, long occurredAt) {
         TransactionEntity template = new TransactionEntity();
         template.id = id;
