@@ -81,7 +81,7 @@ dependencies {
     //Jetpack Security
     implementation("androidx.security:security-crypto:1.1.0")
 
-    //WorkManager + Hilt integration
+    //WorkManager+Hilt integration
     implementation("androidx.work:work-runtime:2.11.2")
     implementation("androidx.hilt:hilt-work:1.4.0")
     annotationProcessor("androidx.hilt:hilt-compiler:1.4.0")
@@ -97,4 +97,7 @@ dependencies {
 
     //Test livedata đồng bộ trong unit test
     testImplementation("androidx.arch.core:core-testing:2.2.0")
+
+    //Test livedata đồng bộ trong androidTest (integration test Room)
+    androidTestImplementation("androidx.arch.core:core-testing:2.2.0")
 }
