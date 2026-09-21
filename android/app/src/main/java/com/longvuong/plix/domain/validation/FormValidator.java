@@ -14,10 +14,10 @@ import javax.inject.Singleton;
 
 @Singleton
 public class FormValidator {
-
     public static final long MAX_AMOUNT = 999_999_999_999L; //999 tỷ vnd, chặn tràn số
     public static final int MAX_NOTE_LENGTH = 500;
     public static final int MAX_CATEGORY_NAME_LENGTH = 50;
+    public static final int MAX_GOAL_NAME_LENGTH = 50;
     private static final int MAX_PAST_YEARS = 5;
 
     @Inject
@@ -108,6 +108,9 @@ public class FormValidator {
         if (trimmed.isEmpty()) {
             return new Result.Error<>(ErrorType.VALIDATION, "Tên mục tiêu không được để trống", null);
         }
+        if (trimmed.length() > MAX_GOAL_NAME_LENGTH) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Tên mục tiêu không được vượt quá " + MAX_GOAL_NAME_LENGTH + " ký tự", null);
+        }
         return new Result.Success<>(null);
     }
 
@@ -117,6 +120,17 @@ public class FormValidator {
         }
         if (amount > MAX_AMOUNT) {
             return new Result.Error<>(ErrorType.VALIDATION, "Số tiền đã tiết kiệm vượt quá giới hạn cho phép", null);
+        }
+        return new Result.Success<>(null);
+    }
+
+    public Result<Void> validateGoalDeadline(long deadlineEpochMs) {
+        long startOfTodayEpochMs = LocalDate.now(ZoneId.systemDefault())
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+        if (deadlineEpochMs < startOfTodayEpochMs) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Hạn chót không được chọn trong quá khứ", null);
         }
         return new Result.Success<>(null);
     }

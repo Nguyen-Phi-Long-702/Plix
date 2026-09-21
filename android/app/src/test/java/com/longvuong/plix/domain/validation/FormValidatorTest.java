@@ -133,4 +133,37 @@ public class FormValidatorTest {
     public void validateGoalName_validValue_returnsSuccess() {
         assertTrue(formValidator.validateGoalName("Mua xe máy") instanceof Result.Success);
     }
+
+    @Test
+    public void validateGoalName_exceedsMaxLength_returnsError() {
+        String longName = "a".repeat(FormValidator.MAX_GOAL_NAME_LENGTH + 1);
+        assertTrue(formValidator.validateGoalName(longName) instanceof Result.Error);
+    }
+
+    @Test
+    public void validateGoalName_exactlyMaxLength_returnsSuccess() {
+        String name = "a".repeat(FormValidator.MAX_GOAL_NAME_LENGTH);
+        assertTrue(formValidator.validateGoalName(name) instanceof Result.Success);
+    }
+
+    @Test
+    public void validateGoalDeadline_pastDate_returnsError() {
+        long yesterdayEpochMs = ZonedDateTime.now(ZoneId.systemDefault())
+                .minusDays(1).toInstant().toEpochMilli();
+        assertTrue(formValidator.validateGoalDeadline(yesterdayEpochMs) instanceof Result.Error);
+    }
+
+    @Test
+    public void validateGoalDeadline_today_returnsSuccess() {
+        long todayEndOfDayEpochMs = ZonedDateTime.now(ZoneId.systemDefault())
+                .withHour(23).withMinute(59).withSecond(59).toInstant().toEpochMilli();
+        assertTrue(formValidator.validateGoalDeadline(todayEndOfDayEpochMs) instanceof Result.Success);
+    }
+
+    @Test
+    public void validateGoalDeadline_futureDate_returnsSuccess() {
+        long nextMonthEpochMs = ZonedDateTime.now(ZoneId.systemDefault())
+                .plusMonths(1).toInstant().toEpochMilli();
+        assertTrue(formValidator.validateGoalDeadline(nextMonthEpochMs) instanceof Result.Success);
+    }
 }

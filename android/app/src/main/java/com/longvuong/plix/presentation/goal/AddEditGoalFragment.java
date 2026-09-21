@@ -157,8 +157,15 @@ public class AddEditGoalFragment extends Fragment {
                 (picker, year, month, dayOfMonth) -> {
                     LocalDate selected = LocalDate.of(year, month + 1, dayOfMonth);
                     long newDeadline = selected.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-                    viewModel.setDeadline(newDeadline);
-                    editDeadline.setText(formatDate(newDeadline));
+
+                    Result<Void> validation = viewModel.validateDeadlineField(newDeadline);
+                    if (validation instanceof Result.Error) {
+                        inputLayoutDeadline.setError(((Result.Error<Void>) validation).message);
+                    } else {
+                        inputLayoutDeadline.setError(null);
+                        viewModel.setDeadline(newDeadline);
+                        editDeadline.setText(formatDate(newDeadline));
+                    }
                 },
                 current.getYear(), current.getMonthValue() - 1, current.getDayOfMonth());
         dialog.show();
@@ -226,6 +233,11 @@ public class AddEditGoalFragment extends Fragment {
                 Result<Void> targetValidation = viewModel.validateTargetAmountField(viewModel.getTargetAmount());
                 if (targetValidation instanceof Result.Error) {
                     inputLayoutTargetAmount.setError(((Result.Error<Void>) targetValidation).message);
+                    valid = false;
+                }
+                Result<Void> deadlineValidation = viewModel.validateDeadlineField(viewModel.getDeadline());
+                if (deadlineValidation instanceof Result.Error) {
+                    inputLayoutDeadline.setError(((Result.Error<Void>) deadlineValidation).message);
                     valid = false;
                 }
             } else {

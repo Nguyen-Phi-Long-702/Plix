@@ -144,6 +144,10 @@ public class AddEditGoalViewModel extends ViewModel {
         return formValidator.validateGoalCurrentAmount(currentAmount);
     }
 
+    public Result<Void> validateDeadlineField(long deadline) {
+        return formValidator.validateGoalDeadline(deadline);
+    }
+
     public GoalRequiredMonthly previewRequiredMonthly() {
         return calculateGoalRequiredMonthlyUseCase.execute(buildPreviewEntity());
     }
@@ -189,6 +193,11 @@ public class AddEditGoalViewModel extends ViewModel {
         Result<Void> targetValidation = formValidator.validateAmount(targetAmount);
         if (targetValidation instanceof Result.Error) {
             saveState.setValue(new UiState.Error<>(((Result.Error<Void>) targetValidation).message));
+            return;
+        }
+        Result<Void> deadlineValidation = formValidator.validateGoalDeadline(deadline);
+        if (deadlineValidation instanceof Result.Error) {
+            saveState.setValue(new UiState.Error<>(((Result.Error<Void>) deadlineValidation).message));
             return;
         }
 
