@@ -1,11 +1,15 @@
 package com.longvuong.plix.data.repository;
 
+import androidx.lifecycle.LiveData;
+
 import com.longvuong.plix.core.error.ErrorMapper;
 import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.data.local.dao.GoalDao;
 import com.longvuong.plix.data.local.entity.GoalEntity;
+
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -21,6 +25,12 @@ public class GoalRepositoryImpl implements GoalRepository {
         this.goalDao = goalDao;
         this.appExecutors = appExecutors;
         this.errorMapper = errorMapper;
+    }
+
+    @Override
+    public LiveData<List<GoalEntity>> getActiveGoals() {
+        //Room trả thẳng livedata cho truy vấn đọc
+        return goalDao.getActiveGoals();
     }
 
     @Override
