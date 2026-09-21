@@ -76,8 +76,7 @@ public class AddEditTransactionFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_add_edit_transaction, container, false);
     }
 
@@ -191,8 +190,7 @@ public class AddEditTransactionFragment extends Fragment {
         ZonedDateTime current = Instant.ofEpochMilli(viewModel.getOccurredAt())
                 .atZone(ZoneId.systemDefault());
 
-        DatePickerDialog dialog = new DatePickerDialog(requireContext(),
-                (picker, year, month, dayOfMonth) -> {
+        DatePickerDialog dialog = new DatePickerDialog(requireContext(), (picker, year, month, dayOfMonth) -> {
                     LocalDate newDate = LocalDate.of(year, month + 1, dayOfMonth);
                     LocalTime existingTime = current.toLocalTime();
                     long newOccurredAt = ZonedDateTime.of(newDate, existingTime, ZoneId.systemDefault())
@@ -219,8 +217,7 @@ public class AddEditTransactionFragment extends Fragment {
 
     private void setupPaymentMethodField() {
         List<String> labels = new ArrayList<>(PAYMENT_METHOD_LABELS.values());
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(), android.R.layout.simple_dropdown_item_1line, labels);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, labels);
         editPaymentMethod.setAdapter(adapter);
         editPaymentMethod.setOnItemClickListener((parent, itemView, position, id) -> {
             String selectedLabel = labels.get(position);
@@ -245,14 +242,14 @@ public class AddEditTransactionFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
+                editNote.post(editNote::requestLayout);
                 if (suppressNoteWatcher) {
                     return;
                 }
                 String note = s.toString();
                 viewModel.setNote(note);
                 Result<Void> validation = viewModel.validateNoteField(note);
-                inputLayoutNote.setError(validation instanceof Result.Error
-                        ? ((Result.Error<Void>) validation).message : null);
+                inputLayoutNote.setError(validation instanceof Result.Error ? ((Result.Error<Void>) validation).message : null);
             }
         });
     }
@@ -338,20 +335,17 @@ public class AddEditTransactionFragment extends Fragment {
             buttonSave.setEnabled(false);
         } else if (state instanceof UiState.Success) {
             buttonSave.setEnabled(true);
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    "Đã lưu giao dịch", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), "Đã lưu giao dịch", Snackbar.LENGTH_SHORT).show();
             NavHostFragment.findNavController(this).popBackStack();
         } else if (state instanceof UiState.Error) {
             buttonSave.setEnabled(true);
             String message = ((UiState.Error<Void>) state).message;
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    message, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
         }
     }
 
     private void hideKeyboard() {
-        InputMethodManager imm = (InputMethodManager)
-                requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         View currentFocus = requireActivity().getCurrentFocus();
         if (imm != null && currentFocus != null) {
             imm.hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
