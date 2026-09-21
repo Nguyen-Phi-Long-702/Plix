@@ -31,6 +31,8 @@ import com.longvuong.plix.domain.usecase.analytics.CategoryExpense;
 import com.longvuong.plix.domain.usecase.analytics.MonthlyTrend;
 import com.longvuong.plix.presentation.common.UiState;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -158,13 +160,21 @@ public class AnalyticsFragment extends Fragment {
     }
 
     private void renderCategoryBarChart(List<CategoryExpense> categoryExpenses) {
+        Map<String, Long> totalByLabel = new LinkedHashMap<>();
+        for (CategoryExpense item : categoryExpenses) {
+            String name = item.categoryId != null ? categoryNamesById.get(item.categoryId) : null;
+            String label = name != null ? name : "Chưa phân loại";
+            totalByLabel.merge(label, item.totalAmount, Long::sum);
+        }
+
+        List<Map.Entry<String, Long>> sorted = new ArrayList<>(totalByLabel.entrySet());
+        Collections.sort(sorted, (a, b) -> Long.compare(b.getValue(), a.getValue()));
+
         List<BarEntry> entries = new ArrayList<>();
         List<String> labels = new ArrayList<>();
-        for (int i = 0; i < categoryExpenses.size(); i++) {
-            CategoryExpense item = categoryExpenses.get(i);
-            entries.add(new BarEntry(i, item.totalAmount));
-            String name = item.categoryId != null ? categoryNamesById.get(item.categoryId) : null;
-            labels.add(name != null ? name : "Chưa phân loại");
+        for (int i = 0; i < sorted.size(); i++) {
+            entries.add(new BarEntry(i, sorted.get(i).getValue()));
+            labels.add(sorted.get(i).getKey());
         }
 
         BarDataSet dataSet = new BarDataSet(entries, "Chi tiêu theo danh mục");
