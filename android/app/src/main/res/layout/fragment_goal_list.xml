@@ -12,12 +12,12 @@
         android:layout_weight="1">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerBudgets"
+            android:id="@+id/recyclerGoals"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:paddingBottom="80dp"
-            tools:listitem="@layout/item_budget" />
+            tools:listitem="@layout/item_goal" />
         <ProgressBar
             android:id="@+id/progressLoading"
             android:layout_width="wrap_content"
@@ -31,15 +31,15 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:padding="24dp"
-            android:text="Chưa có ngân sách — tạo ngân sách đầu tiên"
+            android:text="Chưa có mục tiêu tiết kiệm — tạo mục tiêu đầu tiên"
             android:visibility="gone" />
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabAddBudget"
+            android:id="@+id/fabAddGoal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
-            android:contentDescription="Thêm ngân sách"
+            android:contentDescription="Thêm mục tiêu"
             app:srcCompat="@drawable/ic_add" />
     </FrameLayout>
 </LinearLayout>

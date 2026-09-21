@@ -11,10 +11,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.BudgetEntity;
@@ -32,6 +34,7 @@ public class BudgetListFragment extends Fragment {
     private ProgressBar progressLoading;
     private TextView textEmptyState;
     private FloatingActionButton fabAddBudget;
+    private MaterialButtonToggleGroup toggleBudgetGoal;
 
     @Nullable
     @Override
@@ -44,6 +47,7 @@ public class BudgetListFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(BudgetListViewModel.class);
         bindViews(view);
+        setupTabToggle();
         setupRecyclerView();
         fabAddBudget.setOnClickListener(v -> navigateToAddBudget());
         viewModel.getBudgetListState().observe(getViewLifecycleOwner(), this::renderState);
@@ -56,6 +60,21 @@ public class BudgetListFragment extends Fragment {
         progressLoading = view.findViewById(R.id.progressLoading);
         textEmptyState = view.findViewById(R.id.textEmptyState);
         fabAddBudget = view.findViewById(R.id.fabAddBudget);
+        toggleBudgetGoal = view.findViewById(R.id.toggleBudgetGoal);
+    }
+
+    private void setupTabToggle() {
+        toggleBudgetGoal.check(R.id.btnTabBudget);
+        toggleBudgetGoal.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked || checkedId != R.id.btnTabGoal) {
+                return;
+            }
+            NavOptions options = new NavOptions.Builder()
+                    .setPopUpTo(R.id.budgetGoalFragment, true)
+                    .build();
+            Navigation.findNavController(requireView())
+                    .navigate(R.id.action_budgetGoalFragment_to_goalListFragment, null, options);
+        });
     }
 
     private void setupRecyclerView() {

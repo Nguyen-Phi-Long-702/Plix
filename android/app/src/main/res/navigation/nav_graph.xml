@@ -82,7 +82,19 @@
                     android:id="@+id/action_budgetGoalFragment_to_addEditBudgetFragment"
                     app:destination="@id/addEditBudgetFragment" />
                 <action
-                    android:id="@+id/action_budgetGoalFragment_to_addEditGoalFragment"
+                    android:id="@+id/action_budgetGoalFragment_to_goalListFragment"
+                    app:destination="@id/goalListFragment" />
+            </fragment>
+            <fragment
+                android:id="@+id/goalListFragment"
+                android:name="com.longvuong.plix.presentation.goal.GoalListFragment"
+                android:label="Ngân sách &amp; Mục tiêu"
+                tools:layout="@layout/fragment_goal_list">
+                <action
+                    android:id="@+id/action_goalListFragment_to_budgetGoalFragment"
+                    app:destination="@id/budgetGoalFragment" />
+                <action
+                    android:id="@+id/action_goalListFragment_to_addEditGoalFragment"
                     app:destination="@id/addEditGoalFragment" />
             </fragment>
             <fragment
