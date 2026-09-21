@@ -52,7 +52,19 @@ public class CategoryUseCase {
             callback.onResult(ownership);
             return;
         }
-        categoryRepository.update(entity, callback);
+        categoryRepository.findSystemCategoryByNameAndType(entity.name, entity.type, result -> {
+            if (result instanceof Result.Error) {
+                callback.onResult(propagateError((Result.Error<CategoryEntity>) result));
+                return;
+            }
+            CategoryEntity existingSystemCategory = ((Result.Success<CategoryEntity>) result).data;
+            if (existingSystemCategory != null) {
+                callback.onResult(new Result.Error<>(ErrorType.VALIDATION,
+                        "Tên danh mục đã tồn tại trong danh mục hệ thống, vui lòng chọn tên khác", null));
+                return;
+            }
+            categoryRepository.update(entity, callback);
+        });
     }
 
    public void deleteCategory(CategoryEntity entity, String currentUserId, RepositoryCallback<Void> callback) {

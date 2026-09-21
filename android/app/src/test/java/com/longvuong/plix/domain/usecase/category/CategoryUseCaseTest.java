@@ -132,4 +132,24 @@ public class CategoryUseCaseTest {
         useCase.deleteCategory(entity, "user-1", result -> assertTrue(result instanceof Result.Error));
         assertFalse(fakeRepository.updateCalled);
     }
+
+    @Test
+    public void updateCategory_duplicateNameAndTypeWithSystemCategory_rejectsBeforeUpdate() {
+        fakeRepository.seedSystemCategory(systemCategory("Lương", "income"));
+        CategoryEntity entity = customCategory("user-1");
+        entity.name = "Lương";
+        entity.type = "income";
+        useCase.updateCategory(entity, "user-1", result -> assertTrue(result instanceof Result.Error));
+        assertFalse(fakeRepository.updateCalled);
+    }
+
+    @Test
+    public void updateCategory_sameNameDifferentTypeFromSystemCategory_allowsUpdate() {
+        fakeRepository.seedSystemCategory(systemCategory("Lương", "income"));
+        CategoryEntity entity = customCategory("user-1");
+        entity.name = "Lương";
+        entity.type = "expense";
+        useCase.updateCategory(entity, "user-1", result -> assertTrue(result instanceof Result.Success));
+        assertTrue(fakeRepository.updateCalled);
+    }
 }

@@ -56,7 +56,7 @@ public class RecurringTransactionWorkerRoomTest {
 
     @Test
     public void generateMissingInstances_withRealRoomDatabase_insertsExactlyOneInstanceForCurrentPeriod() {
-        long templateCreatedAt = 1725379200000L; 
+        long templateCreatedAt = 1725379200000L;
 
         transactionDao.insert(monthlyTemplate("tpl-1", 15, templateCreatedAt));
 
