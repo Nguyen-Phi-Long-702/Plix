@@ -1,0 +1,501 @@
+note,category
+grab,Di chuyển
+be,Di chuyển
+xe ôm,Di chuyển
+taxi,Di chuyển
+grab bike,Di chuyển
+đổ xăng,Di chuyển
+xăng xe,Di chuyển
+vé xe buýt,Di chuyển
+vé bus,Di chuyển
+gửi xe,Di chuyển
+phí gửi xe,Di chuyển
+đi grab,Di chuyển
+đi be,Di chuyển
+xe máy,Di chuyển
+sửa xe,Di chuyển
+thay nhớt,Di chuyển
+vé tàu,Di chuyển
+vé máy bay,Di chuyển
+tiền cầu đường,Di chuyển
+phí cao tốc,Di chuyển
+cà phê,Ăn uống
+trà sữa,Ăn uống
+highlands,Ăn uống
+cơm trưa,Ăn uống
+cơm tối,Ăn uống
+bún bò,Ăn uống
+phở,Ăn uống
+bánh mì,Ăn uống
+cơm gà,Ăn uống
+bánh xèo,Ăn uống
+pizza,Ăn uống
+gà rán,Ăn uống
+mì cay,Ăn uống
+lẩu,Ăn uống
+đồ ăn sáng,Ăn uống
+ăn vặt,Ăn uống
+nước ngọt,Ăn uống
+trà đào,Ăn uống
+đặt đồ ăn,Ăn uống
+ăn ngoài,Ăn uống
+siêu thị,Nhu yếu phẩm
+bách hoá xanh,Nhu yếu phẩm
+coopmart,Nhu yếu phẩm
+mua rau,Nhu yếu phẩm
+mua thịt,Nhu yếu phẩm
+mua cá,Nhu yếu phẩm
+mua trứng,Nhu yếu phẩm
+mua gạo,Nhu yếu phẩm
+mua mì gói,Nhu yếu phẩm
+mua nước suối,Nhu yếu phẩm
+mua sữa,Nhu yếu phẩm
+mua dầu gội,Nhu yếu phẩm
+mua sữa tắm,Nhu yếu phẩm
+mua kem đánh răng,Nhu yếu phẩm
+mua giấy vệ sinh,Nhu yếu phẩm
+mua bột giặt,Nhu yếu phẩm
+mua nước rửa chén,Nhu yếu phẩm
+mua khẩu trang,Nhu yếu phẩm
+mua đồ dùng cá nhân,Nhu yếu phẩm
+mua đồ gia dụng,Nhu yếu phẩm
+tiền điện,Hoá đơn (điện/nước/internet)
+tiền nước,Hoá đơn (điện/nước/internet)
+tiền điện tháng này,Hoá đơn (điện/nước/internet)
+tiền nước tháng này,Hoá đơn (điện/nước/internet)
+hoá đơn điện,Hoá đơn (điện/nước/internet)
+hoá đơn nước,Hoá đơn (điện/nước/internet)
+đóng tiền điện,Hoá đơn (điện/nước/internet)
+đóng tiền nước,Hoá đơn (điện/nước/internet)
+tiền internet,Hoá đơn (điện/nước/internet)
+tiền wifi,Hoá đơn (điện/nước/internet)
+cước internet,Hoá đơn (điện/nước/internet)
+cước wifi,Hoá đơn (điện/nước/internet)
+tiền mạng,Hoá đơn (điện/nước/internet)
+đóng tiền mạng,Hoá đơn (điện/nước/internet)
+tiền điện thoại,Hoá đơn (điện/nước/internet)
+cước điện thoại,Hoá đơn (điện/nước/internet)
+nạp tiền điện thoại,Hoá đơn (điện/nước/internet)
+gói cước điện thoại,Hoá đơn (điện/nước/internet)
+thanh toán wifi,Hoá đơn (điện/nước/internet)
+thanh toán hoá đơn,Hoá đơn (điện/nước/internet)
+rạp phim,Giải trí
+xem phim,Giải trí
+vé xem phim,Giải trí
+cinema,Giải trí
+netflix,Giải trí
+spotify,Giải trí
+youtube premium,Giải trí
+mua game,Giải trí
+nạp game,Giải trí
+game,Giải trí
+chơi game,Giải trí
+steam,Giải trí
+vé ca nhạc,Giải trí
+đi xem ca nhạc,Giải trí
+concert,Giải trí
+karaoke,Giải trí
+đi karaoke,Giải trí
+vé công viên,Giải trí
+đi chơi,Giải trí
+xem concert,Giải trí
+mua thuốc,Sức khoẻ
+khám bệnh,Sức khoẻ
+đi khám bác sĩ,Sức khoẻ
+viện phí,Sức khoẻ
+mua thuốc cảm,Sức khoẻ
+khám răng,Sức khoẻ
+nha khoa,Sức khoẻ
+mua vitamin,Sức khoẻ
+bảo hiểm y tế,Sức khoẻ
+khám sức khoẻ định kỳ,Sức khoẻ
+mua thuốc ho,Sức khoẻ
+xét nghiệm máu,Sức khoẻ
+tiêm vắc xin,Sức khoẻ
+mua kính thuốc,Sức khoẻ
+vật lý trị liệu,Sức khoẻ
+mua thuốc bổ,Sức khoẻ
+khám phụ khoa,Sức khoẻ
+khám tổng quát,Sức khoẻ
+mua băng gạc,Sức khoẻ
+chi phí nằm viện,Sức khoẻ
+học phí,Giáo dục
+đóng học phí,Giáo dục
+học phí học kỳ,Giáo dục
+mua sách giáo trình,Giáo dục
+mua sách,Giáo dục
+mua vở,Giáo dục
+mua bút,Giáo dục
+mua tài liệu học tập,Giáo dục
+photo tài liệu,Giáo dục
+in tài liệu,Giáo dục
+đăng ký khoá học online,Giáo dục
+học phí tiếng anh,Giáo dục
+học phí ielts,Giáo dục
+lệ phí thi,Giáo dục
+lệ phí thi lại,Giáo dục
+đóng tiền học thêm,Giáo dục
+học phí gia sư,Giáo dục
+mua giáo trình,Giáo dục
+đăng ký thi chứng chỉ,Giáo dục
+lệ phí ôn thi,Giáo dục
+tiền nhà,Nhà ở/Thuê nhà
+tiền thuê nhà,Nhà ở/Thuê nhà
+tiền phòng trọ,Nhà ở/Thuê nhà
+thuê phòng trọ,Nhà ở/Thuê nhà
+đóng tiền nhà,Nhà ở/Thuê nhà
+tiền cọc nhà,Nhà ở/Thuê nhà
+đặt cọc thuê nhà,Nhà ở/Thuê nhà
+gia hạn hợp đồng thuê nhà,Nhà ở/Thuê nhà
+phí quản lý chung cư,Nhà ở/Thuê nhà
+phí dịch vụ chung cư,Nhà ở/Thuê nhà
+tiền thuê căn hộ,Nhà ở/Thuê nhà
+chuyển nhà,Nhà ở/Thuê nhà
+phí sửa chữa nhà,Nhà ở/Thuê nhà
+sơn sửa nhà,Nhà ở/Thuê nhà
+tiền thuê ký túc xá,Nhà ở/Thuê nhà
+phí ký túc xá,Nhà ở/Thuê nhà
+tiền thuê trọ tháng,Nhà ở/Thuê nhà
+cọc phòng trọ,Nhà ở/Thuê nhà
+hợp đồng thuê nhà,Nhà ở/Thuê nhà
+phí môi giới nhà đất,Nhà ở/Thuê nhà
+mua quần áo,Mua sắm
+mua giày,Mua sắm
+mua túi xách,Mua sắm
+mua mỹ phẩm,Mua sắm
+mua đồ điện tử,Mua sắm
+mua điện thoại,Mua sắm
+mua phụ kiện,Mua sắm
+mua đồng hồ,Mua sắm
+shopee,Mua sắm
+mua sắm online,Mua sắm
+lazada,Mua sắm
+tiki,Mua sắm
+mua đồ chơi,Mua sắm
+mua nước hoa,Mua sắm
+mua kính mát,Mua sắm
+mua balo,Mua sắm
+mua đồ trang trí,Mua sắm
+mua quà tặng,Mua sắm
+mua sạc dự phòng,Mua sắm
+mua sắm cuối tuần,Mua sắm
+lương tháng,Lương
+nhận lương,Lương
+lương công ty,Lương
+lương part-time,Lương
+lương thực tập,Lương
+tiền lương,Lương
+lương làm thêm,Lương
+công ty chuyển lương,Lương
+lương cứng,Lương
+thưởng lương tháng 13,Lương
+lương freelance,Lương
+nhận lương part time,Lương
+lương dạy thêm,Lương
+lương gia sư,Lương
+tiền công,Lương
+lương đi làm thêm,Lương
+nhận lương công ty,Lương
+lương chính thức,Lương
+tiền lương hàng tháng,Lương
+lương thưởng tết,Lương
+đi taxi công nghệ,Di chuyển
+vé phà,Di chuyển
+sửa lốp xe,Di chuyển
+rửa xe máy,Di chuyển
+bảo dưỡng xe,Di chuyển
+mua mũ bảo hiểm,Di chuyển
+vé xe khách,Di chuyển
+phí đậu xe,Di chuyển
+thay lốp xe,Di chuyển
+đổ dầu xe,Di chuyển
+ăn sáng,Ăn uống
+cơm văn phòng,Ăn uống
+quán nhậu,Ăn uống
+trà chanh,Ăn uống
+sinh tố,Ăn uống
+hủ tiếu,Ăn uống
+bún riêu,Ăn uống
+cơm tấm,Ăn uống
+đồ ăn đêm,Ăn uống
+quán cà phê,Ăn uống
+mua nước mắm,Nhu yếu phẩm
+mua bột ngọt,Nhu yếu phẩm
+mua đường,Nhu yếu phẩm
+mua muối,Nhu yếu phẩm
+winmart,Nhu yếu phẩm
+mua nước xả vải,Nhu yếu phẩm
+mua giấy ăn,Nhu yếu phẩm
+mua bàn chải đánh răng,Nhu yếu phẩm
+mua dầu ăn,Nhu yếu phẩm
+big c,Nhu yếu phẩm
+tiền truyền hình cáp,Hoá đơn (điện/nước/internet)
+cước 4g,Hoá đơn (điện/nước/internet)
+gia hạn wifi,Hoá đơn (điện/nước/internet)
+tiền điện tháng trước,Hoá đơn (điện/nước/internet)
+hoá đơn tiền nước tháng trước,Hoá đơn (điện/nước/internet)
+đóng cước điện thoại,Hoá đơn (điện/nước/internet)
+tiền internet fpt,Hoá đơn (điện/nước/internet)
+tiền internet viettel,Hoá đơn (điện/nước/internet)
+thanh toán cước mạng,Hoá đơn (điện/nước/internet)
+phí lắp đặt internet,Hoá đơn (điện/nước/internet)
+vé công viên nước,Giải trí
+đi bowling,Giải trí
+billiards,Giải trí
+đi bar,Giải trí
+mua vé concert,Giải trí
+apple music,Giải trí
+disney+,Giải trí
+vé tham quan,Giải trí
+vé sự kiện,Giải trí
+đi picnic,Giải trí
+mua thuốc dạ dày,Sức khoẻ
+khám mắt,Sức khoẻ
+mua kính áp tròng,Sức khoẻ
+tiêm phòng cúm,Sức khoẻ
+mua thuốc giảm đau,Sức khoẻ
+khám nha sĩ,Sức khoẻ
+siêu âm,Sức khoẻ
+chụp x-quang,Sức khoẻ
+tư vấn tâm lý,Sức khoẻ
+mua nước súc miệng,Sức khoẻ
+học phí đại học,Giáo dục
+mua đồ dùng học tập,Giáo dục
+lệ phí nhập học,Giáo dục
+học phí khoá học kỹ năng,Giáo dục
+mua bút chì,Giáo dục
+học phí toeic,Giáo dục
+lệ phí bảo vệ luận văn,Giáo dục
+tiền photo giáo trình,Giáo dục
+học phí luyện thi đại học,Giáo dục
+mua bảng con,Giáo dục
+đặt cọc ký túc xá,Nhà ở/Thuê nhà
+tiền thuê nhà nguyên căn,Nhà ở/Thuê nhà
+hợp đồng thuê phòng,Nhà ở/Thuê nhà
+tiền thuê chung cư mini,Nhà ở/Thuê nhà
+phí vệ sinh chung cư,Nhà ở/Thuê nhà
+tiền cọc phòng trọ tháng đầu,Nhà ở/Thuê nhà
+tiền thuê nhà quý,Nhà ở/Thuê nhà
+gia hạn hợp đồng nhà trọ,Nhà ở/Thuê nhà
+tiền sửa ống nước nhà trọ,Nhà ở/Thuê nhà
+phí bảo trì thang máy chung cư,Nhà ở/Thuê nhà
+mua laptop,Mua sắm
+mua tai nghe,Mua sắm
+mua loa bluetooth,Mua sắm
+mua vali,Mua sắm
+mua ví da,Mua sắm
+mua dép,Mua sắm
+mua áo khoác,Mua sắm
+mua nội thất,Mua sắm
+mua đồ decor phòng,Mua sắm
+mua sạc điện thoại,Mua sắm
+lương tháng 12,Lương
+nhận lương ngân hàng chuyển,Lương
+lương bán thời gian,Lương
+tiền lương công nhật,Lương
+lương làm cộng tác viên,Lương
+thưởng doanh số,Lương
+lương hợp đồng,Lương
+tiền lương thử việc,Lương
+lương chuyển khoản công ty,Lương
+nhận thưởng lương,Lương
+xe đạp điện,Di chuyển
+thuê xe máy,Di chuyển
+thuê ô tô,Di chuyển
+vá xe,Di chuyển
+bơm xe,Di chuyển
+thay ắc quy xe,Di chuyển
+thay bugi,Di chuyển
+đăng kiểm xe,Di chuyển
+bảo hiểm xe máy,Di chuyển
+bảo hiểm ô tô,Di chuyển
+vé xe điện,Di chuyển
+thẻ xe buýt tháng,Di chuyển
+gojek,Di chuyển
+goride,Di chuyển
+phí giữ xe qua đêm,Di chuyển
+rửa xe ô tô,Di chuyển
+thay bố thắng xe,Di chuyển
+mua xăng a95,Di chuyển
+đổ xăng xe máy,Di chuyển
+phí sang tên xe,Di chuyển
+bún chả,Ăn uống
+bánh cuốn,Ăn uống
+cơm sườn,Ăn uống
+sushi,Ăn uống
+buffet,Ăn uống
+trà sữa trân châu,Ăn uống
+grabfood,Ăn uống
+shopeefood,Ăn uống
+bánh tráng trộn,Ăn uống
+chè,Ăn uống
+kem,Ăn uống
+bánh ngọt,Ăn uống
+nước dừa,Ăn uống
+cháo,Ăn uống
+mì quảng,Ăn uống
+gỏi cuốn,Ăn uống
+cơm chiên,Ăn uống
+bò né,Ăn uống
+cà phê sữa đá,Ăn uống
+nước cam ép,Ăn uống
+mua trái cây,Nhu yếu phẩm
+mua rau củ,Nhu yếu phẩm
+mua tôm,Nhu yếu phẩm
+mua thịt bò,Nhu yếu phẩm
+mua thịt gà,Nhu yếu phẩm
+mua hành tỏi,Nhu yếu phẩm
+mua nước tương,Nhu yếu phẩm
+mua bột mì,Nhu yếu phẩm
+mua bánh mì sandwich,Nhu yếu phẩm
+mua trứng gà,Nhu yếu phẩm
+mua sữa tươi,Nhu yếu phẩm
+mua nước rửa tay,Nhu yếu phẩm
+mua khăn giấy,Nhu yếu phẩm
+mua nước xịt côn trùng,Nhu yếu phẩm
+mua nước lau sàn,Nhu yếu phẩm
+mua kem dưỡng da,Nhu yếu phẩm
+mua nước giặt,Nhu yếu phẩm
+mua nước tẩy rửa,Nhu yếu phẩm
+mua bàn chải vệ sinh nhà,Nhu yếu phẩm
+lotte mart,Nhu yếu phẩm
+tiền điện sinh hoạt,Hoá đơn (điện/nước/internet)
+tiền nước sinh hoạt,Hoá đơn (điện/nước/internet)
+hoá đơn điện tháng trước,Hoá đơn (điện/nước/internet)
+gia hạn thuê bao 4g,Hoá đơn (điện/nước/internet)
+mua sim 4g,Hoá đơn (điện/nước/internet)
+nạp thẻ điện thoại,Hoá đơn (điện/nước/internet)
+cước internet vnpt,Hoá đơn (điện/nước/internet)
+tiền truyền hình fpt play,Hoá đơn (điện/nước/internet)
+phí lắp đặt truyền hình cáp,Hoá đơn (điện/nước/internet)
+đóng phí thuê bao internet,Hoá đơn (điện/nước/internet)
+tiền điện nhà trọ,Hoá đơn (điện/nước/internet)
+tiền nước nhà trọ,Hoá đơn (điện/nước/internet)
+thanh toán hoá đơn điện evn,Hoá đơn (điện/nước/internet)
+gia hạn gói cước 5g,Hoá đơn (điện/nước/internet)
+mua thẻ cào,Hoá đơn (điện/nước/internet)
+phí duy trì thuê bao di động,Hoá đơn (điện/nước/internet)
+gia hạn hợp đồng internet fpt,Hoá đơn (điện/nước/internet)
+tiền wifi nhà trọ,Hoá đơn (điện/nước/internet)
+cước điện thoại trả sau,Hoá đơn (điện/nước/internet)
+cước điện thoại trả trước,Hoá đơn (điện/nước/internet)
+vé xem hài kịch,Giải trí
+vé sở thú,Giải trí
+đi sở thú,Giải trí
+mua truyện tranh,Giải trí
+mua vé rạp chiếu phim 3d,Giải trí
+hbo max,Giải trí
+vé thuỷ cung,Giải trí
+đi thuỷ cung,Giải trí
+chơi board game,Giải trí
+thuê phòng escape room,Giải trí
+vé lasertag,Giải trí
+đi cắm trại,Giải trí
+vé sự kiện âm nhạc,Giải trí
+mua đĩa nhạc,Giải trí
+tiền vé vào cổng khu du lịch,Giải trí
+mua vé đá bóng,Giải trí
+xem trận bóng đá sân vận động,Giải trí
+vé đua xe go-kart,Giải trí
+chơi bida,Giải trí
+vé xem xiếc,Giải trí
+mua thuốc dị ứng,Sức khoẻ
+mua thuốc kháng sinh,Sức khoẻ
+khám tai mũi họng,Sức khoẻ
+khám da liễu,Sức khoẻ
+mua thuốc nhỏ mũi,Sức khoẻ
+mua nước muối sinh lý,Sức khoẻ
+mua cồn sát khuẩn,Sức khoẻ
+mua nhiệt kế,Sức khoẻ
+khám thai định kỳ,Sức khoẻ
+mua thuốc bổ mắt,Sức khoẻ
+chi phí phẫu thuật,Sức khoẻ
+mua máy đo huyết áp,Sức khoẻ
+tiêm phòng viêm gan,Sức khoẻ
+khám nội tổng quát,Sức khoẻ
+mua thuốc xương khớp,Sức khoẻ
+bảo hiểm sức khoẻ tư nhân,Sức khoẻ
+mua băng vệ sinh,Sức khoẻ
+tư vấn dinh dưỡng,Sức khoẻ
+mua thuốc nhỏ mắt,Sức khoẻ
+khám nhi khoa,Sức khoẻ
+mua thước kẻ,Giáo dục
+mua compa,Giáo dục
+lệ phí phúc khảo,Giáo dục
+đăng ký khoá học lập trình,Giáo dục
+mua sách tham khảo,Giáo dục
+thuê gia sư,Giáo dục
+lệ phí thi toeic,Giáo dục
+lệ phí thi ielts,Giáo dục
+tiền học phí kỳ hè,Giáo dục
+lệ phí xét tuyển đại học,Giáo dục
+mua giấy in bài tập,Giáo dục
+thuê phòng học nhóm,Giáo dục
+mua mực in bài tập,Giáo dục
+đóng học phí trả góp,Giáo dục
+lệ phí cấp bằng tốt nghiệp,Giáo dục
+mua sách ngoại ngữ,Giáo dục
+học phí lớp kỹ năng mềm,Giáo dục
+lệ phí thi cải thiện điểm,Giáo dục
+mua đồng phục học sinh,Giáo dục
+tiền quỹ lớp,Giáo dục
+tiền thuê nhà nguyên tháng,Nhà ở/Thuê nhà
+phí gửi xe chung cư,Nhà ở/Thuê nhà
+phí internet chung cư,Nhà ở/Thuê nhà
+tiền thuê homestay dài hạn,Nhà ở/Thuê nhà
+thuê nhà cùng bạn,Nhà ở/Thuê nhà
+tiền đặt cọc phòng trọ sinh viên,Nhà ở/Thuê nhà
+phí điện nước ban quản lý thu hộ,Nhà ở/Thuê nhà
+tiền sửa điện nhà trọ,Nhà ở/Thuê nhà
+tiền lắp điều hoà phòng trọ,Nhà ở/Thuê nhà
+phí bảo trì căn hộ chung cư,Nhà ở/Thuê nhà
+tiền thuê phòng ở ghép,Nhà ở/Thuê nhà
+phí gửi xe máy chung cư,Nhà ở/Thuê nhà
+tiền đặt cọc chuyển trọ mới,Nhà ở/Thuê nhà
+phí phá hợp đồng thuê nhà sớm,Nhà ở/Thuê nhà
+tiền thuê phòng trọ quý,Nhà ở/Thuê nhà
+gia hạn hợp đồng thuê phòng,Nhà ở/Thuê nhà
+phí sơn lại phòng trọ khi trả phòng,Nhà ở/Thuê nhà
+tiền lắp mạng internet phòng trọ mới,Nhà ở/Thuê nhà
+phí chuyển nhượng hợp đồng thuê nhà,Nhà ở/Thuê nhà
+tiền thuê nhà nguyên căn dài hạn,Nhà ở/Thuê nhà
+mua tất,Mua sắm
+mua mũ,Mua sắm
+mua thắt lưng,Mua sắm
+mua váy,Mua sắm
+mua áo sơ mi,Mua sắm
+mua quần jean,Mua sắm
+mua chuột máy tính,Mua sắm
+mua bàn phím,Mua sắm
+mua ốp lưng điện thoại,Mua sắm
+mua màn hình máy tính,Mua sắm
+shopee sale,Mua sắm
+mua giày thể thao,Mua sắm
+mua đồng hồ thông minh,Mua sắm
+mua tai nghe không dây,Mua sắm
+mua sạc nhanh,Mua sắm
+mua vòng tay,Mua sắm
+mua nhẫn,Mua sắm
+mua trang sức,Mua sắm
+tiktok shop,Mua sắm
+mua kính cận,Mua sắm
+lương tháng 1,Lương
+tiền thưởng cuối năm,Lương
+lương phụ cấp,Lương
+tiền hoa hồng bán hàng,Lương
+lương làm gia công tại nhà,Lương
+tiền công dạy kèm,Lương
+lương ngoài giờ,Lương
+thu nhập bán hàng online,Lương
+lương chạy grab,Lương
+thu nhập viết content freelance,Lương
+lương làm phục vụ quán,Lương
+tiền công phát tờ rơi,Lương
+lương trợ giảng,Lương
+tiền thưởng dự án,Lương
+lương nhân viên bán thời gian ca tối,Lương
+tiền công làm mẫu ảnh,Lương
+lương trực đêm,Lương
+tiền thưởng hiệu suất,Lương
+lương part time quán cà phê,Lương
+tiền công làm cộng tác viên bán hàng,Lương
