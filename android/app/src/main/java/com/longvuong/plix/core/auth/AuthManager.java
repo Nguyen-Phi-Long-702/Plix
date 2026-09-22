@@ -23,66 +23,49 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.annotation.Nullable;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Singleton
 public class AuthManager {
-
     public interface AuthCallback {
         void onSuccess(AuthResponseDto response);
         void onError(String message);
     }
-
     public interface TestCallback {
         void onResult(String message);
     }
-
     private final AuthApiService authApiService;
     private final HealthApiService healthApiService;
-
-    //Lưu tạm access/refresh token trong RAM
+    private final EncryptedTokenStore encryptedTokenStore;
+    //Lưu tạm access, refresh token trong RAM
     private volatile String accessToken;
     private volatile String refreshToken;
-
     //livedata phát tín hiệu khi phiên đăng nhập cần đăng nhập lại (refresh cũng thất bại)
     private final MutableLiveData<Boolean> sessionExpiredLiveData = new MutableLiveData<>(false);
-
     @Inject
-    public AuthManager() {
-        OkHttpClient supabaseClient = new OkHttpClient.Builder()
-                .addInterceptor(new ApiKeyInterceptor())
-                .build();
-
-        Retrofit supabaseRetrofit = new Retrofit.Builder()
-                .baseUrl(BuildConfig.SUPABASE_URL)
-                .client(supabaseClient)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
+    public AuthManager(EncryptedTokenStore encryptedTokenStore) {
+        this.encryptedTokenStore = encryptedTokenStore;
+        OkHttpClient supabaseClient = new OkHttpClient.Builder().addInterceptor(new ApiKeyInterceptor()).build();
+        Retrofit supabaseRetrofit = new Retrofit.Builder().baseUrl(BuildConfig.SUPABASE_URL).client(supabaseClient).addConverterFactory(GsonConverterFactory.create()).build();
         this.authApiService = supabaseRetrofit.create(AuthApiService.class);
-
         //Retrofit client tạm thời gọi backend của dự án
-        OkHttpClient backendClient = new OkHttpClient.Builder()
-                .addInterceptor(new AuthInterceptor(this))
-                .authenticator(new AuthAuthenticator(this))
-                .build();
-
-        Retrofit backendRetrofit = new Retrofit.Builder()
-                .baseUrl(BuildConfig.BACKEND_BASE_URL)
-                .client(backendClient)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
+        OkHttpClient backendClient = new OkHttpClient.Builder().addInterceptor(new AuthInterceptor(this)).authenticator(new AuthAuthenticator(this)).build();
+        Retrofit backendRetrofit = new Retrofit.Builder().baseUrl(BuildConfig.BACKEND_BASE_URL).client(backendClient).addConverterFactory(GsonConverterFactory.create()).build();
         this.healthApiService = backendRetrofit.create(HealthApiService.class);
     }
 
     public void register(String email, String password, AuthCallback callback) {
-        authApiService.signup(new SignupRequestDto(email, password))
-                .enqueue(new SimpleCallback(callback));
+        authApiService.signup(new SignupRequestDto(email, password)).enqueue(new SimpleCallback(callback));
     }
 
     public void login(String email, String password, AuthCallback callback) {
-        authApiService.login("password", new LoginRequestDto(email, password))
-                .enqueue(new SimpleCallback(callback));
+        authApiService.login("password", new LoginRequestDto(email, password)).enqueue(new SimpleCallback(callback));
     }
     public boolean refreshSync() {
         String currentRefreshToken = this.refreshToken;
@@ -90,9 +73,7 @@ public class AuthManager {
             return false;
         }
         try {
-            retrofit2.Response<AuthResponseDto> response = authApiService
-                    .refresh("refresh_token", new RefreshRequestDto(currentRefreshToken))
-                    .execute();
+            retrofit2.Response<AuthResponseDto> response = authApiService.refresh("refresh_token", new RefreshRequestDto(currentRefreshToken)).execute();
             if (response.isSuccessful() && response.body() != null) {
                 saveSession(response.body());
                 return true;
@@ -121,14 +102,12 @@ public class AuthManager {
                             callback.onResult("health ok. whoami thất bại(mã lỗi " + whoamiResponse.code() + ")");
                         }
                     }
-
                     @Override
                     public void onFailure(Call<WhoamiResponseDto> call, Throwable t) {
                         callback.onResult("health ok. Không gọi được whoami: " + t.getMessage());
                     }
                 });
             }
-
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 callback.onResult("Không gọi được health: " + t.getMessage());
@@ -139,36 +118,57 @@ public class AuthManager {
     public String getAccessToken() {
         return accessToken;
     }
-
     public String getRefreshToken() {
         return refreshToken;
     }
 
+    @Nullable
+    public String getCurrentUserId() {
+        String token = this.accessToken;
+        if (token == null) {
+            return null;
+        }
+        String[] parts = token.split("\\.");
+        if (parts.length < 2) {
+            return null;
+        }
+        try {
+            byte[] decodedPayload = Base64.getUrlDecoder().decode(parts[1]);
+            JsonObject payload = JsonParser.parseString(
+                    new String(decodedPayload, StandardCharsets.UTF_8)).getAsJsonObject();
+            return payload.has("sub") ? payload.get("sub").getAsString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
     public LiveData<Boolean> getSessionExpiredLiveData() {
         return sessionExpiredLiveData;
     }
-
     public void notifySessionExpired() {
         sessionExpiredLiveData.postValue(true);
     }
-
     public void onSessionExpiredHandled() {
         sessionExpiredLiveData.postValue(false);
     }
-
     private void saveSession(AuthResponseDto response) {
         this.accessToken = response.accessToken;
         this.refreshToken = response.refreshToken;
+        if (encryptedTokenStore != null) {
+            encryptedTokenStore.saveTokens(response.accessToken, response.refreshToken);
+        }
         sessionExpiredLiveData.postValue(false);
     }
-
+    public boolean isLoggedIn() {
+        if (accessToken != null) {
+            return true;
+        }
+        return encryptedTokenStore != null && encryptedTokenStore.getAccessToken() != null;
+    }
     private class SimpleCallback implements Callback<AuthResponseDto> {
         private final AuthCallback callback;
-
         SimpleCallback(AuthCallback callback) {
             this.callback = callback;
         }
-
         @Override
         public void onResponse(Call<AuthResponseDto> call, retrofit2.Response<AuthResponseDto> response) {
             if (response.isSuccessful() && response.body() != null) {
@@ -178,19 +178,15 @@ public class AuthManager {
                 callback.onError("Thất bại(mã lỗi " + response.code() + ")");
             }
         }
-
         @Override
         public void onFailure(Call<AuthResponseDto> call, Throwable t) {
             callback.onError("không thể kết nối đến supabase: " + t.getMessage());
         }
     }
-
     private static class ApiKeyInterceptor implements Interceptor {
         @Override
         public Response intercept(Chain chain) throws IOException {
-            Request withApiKey = chain.request().newBuilder()
-                    .header("apikey", BuildConfig.SUPABASE_ANON_KEY)
-                    .build();
+            Request withApiKey = chain.request().newBuilder().header("apikey", BuildConfig.SUPABASE_ANON_KEY).build();
             return chain.proceed(withApiKey);
         }
     }

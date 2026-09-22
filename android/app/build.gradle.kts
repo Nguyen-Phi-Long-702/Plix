@@ -57,7 +57,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    //Lifecycle-viewmodel & livedata
+    //Lifecycle-viewmodel và livedata
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.7")
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.7")
 
@@ -81,10 +81,23 @@ dependencies {
     //Jetpack Security
     implementation("androidx.security:security-crypto:1.1.0")
 
-    //WorkManager + Hilt integration
+    //WorkManager+Hilt integration
     implementation("androidx.work:work-runtime:2.11.2")
     implementation("androidx.hilt:hilt-work:1.4.0")
+    annotationProcessor("androidx.hilt:hilt-compiler:1.4.0")
 
     //Timber
     implementation("com.jakewharton.timber:timber:5.0.1")
+
+    //SavedStateHandle cho viewmodel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7")
+
+    //MPAndroidChart (biểu đồ Analytics)
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    //Test livedata đồng bộ trong unit test
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+
+    //Test livedata đồng bộ trong androidTest (integration test Room)
+    androidTestImplementation("androidx.arch.core:core-testing:2.2.0")
 }

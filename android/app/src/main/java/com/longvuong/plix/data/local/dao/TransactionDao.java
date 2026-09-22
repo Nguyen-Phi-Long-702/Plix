@@ -1,17 +1,41 @@
 package com.longvuong.plix.data.local.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 
+import java.util.List;
+
 @Dao
 public interface TransactionDao {
-
     @Insert
     void insert(TransactionEntity entity);
 
+    @Update
+    void update(TransactionEntity entity);
+
+    @Query("SELECT * FROM transactions WHERE is_deleted = 0 ORDER BY occurred_at DESC")
+    LiveData<List<TransactionEntity>> getAll();
+
     @Query("SELECT * FROM transactions WHERE id = :id")
     TransactionEntity getById(String id);
+
+    @Query("SELECT * FROM transactions WHERE is_deleted = 0 " + "AND note LIKE '%' || :query || '%' ORDER BY occurred_at DESC")
+    LiveData<List<TransactionEntity>> searchByNote(String query);
+
+    @Query("SELECT * FROM transactions WHERE is_recurring = 1 AND recurrence_parent_id IS NULL AND is_deleted = 0")
+    List<TransactionEntity> getActiveRecurringTemplates();
+
+    @Query("SELECT * FROM transactions WHERE recurrence_parent_id = :templateId AND is_deleted = 0")
+    List<TransactionEntity> getInstancesByRecurrenceParentId(String templateId);
+
+    @Query("SELECT * FROM transactions WHERE recurrence_parent_id = :templateId")
+    List<TransactionEntity> getAllInstancesByRecurrenceParentId(String templateId);
+
+    @Query("SELECT * FROM transactions WHERE is_deleted = 0")
+    List<TransactionEntity> getAllOnce();
 }

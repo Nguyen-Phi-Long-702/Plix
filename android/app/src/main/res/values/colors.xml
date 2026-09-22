@@ -7,4 +7,9 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="color_income">#2E7D32</color>
+    <color name="color_expense">#C62828</color>
+    <color name="budget_progress_normal">#2C9463</color>
+    <color name="budget_progress_warning">#DE9C2E</color>
+    <color name="budget_progress_danger">#D64545</color>
 </resources>

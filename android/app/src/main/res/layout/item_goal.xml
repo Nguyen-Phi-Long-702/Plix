@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/textGoalName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="Mua laptop mới" />
+            <TextView
+                android:id="@+id/textGoalStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="Đang thực hiện" />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/textGoalPercent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="30%" />
+
+        <ImageButton
+            android:id="@+id/buttonDeleteGoal"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Xoá mục tiêu"
+            android:padding="10dp"
+            android:src="@drawable/ic_delete"
+            android:tint="@android:color/darker_gray" />
+    </LinearLayout>
+    <ProgressBar
+        android:id="@+id/progressGoal"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:max="100"
+        tools:progress="30" />
+
+    <TextView
+        android:id="@+id/textGoalAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="13sp"
+        android:textColor="@android:color/darker_gray"
+        tools:text="Đã có 3.000.000đ / 10.000.000đ · Hạn 15/12/2026" />
+
+    <TextView
+        android:id="@+id/textGoalRequiredMonthly"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="13sp"
+        tools:text="Cần tiết kiệm 1.400.000đ/tháng" />
+</LinearLayout>

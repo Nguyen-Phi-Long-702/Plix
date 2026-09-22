@@ -1,0 +1,22 @@
+package com.longvuong.plix.data.repository;
+
+import androidx.lifecycle.LiveData;
+
+import com.longvuong.plix.core.error.RepositoryCallback;
+import com.longvuong.plix.data.local.entity.TransactionEntity;
+
+import java.util.List;
+
+public interface TransactionRepository {
+    LiveData<List<TransactionEntity>> getAll();
+
+    LiveData<List<TransactionEntity>> searchByNote(String query);
+
+    void insert(TransactionEntity entity, RepositoryCallback<Void> callback);
+
+    void update(TransactionEntity entity, RepositoryCallback<Void> callback);
+
+    void getById(String id, RepositoryCallback<TransactionEntity> callback);
+
+    void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback);
+}
