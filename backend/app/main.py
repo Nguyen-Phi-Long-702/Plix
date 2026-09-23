@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 import asyncpg
 from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -43,6 +44,11 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     error_code = _ERROR_CODE_BY_STATUS.get(exc.status_code, "HTTP_ERROR")
     body = ErrorResponse(error_code=error_code, message=str(exc.detail))
     return JSONResponse(status_code=exc.status_code, content=body.model_dump())
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    body = ErrorResponse(error_code="VALIDATION_ERROR", message=str(exc.errors()))
+    return JSONResponse(status_code=422, content=body.model_dump())
 
 app.include_router(categories.router, prefix=API_PREFIX)
 app.include_router(categorize.router, prefix=API_PREFIX)
