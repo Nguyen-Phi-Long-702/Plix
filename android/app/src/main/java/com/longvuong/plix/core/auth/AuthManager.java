@@ -43,6 +43,7 @@ public class AuthManager {
     private final AuthApiService authApiService;
     private final HealthApiService healthApiService;
     private final EncryptedTokenStore encryptedTokenStore;
+    private final Retrofit backendRetrofit;
     //Lưu tạm access, refresh token trong RAM
     private volatile String accessToken;
     private volatile String refreshToken;
@@ -54,16 +55,17 @@ public class AuthManager {
         OkHttpClient supabaseClient = new OkHttpClient.Builder().addInterceptor(new ApiKeyInterceptor()).build();
         Retrofit supabaseRetrofit = new Retrofit.Builder().baseUrl(BuildConfig.SUPABASE_URL).client(supabaseClient).addConverterFactory(GsonConverterFactory.create()).build();
         this.authApiService = supabaseRetrofit.create(AuthApiService.class);
-        //Retrofit client tạm thời gọi backend của dự án
+        //Retrofit client gọi backend của dự án — dùng chung cho mọi ApiService phía backend (Health, Ai, ...)
         OkHttpClient backendClient = new OkHttpClient.Builder().addInterceptor(new AuthInterceptor(this)).authenticator(new AuthAuthenticator(this)).build();
-        Retrofit backendRetrofit = new Retrofit.Builder().baseUrl(BuildConfig.BACKEND_BASE_URL).client(backendClient).addConverterFactory(GsonConverterFactory.create()).build();
+        this.backendRetrofit = new Retrofit.Builder().baseUrl(BuildConfig.BACKEND_BASE_URL).client(backendClient).addConverterFactory(GsonConverterFactory.create()).build();
         this.healthApiService = backendRetrofit.create(HealthApiService.class);
     }
-
+    public Retrofit getBackendRetrofit() {
+        return backendRetrofit;
+    }
     public void register(String email, String password, AuthCallback callback) {
         authApiService.signup(new SignupRequestDto(email, password)).enqueue(new SimpleCallback(callback));
     }
-
     public void login(String email, String password, AuthCallback callback) {
         authApiService.login("password", new LoginRequestDto(email, password)).enqueue(new SimpleCallback(callback));
     }
