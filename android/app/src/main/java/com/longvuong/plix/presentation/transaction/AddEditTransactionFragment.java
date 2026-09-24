@@ -11,7 +11,11 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
+import com.google.android.material.chip.Chip;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -68,7 +72,11 @@ public class AddEditTransactionFragment extends Fragment {
     private TextInputLayout inputLayoutNote;
     private TextInputEditText editNote;
     private MaterialButton buttonSave;
-
+    private LinearLayout layoutCategorySuggestion;
+    private ProgressBar progressCategorySuggestion;
+    private Chip chipCategorySuggestion;
+    private TextView textCategorySuggestionError;
+    private MaterialButton buttonRetryCategorize;
     private List<CategoryEntity> currentCategoryOptions = new ArrayList<>();
     private boolean formPopulated = false;
     private boolean suppressAmountWatcher = false;
@@ -94,6 +102,7 @@ public class AddEditTransactionFragment extends Fragment {
         setupPaymentMethodField();
         setupNoteField();
         setupSaveButton();
+        setupCategorySuggestion();
 
         viewModel.getFormReady().observe(getViewLifecycleOwner(), ready -> {
             if (Boolean.TRUE.equals(ready)) {
@@ -102,6 +111,7 @@ public class AddEditTransactionFragment extends Fragment {
         });
         viewModel.getFilteredCategories().observe(getViewLifecycleOwner(), this::populateCategoryDropdown);
         viewModel.getSaveState().observe(getViewLifecycleOwner(), this::renderSaveState);
+        viewModel.getCategorySuggestionState().observe(getViewLifecycleOwner(), this::renderCategorySuggestionState);
     }
 
     private void bindViews(View view) {
@@ -117,6 +127,11 @@ public class AddEditTransactionFragment extends Fragment {
         inputLayoutNote = view.findViewById(R.id.inputLayoutNote);
         editNote = view.findViewById(R.id.editNote);
         buttonSave = view.findViewById(R.id.buttonSave);
+        layoutCategorySuggestion = view.findViewById(R.id.layoutCategorySuggestion);
+        progressCategorySuggestion = view.findViewById(R.id.progressCategorySuggestion);
+        chipCategorySuggestion = view.findViewById(R.id.chipCategorySuggestion);
+        textCategorySuggestionError = view.findViewById(R.id.textCategorySuggestionError);
+        buttonRetryCategorize = view.findViewById(R.id.buttonRetryCategorize);
     }
 
     private void setupTypeToggle() {
@@ -343,7 +358,35 @@ public class AddEditTransactionFragment extends Fragment {
             Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
         }
     }
+    private void setupCategorySuggestion() {
+        buttonRetryCategorize.setOnClickListener(v -> viewModel.retryCategorize());
+    }
 
+    private void renderCategorySuggestionState(UiState<String> state) {
+        if (state instanceof UiState.Loading) {
+            layoutCategorySuggestion.setVisibility(View.VISIBLE);
+            progressCategorySuggestion.setVisibility(View.VISIBLE);
+            chipCategorySuggestion.setVisibility(View.GONE);
+            textCategorySuggestionError.setVisibility(View.GONE);
+            buttonRetryCategorize.setVisibility(View.GONE);
+        } else if (state instanceof UiState.Success) {
+            layoutCategorySuggestion.setVisibility(View.VISIBLE);
+            progressCategorySuggestion.setVisibility(View.GONE);
+            chipCategorySuggestion.setVisibility(View.VISIBLE);
+            chipCategorySuggestion.setText(((UiState.Success<String>) state).data);
+            textCategorySuggestionError.setVisibility(View.GONE);
+            buttonRetryCategorize.setVisibility(View.GONE);
+        } else if (state instanceof UiState.Error) {
+            layoutCategorySuggestion.setVisibility(View.VISIBLE);
+            progressCategorySuggestion.setVisibility(View.GONE);
+            chipCategorySuggestion.setVisibility(View.GONE);
+            textCategorySuggestionError.setVisibility(View.VISIBLE);
+            textCategorySuggestionError.setText(((UiState.Error<String>) state).message);
+            buttonRetryCategorize.setVisibility(View.VISIBLE);
+        } else {
+            layoutCategorySuggestion.setVisibility(View.GONE);
+        }
+    }
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         View currentFocus = requireActivity().getCurrentFocus();
