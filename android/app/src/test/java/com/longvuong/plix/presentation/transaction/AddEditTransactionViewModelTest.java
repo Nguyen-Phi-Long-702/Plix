@@ -79,7 +79,8 @@ public class AddEditTransactionViewModelTest {
         UpdateTransactionUseCase updateUseCase = new UpdateTransactionUseCase(
                 fakeTransactionRepository, formValidator, fakeCheckBudgetThresholdUseCase());
         return new AddEditTransactionViewModel(savedStateHandle, fakeTransactionRepository,
-                fakeCategoryRepository, addUseCase, updateUseCase, formValidator, authManager);
+                fakeCategoryRepository, addUseCase, updateUseCase, formValidator, authManager,
+                new FakeAiRepository());
     }
 
     private com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase fakeCheckBudgetThresholdUseCase() {

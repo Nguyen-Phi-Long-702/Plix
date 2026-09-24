@@ -12,7 +12,9 @@ import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
+import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.CategoryRepository;
+import com.longvuong.plix.data.repository.CategorySuggestion;
 import com.longvuong.plix.data.repository.TransactionRepository;
 import com.longvuong.plix.domain.usecase.transaction.AddTransactionUseCase;
 import com.longvuong.plix.domain.usecase.transaction.UpdateTransactionUseCase;
@@ -22,6 +24,10 @@ import com.longvuong.plix.presentation.common.UiState;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -38,12 +44,23 @@ public class AddEditTransactionViewModel extends ViewModel {
     private static final String KEY_PAYMENT_METHOD = "draft_payment_method";
     private static final String KEY_NOTE = "draft_note";
     private static final String KEY_LOADED = "draft_loaded";
-
+    private static final long CATEGORIZE_DEBOUNCE_MS = 500;
     private final SavedStateHandle savedStateHandle;
     private final AddTransactionUseCase addTransactionUseCase;
     private final UpdateTransactionUseCase updateTransactionUseCase;
     private final FormValidator formValidator;
     private final AuthManager authManager;
+    private final AiRepository aiRepository;
+
+    private final ScheduledExecutorService categorizeDebounceExecutor =
+            Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "categorize-debounce");
+                thread.setDaemon(true);
+                return thread;
+            });
+    private ScheduledFuture<?> pendingCategorizeTask;
+    private volatile String lastCategorizedNote;
+    private final MutableLiveData<UiState<String>> categorySuggestionState = new MutableLiveData<>(new UiState.Empty<>());
 
     private final String editingTransactionId;
     private TransactionEntity loadedEntity;
@@ -62,12 +79,14 @@ public class AddEditTransactionViewModel extends ViewModel {
             AddTransactionUseCase addTransactionUseCase,
             UpdateTransactionUseCase updateTransactionUseCase,
             FormValidator formValidator,
-            AuthManager authManager) {
+            AuthManager authManager,
+            AiRepository aiRepository) {
         this.savedStateHandle = savedStateHandle;
         this.addTransactionUseCase = addTransactionUseCase;
         this.updateTransactionUseCase = updateTransactionUseCase;
         this.formValidator = formValidator;
         this.authManager = authManager;
+        this.aiRepository = aiRepository;
 
         this.editingTransactionId = savedStateHandle.get(ARG_TRANSACTION_ID);
 
@@ -215,6 +234,7 @@ public class AddEditTransactionViewModel extends ViewModel {
 
     public void setNote(String note) {
         savedStateHandle.set(KEY_NOTE, note);
+        scheduleCategorize(note);
     }
 
     public Result<Void> validateAmountField(long amount) {
@@ -267,7 +287,62 @@ public class AddEditTransactionViewModel extends ViewModel {
             addTransactionUseCase.execute(entity, callback);
         }
     }
+    public LiveData<UiState<String>> getCategorySuggestionState() {
+        return categorySuggestionState;
+    }
 
+    public void retryCategorize() {
+        if (lastCategorizedNote != null) {
+            requestCategorize(lastCategorizedNote);
+        }
+    }
+
+    private void scheduleCategorize(String note) {
+        if (pendingCategorizeTask != null) {
+            pendingCategorizeTask.cancel(false);
+        }
+        aiRepository.cancelPendingCategorize();
+
+        String trimmed = note == null ? "" : note.trim();
+        if (trimmed.isEmpty()) {
+            categorySuggestionState.postValue(new UiState.Empty<>());
+            return;
+        }
+        pendingCategorizeTask = categorizeDebounceExecutor.schedule(
+                () -> requestCategorize(trimmed), CATEGORIZE_DEBOUNCE_MS, TimeUnit.MILLISECONDS);
+    }
+
+    private void requestCategorize(String note) {
+        lastCategorizedNote = note;
+        categorySuggestionState.postValue(new UiState.Loading<>());
+        aiRepository.categorize(note, result -> {
+            if (!note.equals(lastCategorizedNote)) {
+                return; //Đã có note mới hơn được gõ trong lúc chờ phản hồi — bỏ kết quả cũ này
+            }
+            if (result instanceof Result.Success) {
+                CategorySuggestion suggestion = ((Result.Success<CategorySuggestion>) result).data;
+                categorySuggestionState.postValue(new UiState.Success<>(formatSuggestionLabel(suggestion)));
+            } else {
+                categorySuggestionState.postValue(new UiState.Error<>("Không lấy được gợi ý, nhập tay"));
+            }
+        });
+    }
+
+    private String formatSuggestionLabel(CategorySuggestion suggestion) {
+        String categoryLabel = suggestion.category != null ? suggestion.category.name : "Danh mục không xác định";
+        int confidencePercent = Math.round(suggestion.confidence * 100);
+        return categoryLabel + " · " + confidencePercent + "%";
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        if (pendingCategorizeTask != null) {
+            pendingCategorizeTask.cancel(false);
+        }
+        aiRepository.cancelPendingCategorize();
+        categorizeDebounceExecutor.shutdownNow();
+    }
     private UiState<Void> toUiState(Result<Void> result) {
         if (result instanceof Result.Success) {
             return new UiState.Success<>(null);
