@@ -151,8 +151,8 @@
                 style="@style/Widget.MaterialComponents.Chip.Action"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:clickable="false"
-                android:focusable="false"
+                android:clickable="true"
+                android:focusable="true"
                 android:checkable="false"
                 android:visibility="gone"
                 tools:text="Ăn uống · 82%" />

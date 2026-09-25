@@ -334,6 +334,10 @@ public class AddEditTransactionFragment extends Fragment {
                 requireContext(), android.R.layout.simple_dropdown_item_1line, names);
         editCategory.setAdapter(adapter);
 
+        refreshCategoryFieldDisplay();
+    }
+
+    private void refreshCategoryFieldDisplay() {
         String selectedCategoryId = viewModel.getCategoryId();
         String selectedName = "";
         for (CategoryEntity category : currentCategoryOptions) {
@@ -360,6 +364,11 @@ public class AddEditTransactionFragment extends Fragment {
     }
     private void setupCategorySuggestion() {
         buttonRetryCategorize.setOnClickListener(v -> viewModel.retryCategorize());
+        chipCategorySuggestion.setOnClickListener(v -> {
+            viewModel.applySuggestedCategory();
+            refreshCategoryFieldDisplay();
+            inputLayoutCategory.setError(null);
+        });
     }
 
     private void renderCategorySuggestionState(UiState<String> state) {
