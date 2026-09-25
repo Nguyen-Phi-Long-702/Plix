@@ -10,7 +10,7 @@ from app.core.config import DATABASE_URL
 from app.core.middleware import MaxBodySizeMiddleware
 from app.core.security import verify_jwt
 from app.models.error_response import ErrorResponse
-from app.routers import categories, categorize, correction, health
+from app.routers import categories, categorize, correction, health, retrain
 
 
 API_PREFIX = "/api/v1"
@@ -21,7 +21,9 @@ _ERROR_CODE_BY_STATUS = {
     403: "FORBIDDEN",
     404: "NOT_FOUND",
     405: "METHOD_NOT_ALLOWED",
+    409: "CONFLICT",
     413: "PAYLOAD_TOO_LARGE",
+    429: "TOO_MANY_REQUESTS",
     422: "VALIDATION_ERROR",
     500: "INTERNAL_ERROR",
 }
@@ -54,6 +56,7 @@ app.include_router(categories.router, prefix=API_PREFIX)
 app.include_router(categorize.router, prefix=API_PREFIX)
 app.include_router(correction.router, prefix=API_PREFIX)
 app.include_router(health.router, prefix=API_PREFIX)
+app.include_router(retrain.router, prefix=API_PREFIX)
 
 @app.get(f"{API_PREFIX}/whoami")
 def whoami(user_id: str = Depends(verify_jwt)):
