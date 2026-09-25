@@ -5,13 +5,16 @@ import androidx.annotation.Nullable;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 
 public class CategorySuggestion {
+    @Nullable
+    public final String categoryId; //category_id gốc do AI trả về; backend cho phép null khi không phân loại được
 
     @Nullable
     public final CategoryEntity category; //null nếu category_id trả về không khớp category nào trong Room
 
     public final float confidence;
 
-    public CategorySuggestion(@Nullable CategoryEntity category, float confidence) {
+    public CategorySuggestion(@Nullable String categoryId, @Nullable CategoryEntity category, float confidence) {
+        this.categoryId = categoryId;
         this.category = category;
         this.confidence = confidence;
     }

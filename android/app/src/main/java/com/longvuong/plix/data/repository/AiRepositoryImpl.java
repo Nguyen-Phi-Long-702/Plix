@@ -1,5 +1,7 @@
 package com.longvuong.plix.data.repository;
 
+import androidx.annotation.Nullable;
+
 import com.longvuong.plix.core.error.ErrorMapper;
 import com.longvuong.plix.core.error.ErrorType;
 import com.longvuong.plix.core.error.RepositoryCallback;
@@ -10,6 +12,7 @@ import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.remote.api.AiApiService;
 import com.longvuong.plix.data.remote.dto.CategorizeRequestDto;
 import com.longvuong.plix.data.remote.dto.CategorizeResponseDto;
+import com.longvuong.plix.data.remote.dto.CorrectionRequestDto;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,7 +51,7 @@ public class AiRepositoryImpl implements AiRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     CategorizeResponseDto dto = response.body();
                     CategoryEntity category = categoryDao.getById(dto.categoryId);
-                    result = new Result.Success<>(new CategorySuggestion(category, dto.confidence));
+                    result = new Result.Success<>(new CategorySuggestion(dto.categoryId, category, dto.confidence));
                 } else if (response.isSuccessful()) {
                     result = new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
                 } else {
@@ -72,5 +75,23 @@ public class AiRepositoryImpl implements AiRepository {
         if (call != null) {
             call.cancel();
         }
+    }
+
+    @Override
+    public void submitCorrection(String transactionId, @Nullable String predictedCategoryId, String correctedCategoryId, RepositoryCallback<Void> callback) {
+        Call<Void> call = aiApiService.submitCorrection(new CorrectionRequestDto(transactionId, predictedCategoryId, correctedCategoryId));
+
+        appExecutors.networkIO().execute(() -> {
+            try {
+                Response<Void> response = call.execute();
+                Result<Void> result = response.isSuccessful()
+                        ? new Result.Success<>(null)
+                        : errorMapper.mapHttpCode(response.code());
+                appExecutors.mainThread().execute(() -> callback.onResult(result));
+            } catch (Exception e) {
+                Result<Void> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
     }
 }
