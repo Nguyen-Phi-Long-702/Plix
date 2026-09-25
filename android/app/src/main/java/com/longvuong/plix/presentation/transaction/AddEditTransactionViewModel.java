@@ -60,6 +60,7 @@ public class AddEditTransactionViewModel extends ViewModel {
             });
     private ScheduledFuture<?> pendingCategorizeTask;
     private volatile String lastCategorizedNote;
+    private volatile String suggestedCategoryId;
     private final MutableLiveData<UiState<String>> categorySuggestionState = new MutableLiveData<>(new UiState.Empty<>());
 
     private final String editingTransactionId;
@@ -256,6 +257,8 @@ public class AddEditTransactionViewModel extends ViewModel {
             return;
         }
 
+        String predictedCategoryIdSnapshot = suggestedCategoryId;
+
         TransactionEntity entity;
         if (isEditMode() && loadedEntity != null) {
             entity = loadedEntity;
@@ -278,14 +281,31 @@ public class AddEditTransactionViewModel extends ViewModel {
         entity.paymentMethod = getPaymentMethod();
         entity.note = getNote();
 
+        String transactionIdForCorrection = entity.id;
+        String correctedCategoryIdForCorrection = entity.categoryId;
+
         saveState.setValue(new UiState.Loading<>());
-        RepositoryCallback<Void> callback = result -> saveState.setValue(toUiState(result));
+        RepositoryCallback<Void> callback = result -> {
+            saveState.setValue(toUiState(result));
+            if (result instanceof Result.Success) {
+                reportCorrectionIfNeeded(transactionIdForCorrection, predictedCategoryIdSnapshot, correctedCategoryIdForCorrection);
+            }
+        };
 
         if (isEditMode()) {
             updateTransactionUseCase.execute(entity, callback);
         } else {
             addTransactionUseCase.execute(entity, callback);
         }
+    }
+
+    private void reportCorrectionIfNeeded(String transactionId, @Nullable String predictedCategoryId, @Nullable String correctedCategoryId) {
+        if (predictedCategoryId == null || correctedCategoryId == null || predictedCategoryId.equals(correctedCategoryId)) {
+            return; //Không có gợi ý AI cho note hiện tại, hoặc user không sửa lại gợi ý -> không phải correction
+        }
+        aiRepository.submitCorrection(transactionId, predictedCategoryId, correctedCategoryId, result -> {
+            //Best-effort, không cập nhật UI: đây là tín hiệu học cho AI, không ảnh hưởng tới giao dịch đã lưu thành công
+        });
     }
     public LiveData<UiState<String>> getCategorySuggestionState() {
         return categorySuggestionState;
@@ -294,6 +314,19 @@ public class AddEditTransactionViewModel extends ViewModel {
     public void retryCategorize() {
         if (lastCategorizedNote != null) {
             requestCategorize(lastCategorizedNote);
+        }
+    }
+    public void applySuggestedCategory() {
+        String id = suggestedCategoryId;
+        if (id == null) {
+            return;
+        }
+        String currentType = getType();
+        for (CategoryEntity category : allCategories) {
+            if (category.id.equals(id) && category.type.equals(currentType)) {
+                setCategoryId(id);
+                break;
+            }
         }
     }
 
@@ -305,6 +338,7 @@ public class AddEditTransactionViewModel extends ViewModel {
 
         String trimmed = note == null ? "" : note.trim();
         if (trimmed.isEmpty()) {
+            suggestedCategoryId = null;
             categorySuggestionState.postValue(new UiState.Empty<>());
             return;
         }
@@ -314,6 +348,7 @@ public class AddEditTransactionViewModel extends ViewModel {
 
     private void requestCategorize(String note) {
         lastCategorizedNote = note;
+        suggestedCategoryId = null;
         categorySuggestionState.postValue(new UiState.Loading<>());
         aiRepository.categorize(note, result -> {
             if (!note.equals(lastCategorizedNote)) {
@@ -321,6 +356,7 @@ public class AddEditTransactionViewModel extends ViewModel {
             }
             if (result instanceof Result.Success) {
                 CategorySuggestion suggestion = ((Result.Success<CategorySuggestion>) result).data;
+                suggestedCategoryId = suggestion.categoryId;
                 categorySuggestionState.postValue(new UiState.Success<>(formatSuggestionLabel(suggestion)));
             } else {
                 categorySuggestionState.postValue(new UiState.Error<>("Không lấy được gợi ý, nhập tay"));
