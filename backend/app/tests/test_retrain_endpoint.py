@@ -23,6 +23,7 @@ class FakeRetrainEndpointPool:
                 "is_training": False,
                 "elapsed_seconds": self._initial_elapsed_seconds,
                 "training_sample_count": 0,
+                "class_priors": "{}",
             },
         )
 
@@ -44,7 +45,7 @@ class FakeRetrainEndpointPool:
         if "SELECT idf, class_priors, likelihoods, trained_at" in query:
             return {
                 "idf": "{}",
-                "class_priors": "{}",
+                "class_priors": row["class_priors"],
                 "likelihoods": "{}",
                 "trained_at": "2026-09-28T10:00:00+00:00",
                 "training_sample_count": row["training_sample_count"],
@@ -72,6 +73,7 @@ class FakeRetrainEndpointPool:
             row["is_training"] = False
             row["elapsed_seconds"] = 0 
             row["training_sample_count"] = args[5]
+            row["class_priors"] = args[3]  
 
 
 def _build_test_app(pool: FakeRetrainEndpointPool) -> FastAPI:

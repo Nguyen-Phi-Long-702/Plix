@@ -72,10 +72,6 @@ async def save_model_params(
 
 
 async def load_model_params(pool: asyncpg.Pool, user_id: str) -> Optional[ModelParams]:
-    """Đọc 1 hàng ai_model_params theo user_id, dựng lại state để predict()
-    hoạt động y hệt model vừa fit() trong tiến trình (Mục 7.1: model seed
-    '__seed__' đi qua đúng code path load/predict/lưu). Trả None nếu
-    user_id chưa có model (dùng để biết khi nào cần fallback về '__seed__')."""
     row = await pool.fetchrow(
         """
         SELECT idf, class_priors, likelihoods, trained_at,
@@ -88,8 +84,11 @@ async def load_model_params(pool: asyncpg.Pool, user_id: str) -> Optional[ModelP
     if row is None:
         return None
 
-    idf = json.loads(row["idf"])
     class_priors = json.loads(row["class_priors"])
+    if not class_priors:
+        return None
+
+    idf = json.loads(row["idf"])
     likelihoods = json.loads(row["likelihoods"])
     vocabulary = set(idf.keys())
 
