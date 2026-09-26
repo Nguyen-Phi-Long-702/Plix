@@ -18,4 +18,13 @@ class FakeAiRepository implements AiRepository {
     @Override
     public void submitCorrection(String transactionId, @Nullable String predictedCategoryId, String correctedCategoryId, RepositoryCallback<Void> callback) {
     }
+
+    @Override
+    public void retrain(RepositoryCallback<Void> callback) {
+    }
+
+    @Override
+    public int getPendingCorrectionCount() {
+        return 0;
+    }
 }

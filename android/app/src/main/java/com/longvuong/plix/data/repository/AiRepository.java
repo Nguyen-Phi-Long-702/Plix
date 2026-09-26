@@ -10,4 +10,8 @@ public interface AiRepository {
 
     void cancelPendingCategorize();
     void submitCorrection(String transactionId, @Nullable String predictedCategoryId, String correctedCategoryId, RepositoryCallback<Void> callback);
+
+    void retrain(RepositoryCallback<Void> callback);
+
+    int getPendingCorrectionCount();
 }
