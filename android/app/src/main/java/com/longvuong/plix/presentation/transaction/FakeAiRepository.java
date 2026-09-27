@@ -1,12 +1,17 @@
 package com.longvuong.plix.presentation.transaction;
 
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.CategorySuggestion;
 
 class FakeAiRepository implements AiRepository {
+
+    private final MutableLiveData<Boolean> connectivity = new MutableLiveData<>(true);
+
     @Override
     public void categorize(String note, RepositoryCallback<CategorySuggestion> callback) {
     }
@@ -26,5 +31,10 @@ class FakeAiRepository implements AiRepository {
     @Override
     public int getPendingCorrectionCount() {
         return 0;
+    }
+
+    @Override
+    public LiveData<Boolean> observeConnectivity() {
+        return connectivity;
     }
 }

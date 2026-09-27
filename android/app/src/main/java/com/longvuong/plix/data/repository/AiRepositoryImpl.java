@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
 
 import com.longvuong.plix.core.error.ErrorMapper;
 import com.longvuong.plix.core.error.ErrorType;
@@ -17,6 +19,7 @@ import com.longvuong.plix.data.remote.dto.CategorizeRequestDto;
 import com.longvuong.plix.data.remote.dto.CategorizeResponseDto;
 import com.longvuong.plix.data.remote.dto.CorrectionRequestDto;
 import com.longvuong.plix.data.remote.dto.RetrainResponseDto;
+import com.longvuong.plix.core.network.NetworkObserver;
 
 import java.io.IOException;
 
@@ -38,18 +41,20 @@ public class AiRepositoryImpl implements AiRepository {
     private final AppExecutors appExecutors;
     private final ErrorMapper errorMapper;
     private final Context context;
+    private final NetworkObserver networkObserver;
 
     private volatile Call<CategorizeResponseDto> currentCall;
 
     @Inject
     public AiRepositoryImpl(AiApiService aiApiService, CategoryDao categoryDao,
                             AppExecutors appExecutors, ErrorMapper errorMapper,
-                            @ApplicationContext Context context) {
+                            @ApplicationContext Context context, NetworkObserver networkObserver) {
         this.aiApiService = aiApiService;
         this.categoryDao = categoryDao;
         this.appExecutors = appExecutors;
         this.errorMapper = errorMapper;
         this.context = context;
+        this.networkObserver = networkObserver;
     }
 
     @Override
@@ -166,5 +171,9 @@ public class AiRepositoryImpl implements AiRepository {
 
     private SharedPreferences prefs() {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+    }
+    @Override
+    public LiveData<Boolean> observeConnectivity() {
+        return networkObserver.getIsConnected();
     }
 }
