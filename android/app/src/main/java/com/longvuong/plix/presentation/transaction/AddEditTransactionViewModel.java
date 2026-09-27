@@ -45,6 +45,7 @@ public class AddEditTransactionViewModel extends ViewModel {
     private static final String KEY_NOTE = "draft_note";
     private static final String KEY_LOADED = "draft_loaded";
     private static final long CATEGORIZE_DEBOUNCE_MS = 500;
+    private static final float LOW_CONFIDENCE_THRESHOLD = 0.4f;
     private final SavedStateHandle savedStateHandle;
     private final AddTransactionUseCase addTransactionUseCase;
     private final UpdateTransactionUseCase updateTransactionUseCase;
@@ -61,7 +62,8 @@ public class AddEditTransactionViewModel extends ViewModel {
     private ScheduledFuture<?> pendingCategorizeTask;
     private volatile String lastCategorizedNote;
     private volatile String suggestedCategoryId;
-    private final MutableLiveData<UiState<String>> categorySuggestionState = new MutableLiveData<>(new UiState.Empty<>());
+    private volatile boolean suggestedCategoryLowConfidence;
+    private final MediatorLiveData<UiState<CategorySuggestionUiModel>> categorySuggestionState = new MediatorLiveData<>();
 
     private final String editingTransactionId;
     private TransactionEntity loadedEntity;
@@ -103,6 +105,12 @@ public class AddEditTransactionViewModel extends ViewModel {
         filteredCategories.addSource(categoryRepository.getActiveCategories(), categories -> {
             allCategories = categories != null ? categories : new ArrayList<>();
             updateFilteredCategories();
+        });
+        categorySuggestionState.setValue(new UiState.Empty<>());
+        categorySuggestionState.addSource(aiRepository.observeConnectivity(), isConnected -> {
+            if (Boolean.FALSE.equals(isConnected)) {
+                hideSuggestionDueToOffline(); //mất mạng -> ẩn hẳn khối gợi ý
+            }
         });
     }
 
@@ -307,19 +315,24 @@ public class AddEditTransactionViewModel extends ViewModel {
             //Best-effort, không cập nhật UI: đây là tín hiệu học cho AI, không ảnh hưởng tới giao dịch đã lưu thành công
         });
     }
-    public LiveData<UiState<String>> getCategorySuggestionState() {
+    public LiveData<UiState<CategorySuggestionUiModel>> getCategorySuggestionState() {
         return categorySuggestionState;
     }
 
     public void retryCategorize() {
-        if (lastCategorizedNote != null) {
-            requestCategorize(lastCategorizedNote);
+        if (lastCategorizedNote == null) {
+            return;
         }
+        if (isOffline()) {
+            hideSuggestionDueToOffline(); //AI-10: đang mất mạng thì không thử gọi lại API
+            return;
+        }
+        requestCategorize(lastCategorizedNote);
     }
     public void applySuggestedCategory() {
         String id = suggestedCategoryId;
-        if (id == null) {
-            return;
+        if (id == null || suggestedCategoryLowConfidence) {
+            return; //độ tin cậy thấp -> không tự động điền danh mục, để user chọn tay
         }
         String currentType = getType();
         for (CategoryEntity category : allCategories) {
@@ -339,34 +352,60 @@ public class AddEditTransactionViewModel extends ViewModel {
         String trimmed = note == null ? "" : note.trim();
         if (trimmed.isEmpty()) {
             suggestedCategoryId = null;
+            suggestedCategoryLowConfidence = false;
             categorySuggestionState.postValue(new UiState.Empty<>());
+            return;
+        }
+        if (isOffline()) {
+            hideSuggestionDueToOffline(); //AI-10: mất mạng -> không gọi AI, không lỗi, cho nhập tay
             return;
         }
         pendingCategorizeTask = categorizeDebounceExecutor.schedule(
                 () -> requestCategorize(trimmed), CATEGORIZE_DEBOUNCE_MS, TimeUnit.MILLISECONDS);
     }
 
+    private boolean isOffline() {
+        return Boolean.FALSE.equals(aiRepository.observeConnectivity().getValue());
+    }
+
+    private void hideSuggestionDueToOffline() {
+        if (pendingCategorizeTask != null) {
+            pendingCategorizeTask.cancel(false);
+        }
+        aiRepository.cancelPendingCategorize();
+        suggestedCategoryId = null;
+        suggestedCategoryLowConfidence = false;
+        categorySuggestionState.setValue(new UiState.Empty<>());
+    }
+
     private void requestCategorize(String note) {
         lastCategorizedNote = note;
         suggestedCategoryId = null;
+        suggestedCategoryLowConfidence = false;
         categorySuggestionState.postValue(new UiState.Loading<>());
         aiRepository.categorize(note, result -> {
             if (!note.equals(lastCategorizedNote)) {
-                return; //Đã có note mới hơn được gõ trong lúc chờ phản hồi — bỏ kết quả cũ này
+                return; //Đã có note mới hơn được gõ trong lúc chờ phản hồi - bỏ kết quả cũ này
             }
             if (result instanceof Result.Success) {
                 CategorySuggestion suggestion = ((Result.Success<CategorySuggestion>) result).data;
-                suggestedCategoryId = suggestion.categoryId;
-                categorySuggestionState.postValue(new UiState.Success<>(formatSuggestionLabel(suggestion)));
+                boolean lowConfidence = suggestion.confidence < LOW_CONFIDENCE_THRESHOLD;
+                suggestedCategoryId = suggestion.categoryId; //vẫn giữ id gốc để báo correction nếu user tự chọn khác, dù không auto-fill
+                suggestedCategoryLowConfidence = lowConfidence;
+                categorySuggestionState.postValue(new UiState.Success<>(
+                        new CategorySuggestionUiModel(formatSuggestionLabel(suggestion, lowConfidence), lowConfidence)));
             } else {
                 categorySuggestionState.postValue(new UiState.Error<>("Không lấy được gợi ý, nhập tay"));
             }
         });
     }
 
-    private String formatSuggestionLabel(CategorySuggestion suggestion) {
-        String categoryLabel = suggestion.category != null ? suggestion.category.name : "Danh mục không xác định";
+    private String formatSuggestionLabel(CategorySuggestion suggestion, boolean lowConfidence) {
         int confidencePercent = Math.round(suggestion.confidence * 100);
+        if (lowConfidence) {
+            return "Độ tin cậy thấp · " + confidencePercent + "%"; //confidence<0.4 -> đổi hẳn nhãn, không hiện tên category đoán được
+        }
+        String categoryLabel = suggestion.category != null ? suggestion.category.name : "Danh mục không xác định";
         return categoryLabel + " · " + confidencePercent + "%";
     }
 

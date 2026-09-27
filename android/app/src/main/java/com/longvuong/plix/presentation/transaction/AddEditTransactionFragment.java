@@ -14,6 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.content.res.ColorStateList;
 
 import com.google.android.material.chip.Chip;
 import androidx.annotation.NonNull;
@@ -21,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
@@ -75,6 +77,7 @@ public class AddEditTransactionFragment extends Fragment {
     private LinearLayout layoutCategorySuggestion;
     private ProgressBar progressCategorySuggestion;
     private Chip chipCategorySuggestion;
+    private ColorStateList defaultChipTextColors;
     private TextView textCategorySuggestionError;
     private MaterialButton buttonRetryCategorize;
     private List<CategoryEntity> currentCategoryOptions = new ArrayList<>();
@@ -130,6 +133,7 @@ public class AddEditTransactionFragment extends Fragment {
         layoutCategorySuggestion = view.findViewById(R.id.layoutCategorySuggestion);
         progressCategorySuggestion = view.findViewById(R.id.progressCategorySuggestion);
         chipCategorySuggestion = view.findViewById(R.id.chipCategorySuggestion);
+        defaultChipTextColors = chipCategorySuggestion.getTextColors();
         textCategorySuggestionError = view.findViewById(R.id.textCategorySuggestionError);
         buttonRetryCategorize = view.findViewById(R.id.buttonRetryCategorize);
     }
@@ -371,7 +375,7 @@ public class AddEditTransactionFragment extends Fragment {
         });
     }
 
-    private void renderCategorySuggestionState(UiState<String> state) {
+    private void renderCategorySuggestionState(UiState<CategorySuggestionUiModel> state) {
         if (state instanceof UiState.Loading) {
             layoutCategorySuggestion.setVisibility(View.VISIBLE);
             progressCategorySuggestion.setVisibility(View.VISIBLE);
@@ -379,10 +383,12 @@ public class AddEditTransactionFragment extends Fragment {
             textCategorySuggestionError.setVisibility(View.GONE);
             buttonRetryCategorize.setVisibility(View.GONE);
         } else if (state instanceof UiState.Success) {
+            CategorySuggestionUiModel suggestion = ((UiState.Success<CategorySuggestionUiModel>) state).data;
             layoutCategorySuggestion.setVisibility(View.VISIBLE);
             progressCategorySuggestion.setVisibility(View.GONE);
             chipCategorySuggestion.setVisibility(View.VISIBLE);
-            chipCategorySuggestion.setText(((UiState.Success<String>) state).data);
+            chipCategorySuggestion.setText(suggestion.label);
+            applySuggestionChipStyle(suggestion.lowConfidence);
             textCategorySuggestionError.setVisibility(View.GONE);
             buttonRetryCategorize.setVisibility(View.GONE);
         } else if (state instanceof UiState.Error) {
@@ -390,10 +396,20 @@ public class AddEditTransactionFragment extends Fragment {
             progressCategorySuggestion.setVisibility(View.GONE);
             chipCategorySuggestion.setVisibility(View.GONE);
             textCategorySuggestionError.setVisibility(View.VISIBLE);
-            textCategorySuggestionError.setText(((UiState.Error<String>) state).message);
+            textCategorySuggestionError.setText(((UiState.Error<CategorySuggestionUiModel>) state).message);
             buttonRetryCategorize.setVisibility(View.VISIBLE);
         } else {
-            layoutCategorySuggestion.setVisibility(View.GONE);
+            layoutCategorySuggestion.setVisibility(View.GONE); //Bao gồm cả offline: ViewModel trả Empty -> ẩn hẳn khối gợi ý
+        }
+    }
+
+    private void applySuggestionChipStyle(boolean lowConfidence) {
+        chipCategorySuggestion.setClickable(!lowConfidence);
+        chipCategorySuggestion.setFocusable(!lowConfidence);
+        if (lowConfidence) {
+            chipCategorySuggestion.setTextColor(ContextCompat.getColor(requireContext(), R.color.budget_progress_warning));
+        } else {
+            chipCategorySuggestion.setTextColor(defaultChipTextColors);
         }
     }
     private void hideKeyboard() {
