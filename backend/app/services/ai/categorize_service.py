@@ -5,16 +5,19 @@ import asyncpg
 from app.services.ai.model_store import load_model_params
 from app.services.ai.train_seed_model import SEED_USER_ID
 
+MIN_TRAINING_SAMPLES_FOR_OWN_MODEL = 10
 
 class NoModelAvailableError(Exception):
-    pass 
+    pass
 
 async def classify_note(
     pool: asyncpg.Pool, user_id: str, note: str
 ) -> Tuple[Optional[str], float]:
-    """Trả về (category_id, confidence) gợi ý cho `note` của user_id."""
     model_params = await load_model_params(pool, user_id)
-    if model_params is None:
+    if (
+        model_params is None
+        or model_params.training_sample_count < MIN_TRAINING_SAMPLES_FOR_OWN_MODEL
+    ):
         model_params = await load_model_params(pool, SEED_USER_ID)
     if model_params is None:
         raise NoModelAvailableError(user_id)
