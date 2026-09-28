@@ -29,6 +29,12 @@ async def _try_acquire_training_lock(pool: asyncpg.Pool, user_id: str) -> bool:
     return row is not None
 
 
+class NoTrainingDataError(Exception):
+    """Raise khi user_id này chưa có giao dịch nào (chưa xoá) gắn với danh mục
+    (chưa xoá) trên server, nên không có gì để huấn luyện — endpoint /retrain
+    sẽ bắt exception này và trả 400 Bad Request."""
+
+
 async def _release_training_lock(pool: asyncpg.Pool, user_id: str) -> None:
     await pool.execute(
         "UPDATE ai_model_params SET is_training = false WHERE user_id = $1",
@@ -52,6 +58,12 @@ async def retrain_user_model(pool: asyncpg.Pool, user_id: str) -> None:
             """,
             user_id,
         )
+        if not rows:
+            await pool.execute(
+                "DELETE FROM ai_model_params WHERE user_id = $1 AND class_priors = '{}'::jsonb",
+                user_id,
+            )
+            raise NoTrainingDataError(user_id)
         notes = [row["note"] or "" for row in rows]
         labels = [row["category_name"] for row in rows]
 
@@ -77,6 +89,7 @@ async def retrain_user_model(pool: asyncpg.Pool, user_id: str) -> None:
 async def _manual_test() -> None:
     pool = await asyncpg.create_pool(dsn=DATABASE_URL, ssl="require", min_size=1, max_size=1)
     test_user_id = "__ngay13_test_retrain__"
+    no_data_user_id = "__ngay26_no_data__"
     category_a_id, category_b_id = "__ngay13_cat_a__", "__ngay13_cat_b__"
     tx_ids = ["__ngay13_tx_1__", "__ngay13_tx_2__", "__ngay13_tx_3__", "__ngay13_tx_4__"]
     correction_ids = ["__ngay13_corr_1__", "__ngay13_corr_2__"]
@@ -142,12 +155,24 @@ async def _manual_test() -> None:
         except TrainingInProgressError:
             print("Case 2 OK — raise TrainingInProgressError đúng như kỳ vọng khi đang bị khoá")
 
+        # Case 3: user chưa có giao dịch nào -> NoTrainingDataError, không để lại hàng chặn cooldown
+        try:
+            await retrain_user_model(pool, no_data_user_id)
+            print("Case 3 FAIL: đáng lẽ phải raise NoTrainingDataError")
+        except NoTrainingDataError:
+            leftover = await pool.fetchval(
+                "SELECT COUNT(*) FROM ai_model_params WHERE user_id = $1", no_data_user_id
+            )
+            assert leftover == 0, f"Kỳ vọng không còn hàng ai_model_params, thực tế còn {leftover}"
+            print("Case 3 OK — raise NoTrainingDataError và không để lại hàng ai_model_params (không bị chặn cooldown oan)")
+
     finally:
         # Dọn sạch dữ liệu giả, không để lại rác trong Postgres thật dùng chung
         await pool.execute("DELETE FROM corrections WHERE user_id = $1", test_user_id)
         await pool.execute("DELETE FROM transactions WHERE user_id = $1", test_user_id)
         await pool.execute("DELETE FROM categories WHERE user_id = $1", test_user_id)
         await pool.execute("DELETE FROM ai_model_params WHERE user_id = $1", test_user_id)
+        await pool.execute("DELETE FROM ai_model_params WHERE user_id = $1", no_data_user_id)
         await pool.close()
 
 

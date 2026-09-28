@@ -6,7 +6,7 @@ from app.core.rate_limit import RetrainRateLimitedError, check_retrain_cooldown
 from app.core.security import verify_jwt
 from app.models.retrain import RetrainResponse
 from app.services.ai.model_store import load_model_params
-from app.services.ai.retrain_service import TrainingInProgressError, retrain_user_model
+from app.services.ai.retrain_service import NoTrainingDataError, TrainingInProgressError, retrain_user_model
 
 router = APIRouter()
 
@@ -32,6 +32,11 @@ async def retrain(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Đang huấn luyện mô hình, vui lòng thử lại sau",
+        )
+    except NoTrainingDataError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Chưa có giao dịch nào có danh mục trên máy chủ để huấn luyện. Vui lòng thêm và đồng bộ giao dịch trước.",
         )
 
     model_params = await load_model_params(pool, user_id)

@@ -25,3 +25,12 @@
 | Nhà ở/Thuê nhà | 3/5 | 3/5 |
 | Mua sắm | 3/5 | 3/5 |
 | Lương | 5/5 | 5/5 |
+
+
+## 2. Lỗi retrain khi user chưa có giao dịch nào (phát hiện và sửa trong Ngày 26)
+
+- **Hiện tượng:** gọi `POST /api/v1/retrain` khi user chưa có giao dịch nào có danh mục (chưa có giao dịch, hoặc giao dịch không có danh mục / danh mục đã xoá) → server trả 500; đồng thời user bị chặn 429 trong 1 giờ dù chưa huấn luyện được gì.
+- **Nguyên nhân:** không có dữ liệu thì TF-IDF báo lỗi và không được bắt; hàng giữ chỗ `ai_model_params` do bước khoá tạo ra mang `trained_at` = thời điểm gọi nên kiểm tra cooldown coi như vừa retrain. `.env.example` quy định cooldown chỉ tính giữa 2 lần retrain **thành công**.
+- **Cách sửa:** `retrain_service.py` — nếu không có dữ liệu thì xoá hàng giữ chỗ (chỉ hàng chưa có model) và raise `NoTrainingDataError`; `routers/retrain.py` trả **400** với thông báo tiếng Việt (body `{"error_code": "BAD_REQUEST", "message": "..."}`). User đã có model thì model và `trained_at` được giữ nguyên.
+- **Kiểm chứng:** 2 test mới trong `test_retrain_no_data.py`; `python -m app.services.ai.retrain_service` có thêm Case 3 chạy trên Postgres thật.
+- **Lưu ý cho Android:** `/retrain` có thể trả 400 kèm `message` như trên.
