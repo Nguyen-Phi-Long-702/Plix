@@ -1,0 +1,51 @@
+note,true_category,predicted_category,confidence,is_correct
+đi xe grab tới công ty,Di chuyển,Di chuyển,0.8842,1
+nạp tiền vào ví grab,Di chuyển,Hoá đơn (điện/nước/internet),0.4087,0
+vé xe tết về quê,Di chuyển,Di chuyển,0.8875,1
+thay dầu nhớt xe máy định kỳ,Di chuyển,Di chuyển,0.9968,1
+phí rửa xe cuối tuần,Di chuyển,Di chuyển,0.8920,1
+ăn bún đậu mắm tôm,Ăn uống,Ăn uống,0.8089,1
+uống trà sữa full topping,Ăn uống,Ăn uống,0.7863,1
+đặt cơm văn phòng trưa nay,Ăn uống,Ăn uống,0.7792,1
+ăn tối nhà hàng cuối tuần,Ăn uống,Ăn uống,0.6889,1
+mua bánh sinh nhật,Ăn uống,Nhu yếu phẩm,0.5589,0
+mua nước giặt thái,Nhu yếu phẩm,Nhu yếu phẩm,0.8781,1
+mua giấy vệ sinh cuộn lớn,Nhu yếu phẩm,Nhu yếu phẩm,0.8987,1
+đi chợ mua đồ ăn cả tuần,Nhu yếu phẩm,Nhu yếu phẩm,0.7238,1
+mua bịch tã em bé,Nhu yếu phẩm,Nhu yếu phẩm,0.7259,1
+mua nước tẩy toilet,Nhu yếu phẩm,Nhu yếu phẩm,0.8781,1
+thanh toán tiền điện qua app,Hoá đơn (điện/nước/internet),Hoá đơn (điện/nước/internet),0.9803,1
+gia hạn gói cước internet fpt tháng này,Hoá đơn (điện/nước/internet),Hoá đơn (điện/nước/internet),0.9998,1
+đóng phí sử dụng nước máy,Hoá đơn (điện/nước/internet),Hoá đơn (điện/nước/internet),0.6004,1
+nạp data 4g tháng mới,Hoá đơn (điện/nước/internet),Hoá đơn (điện/nước/internet),0.7983,1
+thanh toán hoá đơn truyền hình cáp tháng 10,Hoá đơn (điện/nước/internet),Hoá đơn (điện/nước/internet),1.0000,1
+mua vé xem đá banh sân nhà,Giải trí,Giải trí,0.9731,1
+đặt phòng karaoke sinh nhật bạn,Giải trí,Nhà ở/Thuê nhà,0.7668,0
+nạp kim cương liên quân,Giải trí,Giải trí,0.2387,1
+mua vé xem hài độc thoại,Giải trí,Giải trí,0.9183,1
+đi chơi công viên giải trí cuối tuần,Giải trí,Giải trí,0.8032,1
+khám sức khoẻ tổng quát định kỳ công ty,Sức khoẻ,Sức khoẻ,0.9942,1
+mua thuốc đau bụng,Sức khoẻ,Sức khoẻ,0.8604,1
+chi phí châm cứu,Sức khoẻ,Sức khoẻ,0.4741,1
+mua kem chống nắng theo toa bác sĩ da liễu,Sức khoẻ,Sức khoẻ,0.5464,1
+tiêm vắc xin ngừa cúm mùa,Sức khoẻ,Sức khoẻ,0.8380,1
+đóng học phí học kỳ mới đại học,Giáo dục,Giáo dục,1.0000,1
+mua giáo trình tiếng nhật,Giáo dục,Giáo dục,0.7953,1
+lệ phí thi lại môn triết,Giáo dục,Giáo dục,0.9969,1
+đăng ký lớp học thêm toán,Giáo dục,Giáo dục,0.9949,1
+in bài tiểu luận ở tiệm photo,Giáo dục,Giáo dục,0.9264,1
+thanh toán tiền nhà tháng 11,Nhà ở/Thuê nhà,Hoá đơn (điện/nước/internet),0.5846,0
+phí gửi xe máy khu trọ,Nhà ở/Thuê nhà,Di chuyển,0.5368,0
+sửa vòi nước bị rò trong nhà,Nhà ở/Thuê nhà,Nhà ở/Thuê nhà,0.6740,1
+đặt cọc thuê căn hộ dịch vụ,Nhà ở/Thuê nhà,Nhà ở/Thuê nhà,0.9996,1
+chi phí sơn lại tường phòng trọ,Nhà ở/Thuê nhà,Nhà ở/Thuê nhà,0.9911,1
+mua nồi chiên không dầu,Mua sắm,Mua sắm,0.6061,1
+mua áo len mùa đông,Mua sắm,Mua sắm,0.6309,1
+săn sale mua đồ điện gia dụng,Mua sắm,Mua sắm,0.7660,1
+mua bàn ủi hơi nước,Mua sắm,Nhu yếu phẩm,0.8262,0
+mua kính râm đi biển,Mua sắm,Nhu yếu phẩm,0.3066,0
+lương tháng 9 công ty chuyển khoản,Lương,Lương,0.9997,1
+nhận thưởng dự án hoàn thành sớm,Lương,Lương,0.9662,1
+lương làm thêm giờ cuối tuần,Lương,Lương,0.9987,1
+thu nhập từ bán hàng online tháng này,Lương,Lương,0.9945,1
+lương chuyển đổi công việc mới,Lương,Lương,0.9945,1
