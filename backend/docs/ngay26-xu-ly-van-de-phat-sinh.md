@@ -34,3 +34,21 @@
 - **Cách sửa:** `retrain_service.py` — nếu không có dữ liệu thì xoá hàng giữ chỗ (chỉ hàng chưa có model) và raise `NoTrainingDataError`; `routers/retrain.py` trả **400** với thông báo tiếng Việt (body `{"error_code": "BAD_REQUEST", "message": "..."}`). User đã có model thì model và `trained_at` được giữ nguyên.
 - **Kiểm chứng:** 2 test mới trong `test_retrain_no_data.py`; `python -m app.services.ai.retrain_service` có thêm Case 3 chạy trên Postgres thật.
 - **Lưu ý cho Android:** `/retrain` có thể trả 400 kèm `message` như trên.
+
+
+## 3. Thời gian huấn luyện lại mô hình (retrain)
+
+- **Cách đo:** `python -m app.services.ai.benchmark_retrain` — 5000 giao dịch giả lập cho 1 user riêng, chạy từ máy cá nhân tới supabase thật.
+- **Giới hạn:** không đo trực tiếp trên Render.
+- **Ngày giờ đo:** 28/09/2026 11:30pm
+
+| Hạng mục | Thời gian (giây) |
+|---|---|
+| 1 lần truy vấn tới Postgres (SELECT 1, trung vị 5 lần) | 0.122 |
+| Chỉ tính toán fit TF-IDF + Naive Bayes (trong bộ nhớ) | 0.043 |
+| `retrain_user_model` (khoá + đọc + fit + lưu) | 1.037 |
+| `load_model_params` sau retrain (router `/retrain` gọi) | 0.311 |
+| Ước tính 1 lần gọi `/retrain` (chưa gồm xác thực JWT) | 1.470 |
+
+- **Mốc tham chiếu:** dưới 3 giây.
+- **Kết luận:** Đạt, không cần tối ưu thêm; giữ nguyên `retrain_service.py`.
