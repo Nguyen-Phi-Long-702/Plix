@@ -44,6 +44,11 @@ public class ErrorMapper {
             return new Result.Error<>(ErrorType.SERVER,
                     serverMessage != null ? serverMessage : "Đang huấn luyện, thử lại sau", null);
         }
+        if (code == 400) {
+            String serverMessage = extractServerMessage(errorBodyJson);
+            return new Result.Error<>(ErrorType.SERVER,
+                    serverMessage != null ? serverMessage : "Yêu cầu không hợp lệ, vui lòng thử lại", null);
+        }
         if (code >= 500) {
             return new Result.Error<>(ErrorType.SERVER, "Máy chủ đang bận, thử lại sau", null);
         }
