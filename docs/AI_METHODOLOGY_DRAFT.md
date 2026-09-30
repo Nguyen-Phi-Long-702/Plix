@@ -1,6 +1,6 @@
 # AI Methodology — bản nháp (phân biệt ML cổ điển và LLM)
 
-> Bản nháp Ngày 25. Chỉ mô tả những gì đã có trong code hoặc đã ghi trong kế hoạch; phần nào chưa làm thì ghi rõ là chưa triển khai.
+> Bản nháp Ngày 25, cập nhật Ngày 27. Chỉ mô tả những gì đã có trong code hoặc đã ghi trong kế hoạch; phần nào chưa làm thì ghi rõ là chưa triển khai.
 
 ## 1. Hai loại kỹ thuật AI trong dự án
 
@@ -41,5 +41,25 @@ Ghi chú kỹ thuật: hiện `/categorize` gọi trực tiếp `NaiveBayesClass
 ## 4. Đo chất lượng
 
 - Chỉ số: accuracy = số ghi chú được dự đoán đúng danh mục / tổng số ghi chú kiểm tra, tính cả tổng thể lẫn theo từng danh mục.
-- Tập kiểm tra: `backend/data/eval_categorization_test.csv` (50 ghi chú mới, không trùng và không chứa nguyên ghi chú nào của seed). Số liệu đo thật: `backend/data/eval_categorization_result.md`.
-- Lưu ý: mỗi danh mục chỉ có ít ghi chú kiểm tra nên tỷ lệ theo danh mục dao động mạnh (chỉ cần sai 1 ghi chú là tỷ lệ đổi nhiều).
+- Các lần đo đã thực hiện (đều gọi thật `POST /api/v1/categorize`; lần đo của Vương gọi API trên Render, lần đo của Long gọi backend chạy local bằng uvicorn với Postgres Supabase thật):
+
+| Lần đo | Seed | Tập kiểm tra (50 ghi chú, 5 ghi chú mỗi danh mục) | Kết quả | Nguồn |
+|---|---|---|---|---|
+| Ngày 25 | 500 dòng | `backend/data/eval_categorization_test.csv` | 40/50 = 80,0% | `backend/data/eval_categorization_result.md` |
+| Ngày 25 | 500 dòng | `backend/data/test_categorization_holdout.csv` | 38/50 = 76,0% | `backend/docs/ngay25-ket-qua-do-chinh-xac.md` |
+| Ngày 26 | 600 dòng (60 dòng mỗi danh mục) | `backend/data/test_categorization_holdout.csv` | 43/50 = 86,0% | `backend/docs/ngay26-xu-ly-van-de-phat-sinh.md` |
+
+- Hai tập kiểm tra là hai tập khác nhau nên 80,0% và 76,0% không so sánh trực tiếp với nhau. Mỗi danh mục chỉ có 5 ghi chú nên chỉ cần sai 1 ghi chú là tỷ lệ theo danh mục đổi 20 điểm phần trăm.
+- Sau khi seed tăng lên 600 dòng, 3 ghi chú của `eval_categorization_test.csv` (`mua nước lau kính`, `đi công viên nước`, `phí quản lý toà nhà`) trùng với ghi chú trong seed (so khớp nguyên ghi chú, bỏ khác biệt chữ hoa, chữ thường và dấu câu), nên tập này chỉ còn hợp lệ cho lần đo trên seed 500 dòng. Với cùng cách so khớp, `test_categorization_holdout.csv` không có ghi chú nào trùng với seed 600 dòng.
+- Thời gian huấn luyện lại: đo bằng `python -m app.services.ai.benchmark_retrain` với 5000 giao dịch giả lập của 1 người dùng, chạy từ máy cá nhân tới Supabase thật (chưa đo trực tiếp trên Render). `retrain_user_model` mất 1,037 giây; ước tính một lần gọi `/retrain` khoảng 1,470 giây (chưa gồm xác thực JWT). Nguồn: `backend/docs/ngay26-xu-ly-van-de-phat-sinh.md`.
+
+## 5. Huấn luyện lại (`/retrain`) và giới hạn tần suất
+
+Code: `backend/app/routers/retrain.py`, `backend/app/services/ai/retrain_service.py`, `backend/app/core/rate_limit.py`.
+
+- Dữ liệu huấn luyện: các giao dịch chưa xoá của người dùng có danh mục chưa xoá trên Postgres (ghi chú → tên danh mục). Model được huấn luyện lại từ đầu trên tập này rồi ghi đè `ai_model_params` của đúng người dùng đó.
+- `training_sample_count` là số dòng `corrections` chưa xoá của người dùng, không phải số giao dịch.
+- Giới hạn tần suất: dựa trên `trained_at` của model, mặc định 3600 giây (biến `RETRAIN_COOLDOWN_SECONDS`). Gọi sớm hơn trả 429 kèm số phút còn phải chờ.
+- Khoá chống chạy đồng thời: cột `is_training`. Khi đang huấn luyện, request thứ hai trả 409.
+- Người dùng chưa có giao dịch nào có danh mục trên máy chủ: trả 400 và không làm thay đổi `trained_at` nên không kích hoạt giới hạn tần suất.
+- Mọi lỗi trả body `{error_code, message}`.
