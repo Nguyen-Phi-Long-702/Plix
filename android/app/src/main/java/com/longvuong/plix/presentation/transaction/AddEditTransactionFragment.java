@@ -11,12 +11,18 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.content.res.ColorStateList;
 
+import com.google.android.material.chip.Chip;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
@@ -68,7 +74,12 @@ public class AddEditTransactionFragment extends Fragment {
     private TextInputLayout inputLayoutNote;
     private TextInputEditText editNote;
     private MaterialButton buttonSave;
-
+    private LinearLayout layoutCategorySuggestion;
+    private ProgressBar progressCategorySuggestion;
+    private Chip chipCategorySuggestion;
+    private ColorStateList defaultChipTextColors;
+    private TextView textCategorySuggestionError;
+    private MaterialButton buttonRetryCategorize;
     private List<CategoryEntity> currentCategoryOptions = new ArrayList<>();
     private boolean formPopulated = false;
     private boolean suppressAmountWatcher = false;
@@ -94,6 +105,7 @@ public class AddEditTransactionFragment extends Fragment {
         setupPaymentMethodField();
         setupNoteField();
         setupSaveButton();
+        setupCategorySuggestion();
 
         viewModel.getFormReady().observe(getViewLifecycleOwner(), ready -> {
             if (Boolean.TRUE.equals(ready)) {
@@ -102,6 +114,7 @@ public class AddEditTransactionFragment extends Fragment {
         });
         viewModel.getFilteredCategories().observe(getViewLifecycleOwner(), this::populateCategoryDropdown);
         viewModel.getSaveState().observe(getViewLifecycleOwner(), this::renderSaveState);
+        viewModel.getCategorySuggestionState().observe(getViewLifecycleOwner(), this::renderCategorySuggestionState);
     }
 
     private void bindViews(View view) {
@@ -117,6 +130,12 @@ public class AddEditTransactionFragment extends Fragment {
         inputLayoutNote = view.findViewById(R.id.inputLayoutNote);
         editNote = view.findViewById(R.id.editNote);
         buttonSave = view.findViewById(R.id.buttonSave);
+        layoutCategorySuggestion = view.findViewById(R.id.layoutCategorySuggestion);
+        progressCategorySuggestion = view.findViewById(R.id.progressCategorySuggestion);
+        chipCategorySuggestion = view.findViewById(R.id.chipCategorySuggestion);
+        defaultChipTextColors = chipCategorySuggestion.getTextColors();
+        textCategorySuggestionError = view.findViewById(R.id.textCategorySuggestionError);
+        buttonRetryCategorize = view.findViewById(R.id.buttonRetryCategorize);
     }
 
     private void setupTypeToggle() {
@@ -319,6 +338,10 @@ public class AddEditTransactionFragment extends Fragment {
                 requireContext(), android.R.layout.simple_dropdown_item_1line, names);
         editCategory.setAdapter(adapter);
 
+        refreshCategoryFieldDisplay();
+    }
+
+    private void refreshCategoryFieldDisplay() {
         String selectedCategoryId = viewModel.getCategoryId();
         String selectedName = "";
         for (CategoryEntity category : currentCategoryOptions) {
@@ -343,7 +366,52 @@ public class AddEditTransactionFragment extends Fragment {
             Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
         }
     }
+    private void setupCategorySuggestion() {
+        buttonRetryCategorize.setOnClickListener(v -> viewModel.retryCategorize());
+        chipCategorySuggestion.setOnClickListener(v -> {
+            viewModel.applySuggestedCategory();
+            refreshCategoryFieldDisplay();
+            inputLayoutCategory.setError(null);
+        });
+    }
 
+    private void renderCategorySuggestionState(UiState<CategorySuggestionUiModel> state) {
+        if (state instanceof UiState.Loading) {
+            layoutCategorySuggestion.setVisibility(View.VISIBLE);
+            progressCategorySuggestion.setVisibility(View.VISIBLE);
+            chipCategorySuggestion.setVisibility(View.GONE);
+            textCategorySuggestionError.setVisibility(View.GONE);
+            buttonRetryCategorize.setVisibility(View.GONE);
+        } else if (state instanceof UiState.Success) {
+            CategorySuggestionUiModel suggestion = ((UiState.Success<CategorySuggestionUiModel>) state).data;
+            layoutCategorySuggestion.setVisibility(View.VISIBLE);
+            progressCategorySuggestion.setVisibility(View.GONE);
+            chipCategorySuggestion.setVisibility(View.VISIBLE);
+            chipCategorySuggestion.setText(suggestion.label);
+            applySuggestionChipStyle(suggestion.lowConfidence);
+            textCategorySuggestionError.setVisibility(View.GONE);
+            buttonRetryCategorize.setVisibility(View.GONE);
+        } else if (state instanceof UiState.Error) {
+            layoutCategorySuggestion.setVisibility(View.VISIBLE);
+            progressCategorySuggestion.setVisibility(View.GONE);
+            chipCategorySuggestion.setVisibility(View.GONE);
+            textCategorySuggestionError.setVisibility(View.VISIBLE);
+            textCategorySuggestionError.setText(((UiState.Error<CategorySuggestionUiModel>) state).message);
+            buttonRetryCategorize.setVisibility(View.VISIBLE);
+        } else {
+            layoutCategorySuggestion.setVisibility(View.GONE); //Bao gồm cả offline: ViewModel trả Empty -> ẩn hẳn khối gợi ý
+        }
+    }
+
+    private void applySuggestionChipStyle(boolean lowConfidence) {
+        chipCategorySuggestion.setClickable(!lowConfidence);
+        chipCategorySuggestion.setFocusable(!lowConfidence);
+        if (lowConfidence) {
+            chipCategorySuggestion.setTextColor(ContextCompat.getColor(requireContext(), R.color.budget_progress_warning));
+        } else {
+            chipCategorySuggestion.setTextColor(defaultChipTextColors);
+        }
+    }
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         View currentFocus = requireActivity().getCurrentFocus();

@@ -27,7 +27,10 @@ import com.longvuong.plix.domain.usecase.budget.BudgetThresholdNotifier;
 import com.longvuong.plix.data.local.dao.GoalDao;
 import com.longvuong.plix.data.repository.GoalRepository;
 import com.longvuong.plix.data.repository.GoalRepositoryImpl;
-
+import com.longvuong.plix.core.auth.AuthManager;
+import com.longvuong.plix.data.remote.api.AiApiService;
+import com.longvuong.plix.data.repository.AiRepository;
+import com.longvuong.plix.data.repository.AiRepositoryImpl;
 @Module
 @InstallIn(SingletonComponent.class)
 public class DataModule {
@@ -90,6 +93,17 @@ public class DataModule {
     @Provides
     @Singleton
     public GoalRepository provideGoalRepository(GoalRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public AiApiService provideAiApiService(AuthManager authManager) {
+        return authManager.getBackendRetrofit().create(AiApiService.class);
+    }
+    @Provides
+    @Singleton
+    public AiRepository provideAiRepository(AiRepositoryImpl impl) {
         return impl;
     }
 }

@@ -14,6 +14,9 @@ import com.longvuong.plix.domain.usecase.transaction.AddTransactionUseCase;
 import com.longvuong.plix.domain.usecase.transaction.UpdateTransactionUseCase;
 import com.longvuong.plix.domain.validation.FormValidator;
 import com.longvuong.plix.presentation.common.UiState;
+import com.longvuong.plix.core.error.ErrorType;
+import com.longvuong.plix.core.error.Result;
+import com.longvuong.plix.data.repository.CategorySuggestion;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,6 +28,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 public class AddEditTransactionViewModelTest {
 
@@ -73,13 +77,18 @@ public class AddEditTransactionViewModelTest {
     }
 
     private AddEditTransactionViewModel createViewModel(Map<String, Object> initialState) {
+        return createViewModel(initialState, new FakeAiRepository());
+    }
+
+    private AddEditTransactionViewModel createViewModel(Map<String, Object> initialState, FakeAiRepository aiRepository) {
         SavedStateHandle savedStateHandle = new SavedStateHandle(initialState);
         AddTransactionUseCase addUseCase = new AddTransactionUseCase(
                 fakeTransactionRepository, formValidator, fakeCheckBudgetThresholdUseCase());
         UpdateTransactionUseCase updateUseCase = new UpdateTransactionUseCase(
                 fakeTransactionRepository, formValidator, fakeCheckBudgetThresholdUseCase());
         return new AddEditTransactionViewModel(savedStateHandle, fakeTransactionRepository,
-                fakeCategoryRepository, addUseCase, updateUseCase, formValidator, authManager);
+                fakeCategoryRepository, addUseCase, updateUseCase, formValidator, authManager,
+                aiRepository);
     }
 
     private com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase fakeCheckBudgetThresholdUseCase() {
@@ -156,5 +165,91 @@ public class AddEditTransactionViewModelTest {
         assertEquals(45000L, fakeTransactionRepository.lastInserted.amount);
         UiState<Void> state = viewModel.getSaveState().getValue();
         assertTrue(state instanceof UiState.Success);
+    }
+    @Test
+    public void categorize_beforeResponseArrives_showsLoading() throws InterruptedException {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.getCategorySuggestionState().observeForever(state -> { });
+
+        viewModel.setNote("cà phê");
+        waitUntil(() -> fakeAiRepository.categorizeCalled, 2000);
+
+        UiState<CategorySuggestionUiModel> state = viewModel.getCategorySuggestionState().getValue();
+        assertTrue(state instanceof UiState.Loading);
+    }
+
+    @Test
+    public void categorize_successResult_showsCategoryLabelWithConfidence() throws InterruptedException {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.getCategorySuggestionState().observeForever(state -> { });
+
+        viewModel.setNote("cà phê");
+        waitUntil(() -> fakeAiRepository.categorizeCalled, 2000);
+        fakeAiRepository.completeCategorize(new Result.Success<>(
+                new CategorySuggestion("sys_an_uong", category("sys_an_uong", "Ăn uống", "expense"), 0.62f)));
+
+        UiState<CategorySuggestionUiModel> state = viewModel.getCategorySuggestionState().getValue();
+        assertTrue(state instanceof UiState.Success);
+        CategorySuggestionUiModel model = ((UiState.Success<CategorySuggestionUiModel>) state).data;
+        assertEquals("Ăn uống · 62%", model.label);
+        assertTrue(!model.lowConfidence);
+    }
+
+    @Test
+    public void categorize_lowConfidenceResult_showsLowConfidenceLabel() throws InterruptedException {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.getCategorySuggestionState().observeForever(state -> { });
+
+        viewModel.setNote("khong biet");
+        waitUntil(() -> fakeAiRepository.categorizeCalled, 2000);
+        fakeAiRepository.completeCategorize(new Result.Success<>(new CategorySuggestion(null, null, 0.10f)));
+
+        UiState<CategorySuggestionUiModel> state = viewModel.getCategorySuggestionState().getValue();
+        assertTrue(state instanceof UiState.Success);
+        CategorySuggestionUiModel model = ((UiState.Success<CategorySuggestionUiModel>) state).data;
+        assertEquals("Độ tin cậy thấp · 10%", model.label);
+        assertTrue(model.lowConfidence);
+    }
+
+    @Test
+    public void categorize_errorResult_showsErrorState() throws InterruptedException {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.getCategorySuggestionState().observeForever(state -> { });
+
+        viewModel.setNote("cà phê");
+        waitUntil(() -> fakeAiRepository.categorizeCalled, 2000);
+        fakeAiRepository.completeCategorize(new Result.Error<>(ErrorType.NETWORK, "Mat ket noi trong luc goi API", null));
+
+        UiState<CategorySuggestionUiModel> state = viewModel.getCategorySuggestionState().getValue();
+        assertTrue(state instanceof UiState.Error);
+        assertEquals("Không lấy được gợi ý, nhập tay", ((UiState.Error<CategorySuggestionUiModel>) state).message);
+    }
+
+    @Test
+    public void connectivityLost_hidesSuggestionBlockEvenIfSuggestionWasShowing() throws InterruptedException {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.getCategorySuggestionState().observeForever(state -> { });
+
+        viewModel.setNote("cà phê");
+        waitUntil(() -> fakeAiRepository.categorizeCalled, 2000);
+        fakeAiRepository.completeCategorize(new Result.Success<>(
+                new CategorySuggestion("sys_an_uong", category("sys_an_uong", "Ăn uống", "expense"), 0.62f)));
+        assertTrue(viewModel.getCategorySuggestionState().getValue() instanceof UiState.Success);
+
+        fakeAiRepository.setConnected(false);
+
+        assertTrue(viewModel.getCategorySuggestionState().getValue() instanceof UiState.Empty);
+    }
+
+    private static void waitUntil(BooleanSupplier condition, long timeoutMs) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (!condition.getAsBoolean() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(20);
+        }
     }
 }

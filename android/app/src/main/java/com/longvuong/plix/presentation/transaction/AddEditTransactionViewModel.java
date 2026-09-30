@@ -12,7 +12,9 @@ import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
+import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.CategoryRepository;
+import com.longvuong.plix.data.repository.CategorySuggestion;
 import com.longvuong.plix.data.repository.TransactionRepository;
 import com.longvuong.plix.domain.usecase.transaction.AddTransactionUseCase;
 import com.longvuong.plix.domain.usecase.transaction.UpdateTransactionUseCase;
@@ -22,6 +24,10 @@ import com.longvuong.plix.presentation.common.UiState;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -38,12 +44,26 @@ public class AddEditTransactionViewModel extends ViewModel {
     private static final String KEY_PAYMENT_METHOD = "draft_payment_method";
     private static final String KEY_NOTE = "draft_note";
     private static final String KEY_LOADED = "draft_loaded";
-
+    private static final long CATEGORIZE_DEBOUNCE_MS = 500;
+    private static final float LOW_CONFIDENCE_THRESHOLD = 0.4f;
     private final SavedStateHandle savedStateHandle;
     private final AddTransactionUseCase addTransactionUseCase;
     private final UpdateTransactionUseCase updateTransactionUseCase;
     private final FormValidator formValidator;
     private final AuthManager authManager;
+    private final AiRepository aiRepository;
+
+    private final ScheduledExecutorService categorizeDebounceExecutor =
+            Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "categorize-debounce");
+                thread.setDaemon(true);
+                return thread;
+            });
+    private ScheduledFuture<?> pendingCategorizeTask;
+    private volatile String lastCategorizedNote;
+    private volatile String suggestedCategoryId;
+    private volatile boolean suggestedCategoryLowConfidence;
+    private final MediatorLiveData<UiState<CategorySuggestionUiModel>> categorySuggestionState = new MediatorLiveData<>();
 
     private final String editingTransactionId;
     private TransactionEntity loadedEntity;
@@ -62,12 +82,14 @@ public class AddEditTransactionViewModel extends ViewModel {
             AddTransactionUseCase addTransactionUseCase,
             UpdateTransactionUseCase updateTransactionUseCase,
             FormValidator formValidator,
-            AuthManager authManager) {
+            AuthManager authManager,
+            AiRepository aiRepository) {
         this.savedStateHandle = savedStateHandle;
         this.addTransactionUseCase = addTransactionUseCase;
         this.updateTransactionUseCase = updateTransactionUseCase;
         this.formValidator = formValidator;
         this.authManager = authManager;
+        this.aiRepository = aiRepository;
 
         this.editingTransactionId = savedStateHandle.get(ARG_TRANSACTION_ID);
 
@@ -83,6 +105,12 @@ public class AddEditTransactionViewModel extends ViewModel {
         filteredCategories.addSource(categoryRepository.getActiveCategories(), categories -> {
             allCategories = categories != null ? categories : new ArrayList<>();
             updateFilteredCategories();
+        });
+        categorySuggestionState.setValue(new UiState.Empty<>());
+        categorySuggestionState.addSource(aiRepository.observeConnectivity(), isConnected -> {
+            if (Boolean.FALSE.equals(isConnected)) {
+                hideSuggestionDueToOffline(); //mất mạng -> ẩn hẳn khối gợi ý
+            }
         });
     }
 
@@ -215,6 +243,7 @@ public class AddEditTransactionViewModel extends ViewModel {
 
     public void setNote(String note) {
         savedStateHandle.set(KEY_NOTE, note);
+        scheduleCategorize(note);
     }
 
     public Result<Void> validateAmountField(long amount) {
@@ -235,6 +264,8 @@ public class AddEditTransactionViewModel extends ViewModel {
             saveState.setValue(new UiState.Error<>("Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại"));
             return;
         }
+
+        String predictedCategoryIdSnapshot = suggestedCategoryId;
 
         TransactionEntity entity;
         if (isEditMode() && loadedEntity != null) {
@@ -258,8 +289,16 @@ public class AddEditTransactionViewModel extends ViewModel {
         entity.paymentMethod = getPaymentMethod();
         entity.note = getNote();
 
+        String transactionIdForCorrection = entity.id;
+        String correctedCategoryIdForCorrection = entity.categoryId;
+
         saveState.setValue(new UiState.Loading<>());
-        RepositoryCallback<Void> callback = result -> saveState.setValue(toUiState(result));
+        RepositoryCallback<Void> callback = result -> {
+            saveState.setValue(toUiState(result));
+            if (result instanceof Result.Success) {
+                reportCorrectionIfNeeded(transactionIdForCorrection, predictedCategoryIdSnapshot, correctedCategoryIdForCorrection);
+            }
+        };
 
         if (isEditMode()) {
             updateTransactionUseCase.execute(entity, callback);
@@ -268,6 +307,117 @@ public class AddEditTransactionViewModel extends ViewModel {
         }
     }
 
+    private void reportCorrectionIfNeeded(String transactionId, @Nullable String predictedCategoryId, @Nullable String correctedCategoryId) {
+        if (predictedCategoryId == null || correctedCategoryId == null || predictedCategoryId.equals(correctedCategoryId)) {
+            return; //Không có gợi ý AI cho note hiện tại, hoặc user không sửa lại gợi ý -> không phải correction
+        }
+        aiRepository.submitCorrection(transactionId, predictedCategoryId, correctedCategoryId, result -> {
+            //Best-effort, không cập nhật UI: đây là tín hiệu học cho AI, không ảnh hưởng tới giao dịch đã lưu thành công
+        });
+    }
+    public LiveData<UiState<CategorySuggestionUiModel>> getCategorySuggestionState() {
+        return categorySuggestionState;
+    }
+
+    public void retryCategorize() {
+        if (lastCategorizedNote == null) {
+            return;
+        }
+        if (isOffline()) {
+            hideSuggestionDueToOffline(); //AI-10: đang mất mạng thì không thử gọi lại API
+            return;
+        }
+        requestCategorize(lastCategorizedNote);
+    }
+    public void applySuggestedCategory() {
+        String id = suggestedCategoryId;
+        if (id == null || suggestedCategoryLowConfidence) {
+            return; //độ tin cậy thấp -> không tự động điền danh mục, để user chọn tay
+        }
+        String currentType = getType();
+        for (CategoryEntity category : allCategories) {
+            if (category.id.equals(id) && category.type.equals(currentType)) {
+                setCategoryId(id);
+                break;
+            }
+        }
+    }
+
+    private void scheduleCategorize(String note) {
+        if (pendingCategorizeTask != null) {
+            pendingCategorizeTask.cancel(false);
+        }
+        aiRepository.cancelPendingCategorize();
+
+        String trimmed = note == null ? "" : note.trim();
+        if (trimmed.isEmpty()) {
+            suggestedCategoryId = null;
+            suggestedCategoryLowConfidence = false;
+            categorySuggestionState.postValue(new UiState.Empty<>());
+            return;
+        }
+        if (isOffline()) {
+            hideSuggestionDueToOffline(); //AI-10: mất mạng -> không gọi AI, không lỗi, cho nhập tay
+            return;
+        }
+        pendingCategorizeTask = categorizeDebounceExecutor.schedule(
+                () -> requestCategorize(trimmed), CATEGORIZE_DEBOUNCE_MS, TimeUnit.MILLISECONDS);
+    }
+
+    private boolean isOffline() {
+        return Boolean.FALSE.equals(aiRepository.observeConnectivity().getValue());
+    }
+
+    private void hideSuggestionDueToOffline() {
+        if (pendingCategorizeTask != null) {
+            pendingCategorizeTask.cancel(false);
+        }
+        aiRepository.cancelPendingCategorize();
+        suggestedCategoryId = null;
+        suggestedCategoryLowConfidence = false;
+        categorySuggestionState.setValue(new UiState.Empty<>());
+    }
+
+    private void requestCategorize(String note) {
+        lastCategorizedNote = note;
+        suggestedCategoryId = null;
+        suggestedCategoryLowConfidence = false;
+        categorySuggestionState.postValue(new UiState.Loading<>());
+        aiRepository.categorize(note, result -> {
+            if (!note.equals(lastCategorizedNote)) {
+                return; //Đã có note mới hơn được gõ trong lúc chờ phản hồi - bỏ kết quả cũ này
+            }
+            if (result instanceof Result.Success) {
+                CategorySuggestion suggestion = ((Result.Success<CategorySuggestion>) result).data;
+                boolean lowConfidence = suggestion.confidence < LOW_CONFIDENCE_THRESHOLD;
+                suggestedCategoryId = suggestion.categoryId; //vẫn giữ id gốc để báo correction nếu user tự chọn khác, dù không auto-fill
+                suggestedCategoryLowConfidence = lowConfidence;
+                categorySuggestionState.postValue(new UiState.Success<>(
+                        new CategorySuggestionUiModel(formatSuggestionLabel(suggestion, lowConfidence), lowConfidence)));
+            } else {
+                categorySuggestionState.postValue(new UiState.Error<>("Không lấy được gợi ý, nhập tay"));
+            }
+        });
+    }
+
+    private String formatSuggestionLabel(CategorySuggestion suggestion, boolean lowConfidence) {
+        int confidencePercent = Math.round(suggestion.confidence * 100);
+        if (lowConfidence) {
+            return "Độ tin cậy thấp · " + confidencePercent + "%"; //confidence<0.4 -> đổi hẳn nhãn, không hiện tên category đoán được
+        }
+        String categoryLabel = suggestion.category != null ? suggestion.category.name : "Danh mục không xác định";
+        return categoryLabel + " · " + confidencePercent + "%";
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        if (pendingCategorizeTask != null) {
+            pendingCategorizeTask.cancel(false);
+        }
+        aiRepository.cancelPendingCategorize();
+        categorizeDebounceExecutor.shutdownNow();
+    }
     private UiState<Void> toUiState(Result<Void> result) {
         if (result instanceof Result.Success) {
             return new UiState.Success<>(null);
