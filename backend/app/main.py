@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 import asyncpg
 from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -9,7 +10,7 @@ from app.core.config import DATABASE_URL
 from app.core.middleware import MaxBodySizeMiddleware
 from app.core.security import verify_jwt
 from app.models.error_response import ErrorResponse
-from app.routers import categories, health
+from app.routers import categories, categorize, correction, health, retrain
 
 
 API_PREFIX = "/api/v1"
@@ -20,7 +21,9 @@ _ERROR_CODE_BY_STATUS = {
     403: "FORBIDDEN",
     404: "NOT_FOUND",
     405: "METHOD_NOT_ALLOWED",
+    409: "CONFLICT",
     413: "PAYLOAD_TOO_LARGE",
+    429: "TOO_MANY_REQUESTS",
     422: "VALIDATION_ERROR",
     500: "INTERNAL_ERROR",
 }
@@ -44,9 +47,16 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     body = ErrorResponse(error_code=error_code, message=str(exc.detail))
     return JSONResponse(status_code=exc.status_code, content=body.model_dump())
 
-app.include_router(categories.router, prefix=API_PREFIX)
-app.include_router(health.router, prefix=API_PREFIX)
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    body = ErrorResponse(error_code="VALIDATION_ERROR", message=str(exc.errors()))
+    return JSONResponse(status_code=422, content=body.model_dump())
 
+app.include_router(categories.router, prefix=API_PREFIX)
+app.include_router(categorize.router, prefix=API_PREFIX)
+app.include_router(correction.router, prefix=API_PREFIX)
+app.include_router(health.router, prefix=API_PREFIX)
+app.include_router(retrain.router, prefix=API_PREFIX)
 
 @app.get(f"{API_PREFIX}/whoami")
 def whoami(user_id: str = Depends(verify_jwt)):
