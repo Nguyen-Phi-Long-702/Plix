@@ -38,4 +38,10 @@ public interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE is_deleted = 0")
     List<TransactionEntity> getAllOnce();
+
+    @Query("SELECT * FROM transactions WHERE sync_status = 'pending' AND user_id = :userId ORDER BY updated_at ASC")
+    List<TransactionEntity> getPendingSync(String userId);
+
+    @Query("UPDATE transactions SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
+    void markSynced(String id, long updatedAt);
 }
