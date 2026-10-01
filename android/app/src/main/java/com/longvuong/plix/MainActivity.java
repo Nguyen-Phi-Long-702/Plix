@@ -16,10 +16,13 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.graphics.Insets;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.core.notification.NotificationHelper;
+import com.longvuong.plix.presentation.sync.SyncIndicatorMenuProvider;
+import com.longvuong.plix.presentation.sync.SyncStatusViewModel;
 
 import javax.inject.Inject;
 
@@ -49,16 +52,17 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.nav_host_fragment);
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         navController = navHostFragment.getNavController();
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         NavigationUI.setupWithNavController(bottomNavigationView, navController);
 
         //Chỉ hiện thanh điều hướng dưới khi đang ở trong mainGraph
-        navController.addOnDestinationChangedListener((controller, destination, arguments) ->
-                updateBottomNavVisibility(destination));
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> updateBottomNavVisibility(destination));
+
+        SyncStatusViewModel syncStatusViewModel = new ViewModelProvider(this).get(SyncStatusViewModel.class);
+        addMenuProvider(new SyncIndicatorMenuProvider(this, syncStatusViewModel, navController));
 
         authManager.getSessionExpiredLiveData().observe(this, expired -> {
             if (Boolean.TRUE.equals(expired)) {

@@ -12,4 +12,7 @@
     <color name="budget_progress_normal">#2C9463</color>
     <color name="budget_progress_warning">#DE9C2E</color>
     <color name="budget_progress_danger">#D64545</color>
+    <color name="sync_idle">#B3FFFFFF</color>
+    <color name="sync_syncing">@color/white</color>
+    <color name="sync_error">@color/budget_progress_warning</color>
 </resources>
