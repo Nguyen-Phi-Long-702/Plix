@@ -15,6 +15,7 @@ public class SyncPreferences {
     private static final String PREF_NAME = "sync_prefs";
     private static final String KEY_LAST_HEALTH_CALL_AT = "last_health_call_at";
     private static final String KEY_LAST_ERROR = "last_error";
+    private static final String KEY_PULL_CURSOR_PREFIX = "pull_cursor_";
 
     private final SharedPreferences prefs;
 
@@ -42,5 +43,18 @@ public class SyncPreferences {
 
     public void clearLastError() {
         prefs.edit().remove(KEY_LAST_ERROR).apply();
+    }
+
+    //Con trỏ kéo dữ liệu theo từng (user_id, bảng). Chưa có thì trả về 0 để kéo toàn bộ
+    public long getPullCursor(String userId, String table) {
+        return prefs.getLong(pullCursorKey(userId, table), 0L);
+    }
+
+    public void setPullCursor(String userId, String table, long cursor) {
+        prefs.edit().putLong(pullCursorKey(userId, table), cursor).apply();
+    }
+
+    private static String pullCursorKey(String userId, String table) {
+        return KEY_PULL_CURSOR_PREFIX + userId + "_" + table;
     }
 }
