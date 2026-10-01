@@ -11,6 +11,7 @@ import androidx.work.WorkManager;
 import com.longvuong.plix.data.sync.SyncPreferences;
 import com.longvuong.plix.data.sync.SyncStatus;
 import com.longvuong.plix.data.sync.SyncWorker;
+import com.longvuong.plix.data.sync.SyncScheduler;
 
 import java.util.List;
 
@@ -22,11 +23,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 @Singleton
 public class SyncRepositoryImpl implements SyncRepository {
     private final SyncPreferences syncPreferences;
+    private final SyncScheduler syncScheduler;
     private final LiveData<SyncStatus> syncStatus;
 
     @Inject
-    public SyncRepositoryImpl(@ApplicationContext Context context, SyncPreferences syncPreferences) {
+    public SyncRepositoryImpl(@ApplicationContext Context context, SyncPreferences syncPreferences, SyncScheduler syncScheduler) {
         this.syncPreferences = syncPreferences;
+        this.syncScheduler = syncScheduler;
         LiveData<List<WorkInfo>> workInfos = WorkManager.getInstance(context).getWorkInfosByTagLiveData(SyncWorker.TAG);
         this.syncStatus = Transformations.map(workInfos, infos -> toSyncStatus(infos));
     }
@@ -40,6 +43,11 @@ public class SyncRepositoryImpl implements SyncRepository {
     @Override
     public String getLastSyncError() {
         return syncPreferences.getLastError();
+    }
+
+    @Override
+    public void requestSync() {
+        syncScheduler.requestSync();
     }
 
     private SyncStatus toSyncStatus(@Nullable List<WorkInfo> workInfos) {

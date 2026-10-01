@@ -10,4 +10,6 @@ public interface SyncRepository {
 
     @Nullable
     String getLastSyncError();
+
+    void requestSync();
 }
