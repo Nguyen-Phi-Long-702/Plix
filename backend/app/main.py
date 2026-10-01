@@ -10,7 +10,7 @@ from app.core.config import DATABASE_URL
 from app.core.middleware import MaxBodySizeMiddleware
 from app.core.security import verify_jwt
 from app.models.error_response import ErrorResponse
-from app.routers import categories, categorize, correction, health, retrain
+from app.routers import categories, categorize, correction, health, retrain, sync
 
 
 API_PREFIX = "/api/v1"
@@ -57,6 +57,7 @@ app.include_router(categorize.router, prefix=API_PREFIX)
 app.include_router(correction.router, prefix=API_PREFIX)
 app.include_router(health.router, prefix=API_PREFIX)
 app.include_router(retrain.router, prefix=API_PREFIX)
+app.include_router(sync.router, prefix=API_PREFIX)
 
 @app.get(f"{API_PREFIX}/whoami")
 def whoami(user_id: str = Depends(verify_jwt)):
