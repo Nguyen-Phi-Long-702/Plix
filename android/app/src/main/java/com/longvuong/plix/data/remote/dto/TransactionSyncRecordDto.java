@@ -62,6 +62,26 @@ public class TransactionSyncRecordDto {
         this.isDeleted = entity.isDeleted;
     }
 
+    //Máy chủ không gửi user_id về, user_id lấy từ phiên đăng nhập hiện tại, bản ghi vừa kéo về coi như đã đồng bộ
+    public TransactionEntity toEntity(String userId) {
+        TransactionEntity entity = new TransactionEntity();
+        entity.id = id;
+        entity.userId = userId;
+        entity.amount = amount;
+        entity.type = type;
+        entity.categoryId = categoryId;
+        entity.note = note;
+        entity.paymentMethod = paymentMethod;
+        entity.occurredAt = occurredAt;
+        entity.isRecurring = isRecurring;
+        entity.recurrenceRule = recurrenceRule;
+        entity.recurrenceParentId = recurrenceParentId;
+        entity.updatedAt = updatedAt;
+        entity.syncStatus = "synced";
+        entity.isDeleted = isDeleted;
+        return entity;
+    }
+
     //Cố ý không có user_id và sync_status: server tự gán user_id từ JWT, sync_status chỉ tồn tại ở room
     public static TransactionSyncRecordDto fromEntity(TransactionEntity entity) {
         return new TransactionSyncRecordDto(entity);
