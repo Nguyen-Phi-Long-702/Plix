@@ -25,6 +25,7 @@ import java.util.Set;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
+import retrofit2.HttpException;
 import retrofit2.Response;
 import timber.log.Timber;
 
@@ -42,17 +43,19 @@ public class SyncWorker extends Worker {
     private final SyncApiService syncApiService;
     private final HealthApiService healthApiService;
     private final SyncPreferences syncPreferences;
+    private final TransactionPuller transactionPuller;
 
     @AssistedInject
     public SyncWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters,
                       TransactionDao transactionDao, AuthManager authManager, SyncApiService syncApiService,
-                      HealthApiService healthApiService, SyncPreferences syncPreferences) {
+                      HealthApiService healthApiService, SyncPreferences syncPreferences, TransactionPuller transactionPuller) {
         super(context, workerParameters);
         this.transactionDao = transactionDao;
         this.authManager = authManager;
         this.syncApiService = syncApiService;
         this.healthApiService = healthApiService;
         this.syncPreferences = syncPreferences;
+        this.transactionPuller = transactionPuller;
     }
 
     @NonNull
@@ -64,27 +67,30 @@ public class SyncWorker extends Worker {
             return Result.success();
         }
         try {
+            warmUpIfNeeded(System.currentTimeMillis()); //lượt nào cũng có request thật (đẩy hoặc kéo) nên luôn kiểm tra warm-up
             List<TransactionEntity> pending = transactionDao.getPendingSync(userId);
-            if (pending.isEmpty()) {
-                syncPreferences.clearLastError();
-                return Result.success();
+            if (!pending.isEmpty()) {
+                Timber.d("Bắt đầu đồng bộ %d giao dịch đang chờ", pending.size());
+                for (int from = 0; from < pending.size(); from += BATCH_SIZE) {
+                    if (isStopped()) {
+                        return Result.retry(); //bị thay thế bởi lượt debounce mới, kết quả này sẽ bị bỏ qua
+                    }
+                    int to = Math.min(from + BATCH_SIZE, pending.size());
+                    Result batchFailure = pushBatch(pending.subList(from, to));
+                    if (batchFailure != null) {
+                        return batchFailure;
+                    }
+                }
             }
-            warmUpIfNeeded(System.currentTimeMillis()); //chỉ warm-up khi thật sự có dữ liệu cần đẩy (tránh gọi /health vô ích mỗi 15 phút)
-            Timber.d("Bắt đầu đồng bộ %d giao dịch đang chờ", pending.size());
-
-            for (int from = 0; from < pending.size(); from += BATCH_SIZE) {
-                if (isStopped()) {
-                    return Result.retry(); //bị thay thế bởi lượt debounce mới, kết quả này sẽ bị bỏ qua
-                }
-                int to = Math.min(from + BATCH_SIZE, pending.size());
-                Result batchFailure = pushBatch(pending.subList(from, to));
-                if (batchFailure != null) {
-                    return batchFailure;
-                }
+            transactionPuller.pull(userId, this::isStopped); //đẩy xong mới kéo về
+            if (isStopped()) {
+                return Result.retry(); //bị huỷ giữa chừng khi đang kéo, kết quả này sẽ bị bỏ qua
             }
             syncPreferences.clearLastError();
             Timber.d("Đồng bộ xong");
             return Result.success();
+        } catch (HttpException e) {
+            return handleHttpFailure(e.code()); //máy chủ trả mã lỗi khi kéo dữ liệu về
         } catch (IOException e) {
             if (isStopped()) {
                 return Result.retry(); //bị huỷ do lượt debounce mới thay thế, không phải lỗi thật
