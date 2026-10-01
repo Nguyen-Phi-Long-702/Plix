@@ -8,6 +8,7 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.data.local.dao.TransactionDao;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
+import com.longvuong.plix.data.sync.SyncScheduler;
 
 import java.util.List;
 
@@ -19,12 +20,14 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     private final TransactionDao transactionDao;
     private final AppExecutors appExecutors;
     private final ErrorMapper errorMapper;
+    private final SyncScheduler syncScheduler;
 
     @Inject
-    public TransactionRepositoryImpl(TransactionDao transactionDao, AppExecutors appExecutors, ErrorMapper errorMapper) {
+    public TransactionRepositoryImpl(TransactionDao transactionDao, AppExecutors appExecutors, ErrorMapper errorMapper, SyncScheduler syncScheduler) {
         this.transactionDao = transactionDao;
         this.appExecutors = appExecutors;
         this.errorMapper = errorMapper;
+        this.syncScheduler = syncScheduler;
     }
 
     @Override
@@ -42,6 +45,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
         appExecutors.diskIO().execute(() -> {
             try {
                 transactionDao.insert(entity);
+                syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {
                 notifyError(callback, e);
@@ -54,6 +58,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
         appExecutors.diskIO().execute(() -> {
             try {
                 transactionDao.update(entity);
+                syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {
                 notifyError(callback, e);
