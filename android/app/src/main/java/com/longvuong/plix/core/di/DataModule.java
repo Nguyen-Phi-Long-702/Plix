@@ -29,8 +29,11 @@ import com.longvuong.plix.data.repository.GoalRepository;
 import com.longvuong.plix.data.repository.GoalRepositoryImpl;
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.data.remote.api.AiApiService;
+import com.longvuong.plix.data.remote.api.HealthApiService;
+import com.longvuong.plix.data.remote.api.SyncApiService;
 import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.AiRepositoryImpl;
+
 @Module
 @InstallIn(SingletonComponent.class)
 public class DataModule {
@@ -105,5 +108,17 @@ public class DataModule {
     @Singleton
     public AiRepository provideAiRepository(AiRepositoryImpl impl) {
         return impl;
+    }
+
+    @Provides
+    @Singleton
+    public SyncApiService provideSyncApiService(AuthManager authManager) {
+        return authManager.getBackendRetrofit().create(SyncApiService.class);
+    }
+
+    @Provides
+    @Singleton
+    public HealthApiService provideHealthApiService(AuthManager authManager) {
+        return authManager.getBackendRetrofit().create(HealthApiService.class);
     }
 }
