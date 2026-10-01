@@ -8,6 +8,8 @@ import com.longvuong.plix.data.local.AppDatabase;
 import com.longvuong.plix.data.local.dao.TransactionDao;
 import com.longvuong.plix.data.repository.TransactionRepository;
 import com.longvuong.plix.data.repository.TransactionRepositoryImpl;
+import com.longvuong.plix.data.repository.SyncRepository;
+import com.longvuong.plix.data.repository.SyncRepositoryImpl;
 
 import javax.inject.Singleton;
 
@@ -120,5 +122,11 @@ public class DataModule {
     @Singleton
     public HealthApiService provideHealthApiService(AuthManager authManager) {
         return authManager.getBackendRetrofit().create(HealthApiService.class);
+    }
+
+    @Provides
+    @Singleton
+    public SyncRepository provideSyncRepository(SyncRepositoryImpl impl) {
+        return impl;
     }
 }
