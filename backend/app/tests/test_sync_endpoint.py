@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from app.core.config import MAX_PULL_LIMIT
 from app.core.security import verify_jwt
 from app.routers import sync
 
@@ -74,3 +75,107 @@ def test_push_rejects_record_missing_required_field():
 
     assert response.status_code == 422
     assert pool.upsert_args == []
+
+
+class FakePullPool:
+    """Giả lập asyncpg.Pool cho endpoint pull: fetch trả sẵn các dòng, fetchval
+    trả sẵn has_more; ghi lại tham số của lần fetch để kiểm tra user_id/limit."""
+
+    def __init__(self, rows=None, has_more=False):
+        self.rows = rows or []
+        self.has_more = has_more
+        self.fetch_args = []
+
+    async def fetch(self, query, *args):
+        self.fetch_args.append(args)
+        return self.rows
+
+    async def fetchval(self, query, *args):
+        return self.has_more
+
+
+def _pull_row(**overrides):
+    row = {
+        "id": "tx-1",
+        "updated_at": 2000,
+        "is_deleted": False,
+        "amount": 50000,
+        "type": "expense",
+        "category_id": None,
+        "note": "",
+        "payment_method": None,
+        "occurred_at": 1790000000000,
+        "is_recurring": False,
+        "recurrence_rule": None,
+        "recurrence_parent_id": None,
+    }
+    row.update(overrides)
+    return row
+
+
+def test_pull_returns_records_and_has_more_in_contract_shape():
+    pool = FakePullPool(rows=[_pull_row()], has_more=True)
+    client = TestClient(_build_test_app(pool))
+
+    response = client.get("/api/v1/sync/transactions/pull?since=0")
+
+    assert response.status_code == 200
+    assert response.json() == {"records": [_pull_row()], "has_more": True}
+
+
+def test_pull_returns_tombstone_records():
+    pool = FakePullPool(rows=[_pull_row(is_deleted=True)])
+    client = TestClient(_build_test_app(pool))
+
+    response = client.get("/api/v1/sync/transactions/pull?since=0")
+
+    assert response.status_code == 200
+    assert response.json()["records"][0]["is_deleted"] is True
+
+
+def test_pull_uses_jwt_user_id_and_ignores_user_id_sent_by_client():
+    pool = FakePullPool()
+    client = TestClient(_build_test_app(pool))
+
+    response = client.get("/api/v1/sync/transactions/pull?since=0&user_id=hacker")
+
+    assert response.status_code == 200
+    assert pool.fetch_args[0][0] == "user-1"
+
+
+def test_pull_default_limit_is_500_capped_by_max_pull_limit():
+    pool = FakePullPool()
+    client = TestClient(_build_test_app(pool))
+
+    client.get("/api/v1/sync/transactions/pull?since=1500")
+
+    assert pool.fetch_args[0] == ("user-1", 1500, min(500, MAX_PULL_LIMIT))
+
+
+def test_pull_limit_larger_than_max_pull_limit_is_capped():
+    pool = FakePullPool()
+    client = TestClient(_build_test_app(pool))
+
+    client.get(f"/api/v1/sync/transactions/pull?since=0&limit={MAX_PULL_LIMIT + 1000}")
+
+    assert pool.fetch_args[0][2] == MAX_PULL_LIMIT
+
+
+def test_pull_rejects_missing_since():
+    pool = FakePullPool()
+    client = TestClient(_build_test_app(pool))
+
+    response = client.get("/api/v1/sync/transactions/pull")
+
+    assert response.status_code == 422
+    assert pool.fetch_args == []
+
+
+def test_pull_rejects_limit_below_one():
+    pool = FakePullPool()
+    client = TestClient(_build_test_app(pool))
+
+    response = client.get("/api/v1/sync/transactions/pull?since=0&limit=0")
+
+    assert response.status_code == 422
+    assert pool.fetch_args == []
