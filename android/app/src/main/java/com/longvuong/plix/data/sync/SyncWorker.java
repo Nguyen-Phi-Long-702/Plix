@@ -8,20 +8,9 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.longvuong.plix.core.auth.AuthManager;
-import com.longvuong.plix.data.local.dao.TransactionDao;
-import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.remote.api.HealthApiService;
-import com.longvuong.plix.data.remote.api.SyncApiService;
-import com.longvuong.plix.data.remote.dto.SyncPushResponseDto;
-import com.longvuong.plix.data.remote.dto.SyncPushRequestDto;
-import com.longvuong.plix.data.remote.dto.TransactionSyncRecordDto;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
@@ -35,29 +24,25 @@ public class SyncWorker extends Worker {
     public static final String UNIQUE_PERIODIC_WORK_NAME = "sync_periodic_worker";
     public static final String UNIQUE_ONE_TIME_WORK_NAME = "sync_one_time_worker";
 
-    private static final int BATCH_SIZE = 50;
     private static final long WARM_UP_INTERVAL_MILLIS = 10 * 60 * 1000L;
 
-    private final TransactionDao transactionDao;
     private final AuthManager authManager;
-    private final SyncApiService syncApiService;
     private final HealthApiService healthApiService;
     private final SyncPreferences syncPreferences;
     private final TransactionSyncableEntity transactionTable;
+    private final SyncPusher syncPusher;
     private final SyncPuller syncPuller;
 
     @AssistedInject
     public SyncWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters,
-                      TransactionDao transactionDao, AuthManager authManager, SyncApiService syncApiService,
-                      HealthApiService healthApiService, SyncPreferences syncPreferences,
-                      TransactionSyncableEntity transactionTable, SyncPuller syncPuller) {
+                      AuthManager authManager, HealthApiService healthApiService, SyncPreferences syncPreferences,
+                      TransactionSyncableEntity transactionTable, SyncPusher syncPusher, SyncPuller syncPuller) {
         super(context, workerParameters);
-        this.transactionDao = transactionDao;
         this.authManager = authManager;
-        this.syncApiService = syncApiService;
         this.healthApiService = healthApiService;
         this.syncPreferences = syncPreferences;
         this.transactionTable = transactionTable;
+        this.syncPusher = syncPusher;
         this.syncPuller = syncPuller;
     }
 
@@ -71,19 +56,9 @@ public class SyncWorker extends Worker {
         }
         try {
             warmUpIfNeeded(System.currentTimeMillis()); //lượt nào cũng có request thật (đẩy hoặc kéo) nên luôn kiểm tra warm-up
-            List<TransactionEntity> pending = transactionDao.getPendingSync(userId);
-            if (!pending.isEmpty()) {
-                Timber.d("Bắt đầu đồng bộ %d giao dịch đang chờ", pending.size());
-                for (int from = 0; from < pending.size(); from += BATCH_SIZE) {
-                    if (isStopped()) {
-                        return Result.retry(); //bị thay thế bởi lượt debounce mới, kết quả này sẽ bị bỏ qua
-                    }
-                    int to = Math.min(from + BATCH_SIZE, pending.size());
-                    Result batchFailure = pushBatch(pending.subList(from, to));
-                    if (batchFailure != null) {
-                        return batchFailure;
-                    }
-                }
+            syncPusher.push(transactionTable, userId, this::isStopped);
+            if (isStopped()) {
+                return Result.retry(); //bị thay thế bởi lượt debounce mới, kết quả này sẽ bị bỏ qua
             }
             syncPuller.pull(transactionTable, userId, this::isStopped); //đẩy xong mới kéo về
             if (isStopped()) {
@@ -93,7 +68,7 @@ public class SyncWorker extends Worker {
             Timber.d("Đồng bộ xong");
             return Result.success();
         } catch (HttpException e) {
-            return handleHttpFailure(e.code()); //máy chủ trả mã lỗi khi kéo dữ liệu về
+            return handleHttpFailure(e.code()); //máy chủ trả mã lỗi khi đẩy hoặc kéo dữ liệu
         } catch (IOException e) {
             if (isStopped()) {
                 return Result.retry(); //bị huỷ do lượt debounce mới thay thế, không phải lỗi thật
@@ -108,37 +83,8 @@ public class SyncWorker extends Worker {
         }
     }
 
-    //Trả về null nếu đợt này thành công, ngược lại trả về kết quả để doWork() dừng và trả ra ngoài
-    private Result pushBatch(List<TransactionEntity> batch) throws IOException {
-        List<TransactionSyncRecordDto> records = new ArrayList<>();
-        for (TransactionEntity entity : batch) {
-            records.add(TransactionSyncRecordDto.fromEntity(entity));
-        }
-        Response<SyncPushResponseDto> response =
-                syncApiService.pushTransactions(new SyncPushRequestDto<>(records)).execute();
-        if (!response.isSuccessful() || response.body() == null) {
-            return handleHttpFailure(response.code());
-        }
-        markSynced(batch, response.body());
-        return null;
-    }
-
-    private void markSynced(List<TransactionEntity> batch, SyncPushResponseDto body) {
-        Set<String> upsertedIds = new HashSet<>(
-                body.upsertedIds != null ? body.upsertedIds : Collections.<String>emptyList());
-        for (TransactionEntity entity : batch) {
-            if (upsertedIds.contains(entity.id)) {
-                //chỉ đánh dấu khi updated_at không đổi, nếu người dùng vừa sửa thì giữ pending cho lượt sau
-                transactionDao.markSynced(entity.id, entity.updatedAt);
-            }
-        }
-        if (body.rejected != null && !body.rejected.isEmpty()) {
-            Timber.w("Máy chủ từ chối %d giao dịch, giữ nguyên trạng thái pending", body.rejected.size());
-        }
-    }
-
     private Result handleHttpFailure(int code) {
-        Timber.w("Đẩy giao dịch thất bại, mã HTTP %d", code);
+        Timber.w("Đồng bộ thất bại, mã HTTP %d", code);
         syncPreferences.saveLastError("Máy chủ phản hồi lỗi (mã " + code + ")");
         boolean retryable = code >= 500 || code == 429 || code == 408;
         return retryable ? Result.retry() : Result.failure();
