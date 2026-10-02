@@ -1,8 +1,9 @@
 package com.longvuong.plix.data.remote.api;
 
+import com.longvuong.plix.data.remote.dto.SyncPullResponseDto;
+import com.longvuong.plix.data.remote.dto.SyncPushRequestDto;
 import com.longvuong.plix.data.remote.dto.SyncPushResponseDto;
-import com.longvuong.plix.data.remote.dto.TransactionPullResponseDto;
-import com.longvuong.plix.data.remote.dto.TransactionPushRequestDto;
+import com.longvuong.plix.data.remote.dto.TransactionSyncRecordDto;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -12,8 +13,8 @@ import retrofit2.http.Query;
 
 public interface SyncApiService {
     @POST("api/v1/sync/transactions/push")
-    Call<SyncPushResponseDto> pushTransactions(@Body TransactionPushRequestDto body);
+    Call<SyncPushResponseDto> pushTransactions(@Body SyncPushRequestDto<TransactionSyncRecordDto> body);
 
     @GET("api/v1/sync/transactions/pull")
-    Call<TransactionPullResponseDto> pullTransactions(@Query("since") long since, @Query("limit") int limit);
+    Call<SyncPullResponseDto<TransactionSyncRecordDto>> pullTransactions(@Query("since") long since, @Query("limit") int limit);
 }

@@ -13,7 +13,7 @@ import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.remote.api.HealthApiService;
 import com.longvuong.plix.data.remote.api.SyncApiService;
 import com.longvuong.plix.data.remote.dto.SyncPushResponseDto;
-import com.longvuong.plix.data.remote.dto.TransactionPushRequestDto;
+import com.longvuong.plix.data.remote.dto.SyncPushRequestDto;
 import com.longvuong.plix.data.remote.dto.TransactionSyncRecordDto;
 
 import java.io.IOException;
@@ -43,19 +43,22 @@ public class SyncWorker extends Worker {
     private final SyncApiService syncApiService;
     private final HealthApiService healthApiService;
     private final SyncPreferences syncPreferences;
-    private final TransactionPuller transactionPuller;
+    private final TransactionSyncableEntity transactionTable;
+    private final SyncPuller syncPuller;
 
     @AssistedInject
     public SyncWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters,
                       TransactionDao transactionDao, AuthManager authManager, SyncApiService syncApiService,
-                      HealthApiService healthApiService, SyncPreferences syncPreferences, TransactionPuller transactionPuller) {
+                      HealthApiService healthApiService, SyncPreferences syncPreferences,
+                      TransactionSyncableEntity transactionTable, SyncPuller syncPuller) {
         super(context, workerParameters);
         this.transactionDao = transactionDao;
         this.authManager = authManager;
         this.syncApiService = syncApiService;
         this.healthApiService = healthApiService;
         this.syncPreferences = syncPreferences;
-        this.transactionPuller = transactionPuller;
+        this.transactionTable = transactionTable;
+        this.syncPuller = syncPuller;
     }
 
     @NonNull
@@ -82,7 +85,7 @@ public class SyncWorker extends Worker {
                     }
                 }
             }
-            transactionPuller.pull(userId, this::isStopped); //đẩy xong mới kéo về
+            syncPuller.pull(transactionTable, userId, this::isStopped); //đẩy xong mới kéo về
             if (isStopped()) {
                 return Result.retry(); //bị huỷ giữa chừng khi đang kéo, kết quả này sẽ bị bỏ qua
             }
@@ -112,7 +115,7 @@ public class SyncWorker extends Worker {
             records.add(TransactionSyncRecordDto.fromEntity(entity));
         }
         Response<SyncPushResponseDto> response =
-                syncApiService.pushTransactions(new TransactionPushRequestDto(records)).execute();
+                syncApiService.pushTransactions(new SyncPushRequestDto<>(records)).execute();
         if (!response.isSuccessful() || response.body() == null) {
             return handleHttpFailure(response.code());
         }

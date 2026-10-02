@@ -7,7 +7,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.longvuong.plix.data.local.entity.TransactionEntity;
-import com.longvuong.plix.data.remote.dto.TransactionPullResponseDto;
+import com.longvuong.plix.data.remote.dto.SyncPullResponseDto;
 import com.longvuong.plix.data.remote.dto.TransactionSyncRecordDto;
 
 import org.junit.Before;
@@ -21,23 +21,25 @@ import java.util.List;
 
 import retrofit2.Response;
 
-public class TransactionPullerTest {
+public class SyncPullerTest {
     private static final String USER_ID = "user-1";
     private static final long FIRST_UPDATED_AT = 1000L;
 
     private FakeTransactionDao fakeTransactionDao;
     private long savedCursor;
     private int applyCount;
-    private TransactionPuller.BatchApplier recordingApplier;
+    private TransactionSyncableEntity table;
+    private SyncPuller.BatchApplier<TransactionSyncRecordDto> recordingApplier;
 
     @Before
     public void setUp() {
         fakeTransactionDao = new FakeTransactionDao();
+        table = new TransactionSyncableEntity(fakeTransactionDao, null); //không gọi api nên không cần SyncApiService
         savedCursor = 0L;
         applyCount = 0;
         //Ghi bản ghi vào Room rồi mới lưu con trỏ
         recordingApplier = (records, newCursor) -> {
-            TransactionPuller.upsertBatch(fakeTransactionDao, records, USER_ID);
+            SyncPuller.upsertBatch(table, records, USER_ID);
             savedCursor = newCursor;
             applyCount++;
         };
@@ -72,12 +74,12 @@ public class TransactionPullerTest {
         return records;
     }
 
-    private Response<TransactionPullResponseDto> page(List<TransactionSyncRecordDto> records, boolean hasMore) {
-        return Response.success(new TransactionPullResponseDto(records, hasMore));
+    private Response<SyncPullResponseDto<TransactionSyncRecordDto>> page(List<TransactionSyncRecordDto> records, boolean hasMore) {
+        return Response.success(new SyncPullResponseDto<>(records, hasMore));
     }
 
     //Máy chủ giả: dữ liệu đã sắp tăng dần theo updated_at, lọc >= since, cắt theo limit, has_more = còn bản ghi có updated_at > max(updated_at của lô này)
-    private static class FakePullServer implements TransactionPuller.PageFetcher {
+    private static class FakePullServer implements SyncPuller.PageFetcher<TransactionSyncRecordDto> {
         private final List<TransactionSyncRecordDto> data;
         final List<Long> sinceValues = new ArrayList<>();
 
@@ -86,7 +88,7 @@ public class TransactionPullerTest {
         }
 
         @Override
-        public Response<TransactionPullResponseDto> fetch(long since, int limit) {
+        public Response<SyncPullResponseDto<TransactionSyncRecordDto>> fetch(long since, int limit) {
             sinceValues.add(since);
             List<TransactionSyncRecordDto> matching = new ArrayList<>();
             for (TransactionSyncRecordDto record : data) {
@@ -105,15 +107,15 @@ public class TransactionPullerTest {
                     hasMore = true;
                 }
             }
-            return Response.success(new TransactionPullResponseDto(page, hasMore));
+            return Response.success(new SyncPullResponseDto<>(page, hasMore));
         }
     }
 
 
     @Test
     public void pullAll_emptyFirstResponse_appliesNothingAndKeepsCursor() throws IOException {
-        TransactionPuller.PageFetcher fetcher = (since, limit) -> page(Collections.<TransactionSyncRecordDto>emptyList(), false);
-        TransactionPuller.pullAll(fetcher, 0L, () -> false, recordingApplier);
+        SyncPuller.PageFetcher<TransactionSyncRecordDto> fetcher = (since, limit) -> page(Collections.<TransactionSyncRecordDto>emptyList(), false);
+        SyncPuller.pullAll(table, fetcher, 0L, () -> false, recordingApplier);
         assertEquals(0, applyCount);
         assertEquals(0L, savedCursor);
     }
@@ -121,7 +123,7 @@ public class TransactionPullerTest {
     @Test
     public void pullAll_singleBatchWithoutMore_appliesOnceAndSavesMaxUpdatedAt() throws IOException {
         FakePullServer server = new FakePullServer(distinctRecords(3));
-        TransactionPuller.pullAll(server, 0L, () -> false, recordingApplier);
+        SyncPuller.pullAll(table, server, 0L, () -> false, recordingApplier);
         assertEquals(1, server.sinceValues.size());
         assertEquals(1, applyCount);
         assertEquals(FIRST_UPDATED_AT + 2, savedCursor);
@@ -131,7 +133,7 @@ public class TransactionPullerTest {
     @Test
     public void pullAll_moreThan500Records_loopsWithNewCursorUntilAllPulled() throws IOException {
         FakePullServer server = new FakePullServer(distinctRecords(1200));
-        TransactionPuller.pullAll(server, 0L, () -> false, recordingApplier);
+        SyncPuller.pullAll(table, server, 0L, () -> false, recordingApplier);
         //lần 1 since=0, lần 2 since=max của lô 1 (1000+499), lần 3 since=max của lô 2 (1000+998)
         assertEquals(Arrays.asList(0L, 1499L, 1998L), server.sinceValues);
         assertEquals(3, applyCount);
@@ -147,14 +149,14 @@ public class TransactionPullerTest {
         }
         final int[] fetchCount = {0};
         //Máy chủ lỗi: luôn trả đúng 500 bản ghi đầu và has_more=true -> nếu không có safety guard sẽ lặp vô hạn
-        TransactionPuller.PageFetcher stuckServer = (since, limit) -> {
+        SyncPuller.PageFetcher<TransactionSyncRecordDto> stuckServer = (since, limit) -> {
             fetchCount[0]++;
             if (fetchCount[0] > 10) {
                 throw new AssertionError("Vòng lặp không dừng: safety guard không hoạt động");
             }
             return page(new ArrayList<>(sameTimeRecords.subList(0, limit)), true);
         };
-        TransactionPuller.pullAll(stuckServer, 0L, () -> false, recordingApplier);
+        SyncPuller.pullAll(table, stuckServer, 0L, () -> false, recordingApplier);
         assertEquals(2, fetchCount[0]); //lần 2 phát hiện trùng lô lần 1 thì dừng
         assertEquals(1, applyCount); //lô trùng không ghi lại
         assertEquals(5000L, savedCursor);
@@ -165,14 +167,14 @@ public class TransactionPullerTest {
     public void pullAll_networkErrorOnSecondCall_keepsCursorOfFirstBatch() {
         List<TransactionSyncRecordDto> firstPage = distinctRecords(3);
         final int[] fetchCount = {0};
-        TransactionPuller.PageFetcher flakyServer = (since, limit) -> {
+        SyncPuller.PageFetcher<TransactionSyncRecordDto> flakyServer = (since, limit) -> {
             fetchCount[0]++;
             if (fetchCount[0] == 1) {
                 return page(firstPage, true);
             }
             throw new IOException("mất mạng giữa chừng");
         };
-        assertThrows(IOException.class, () -> TransactionPuller.pullAll(flakyServer, 0L, () -> false, recordingApplier));
+        assertThrows(IOException.class, () -> SyncPuller.pullAll(table, flakyServer, 0L, () -> false, recordingApplier));
         assertEquals(1, applyCount);
         assertEquals(FIRST_UPDATED_AT + 2, savedCursor); //giữ nguyên ở lần thành công gần nhất
     }
@@ -181,28 +183,28 @@ public class TransactionPullerTest {
     public void pullAll_applyFailsOnSecondBatch_cursorStaysAtFirstBatch() {
         FakePullServer server = new FakePullServer(distinctRecords(1200));
         final int[] applyCalls = {0};
-        TransactionPuller.BatchApplier failingOnSecond = (records, newCursor) -> {
+        SyncPuller.BatchApplier<TransactionSyncRecordDto> failingOnSecond = (records, newCursor) -> {
             applyCalls[0]++;
             if (applyCalls[0] == 2) {
                 throw new IllegalStateException("ghi Room thất bại");
             }
             recordingApplier.apply(records, newCursor);
         };
-        assertThrows(IllegalStateException.class, () -> TransactionPuller.pullAll(server, 0L, () -> false, failingOnSecond));
+        assertThrows(IllegalStateException.class, () -> SyncPuller.pullAll(table, server, 0L, () -> false, failingOnSecond));
         assertEquals(1499L, savedCursor); //con trỏ lô 1, không tiến lên lô 2
     }
 
     @Test
     public void pullAll_shouldStopAlreadyTrue_doesNotCallApi() throws IOException {
         FakePullServer server = new FakePullServer(distinctRecords(3));
-        TransactionPuller.pullAll(server, 0L, () -> true, recordingApplier);
+        SyncPuller.pullAll(table, server, 0L, () -> true, recordingApplier);
         assertTrue(server.sinceValues.isEmpty());
         assertEquals(0, applyCount);
     }
 
     @Test
     public void upsertBatch_unknownRecord_insertsAsSyncedForCurrentUser() {
-        TransactionPuller.upsertBatch(fakeTransactionDao, Collections.singletonList(record("t1", 2000L, 500L, false)), USER_ID);
+        SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 2000L, 500L, false)), USER_ID);
         TransactionEntity saved = fakeTransactionDao.getById("t1");
         assertNotNull(saved);
         assertEquals(USER_ID, saved.userId);
@@ -214,7 +216,7 @@ public class TransactionPullerTest {
     @Test
     public void upsertBatch_incomingNewer_overwritesExisting() {
         fakeTransactionDao.insert(entity("t1", 2000L, "synced", 500L));
-        TransactionPuller.upsertBatch(fakeTransactionDao, Collections.singletonList(record("t1", 3000L, 900L, false)), USER_ID);
+        SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 3000L, 900L, false)), USER_ID);
         TransactionEntity saved = fakeTransactionDao.getById("t1");
         assertEquals(900L, saved.amount);
         assertEquals(3000L, saved.updatedAt);
@@ -223,21 +225,21 @@ public class TransactionPullerTest {
     @Test
     public void upsertBatch_sameUpdatedAt_keepsExisting() {
         fakeTransactionDao.insert(entity("t1", 2000L, "synced", 500L));
-        TransactionPuller.upsertBatch(fakeTransactionDao, Collections.singletonList(record("t1", 2000L, 900L, false)), USER_ID);
+        SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 2000L, 900L, false)), USER_ID);
         assertEquals(500L, fakeTransactionDao.getById("t1").amount);
     }
 
     @Test
     public void upsertBatch_incomingOlder_keepsExisting() {
         fakeTransactionDao.insert(entity("t1", 2000L, "synced", 500L));
-        TransactionPuller.upsertBatch(fakeTransactionDao, Collections.singletonList(record("t1", 1500L, 900L, false)), USER_ID);
+        SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 1500L, 900L, false)), USER_ID);
         assertEquals(500L, fakeTransactionDao.getById("t1").amount);
     }
 
     @Test
     public void upsertBatch_incomingTombstoneNewer_marksDeletedLocally() {
         fakeTransactionDao.insert(entity("t1", 2000L, "synced", 500L));
-        TransactionPuller.upsertBatch(fakeTransactionDao, Collections.singletonList(record("t1", 3000L, 500L, true)), USER_ID);
+        SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 3000L, 500L, true)), USER_ID);
         assertTrue(fakeTransactionDao.getById("t1").isDeleted);
         assertTrue(fakeTransactionDao.getAllOnce().isEmpty());
     }
@@ -245,7 +247,7 @@ public class TransactionPullerTest {
     @Test
     public void upsertBatch_localPendingNewerThanIncoming_staysPendingAndUnchanged() {
         fakeTransactionDao.insert(entity("t1", 5000L, "pending", 500L));
-        TransactionPuller.upsertBatch(fakeTransactionDao, Collections.singletonList(record("t1", 4000L, 900L, false)), USER_ID);
+        SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 4000L, 900L, false)), USER_ID);
         TransactionEntity saved = fakeTransactionDao.getById("t1");
         assertEquals("pending", saved.syncStatus);
         assertEquals(500L, saved.amount);
