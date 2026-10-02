@@ -2,7 +2,7 @@ from typing import List
 
 import asyncpg
 
-from app.models.sync import RejectedRecord, SyncPushResponse, TransactionSyncRecord
+from app.models.sync import RejectedRecord, SyncPullResponse, SyncPushResponse, TransactionSyncRecord
 
 # Upsert 1 giao dịch theo id. Quy tắc last-write-wins (Master Plan Mục 18.3):
 # chỉ ghi đè khi incoming.updated_at LỚN HƠN HẲN bản đang lưu (so sánh `<`
@@ -83,3 +83,48 @@ async def push_transactions(
             rejected.append(RejectedRecord(id=record.id, reason="forbidden"))
 
     return SyncPushResponse(upserted_ids=upserted_ids, rejected=rejected)
+
+
+
+_PULL_TRANSACTIONS_SQL = """
+SELECT id, updated_at, is_deleted, amount, type, category_id, note,
+       payment_method, occurred_at, is_recurring, recurrence_rule,
+       recurrence_parent_id
+FROM transactions
+WHERE user_id = $1 AND updated_at >= $2
+ORDER BY updated_at ASC, id ASC
+LIMIT $3
+"""
+
+# has_more (Sync Payload Schema, mục 4): true nếu còn bản ghi có updated_at
+# LỚN HƠN updated_at lớn nhất của batch vừa trả về.
+_HAS_MORE_TRANSACTIONS_SQL = """
+SELECT EXISTS (
+    SELECT 1 FROM transactions
+    WHERE user_id = $1 AND updated_at > $2
+)
+"""
+
+
+async def pull_transactions(
+    pool: asyncpg.Pool,
+    user_id: str,
+    since: int,
+    limit: int,
+) -> SyncPullResponse[TransactionSyncRecord]:
+    """Trả tối đa `limit` giao dịch của user có updated_at >= since (kể cả
+    tombstone), sắp xếp tăng dần theo updated_at, kèm cờ has_more.
+    `user_id` luôn lấy từ JWT (do router truyền vào)."""
+    rows = await pool.fetch(_PULL_TRANSACTIONS_SQL, user_id, since, limit)
+    records = [TransactionSyncRecord(**dict(row)) for row in rows]
+
+    if not records:
+        return SyncPullResponse[TransactionSyncRecord](records=[], has_more=False)
+
+    max_updated_at = records[-1].updated_at
+    has_more = await pool.fetchval(
+        _HAS_MORE_TRANSACTIONS_SQL, user_id, max_updated_at
+    )
+    return SyncPullResponse[TransactionSyncRecord](
+        records=records, has_more=has_more
+    )
