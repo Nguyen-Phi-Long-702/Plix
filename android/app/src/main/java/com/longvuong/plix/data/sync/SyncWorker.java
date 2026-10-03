@@ -8,9 +8,13 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.longvuong.plix.core.auth.AuthManager;
+import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.remote.api.HealthApiService;
+import com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
@@ -29,21 +33,24 @@ public class SyncWorker extends Worker {
     private final AuthManager authManager;
     private final HealthApiService healthApiService;
     private final SyncPreferences syncPreferences;
-    private final TransactionSyncableEntity transactionTable;
+    private final SyncTables syncTables;
     private final SyncPusher syncPusher;
     private final SyncPuller syncPuller;
+    private final CheckBudgetThresholdUseCase checkBudgetThresholdUseCase;
 
     @AssistedInject
     public SyncWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters,
                       AuthManager authManager, HealthApiService healthApiService, SyncPreferences syncPreferences,
-                      TransactionSyncableEntity transactionTable, SyncPusher syncPusher, SyncPuller syncPuller) {
+                      SyncTables syncTables, SyncPusher syncPusher, SyncPuller syncPuller,
+                      CheckBudgetThresholdUseCase checkBudgetThresholdUseCase) {
         super(context, workerParameters);
         this.authManager = authManager;
         this.healthApiService = healthApiService;
         this.syncPreferences = syncPreferences;
-        this.transactionTable = transactionTable;
+        this.syncTables = syncTables;
         this.syncPusher = syncPusher;
         this.syncPuller = syncPuller;
+        this.checkBudgetThresholdUseCase = checkBudgetThresholdUseCase;
     }
 
     @NonNull
@@ -56,11 +63,17 @@ public class SyncWorker extends Worker {
         }
         try {
             warmUpIfNeeded(System.currentTimeMillis()); //lượt nào cũng có request thật (đẩy hoặc kéo) nên luôn kiểm tra warm-up
-            syncPusher.push(transactionTable, userId, this::isStopped);
+            pushAllTables(userId);
             if (isStopped()) {
                 return Result.retry(); //bị thay thế bởi lượt debounce mới, kết quả này sẽ bị bỏ qua
             }
-            syncPuller.pull(transactionTable, userId, this::isStopped); //đẩy xong mới kéo về
+            List<EntityChange<TransactionEntity>> pulledTransactions = new ArrayList<>();
+            try {
+                pullAllTables(userId, pulledTransactions); //đẩy xong cả 5 bảng mới kéo về
+            } finally {
+                //Giao dịch đã ghi vào Room thì phải kiểm tra ngưỡng, kể cả khi lượt kéo bị dừng hoặc lỗi giữa chừng (con trỏ đã tiến qua các lô đó)
+                checkBudgetThresholdAfterPull(pulledTransactions);
+            }
             if (isStopped()) {
                 return Result.retry(); //bị huỷ giữa chừng khi đang kéo, kết quả này sẽ bị bỏ qua
             }
@@ -81,6 +94,47 @@ public class SyncWorker extends Worker {
             syncPreferences.saveLastError("Đã xảy ra lỗi không xác định");
             return Result.failure();
         }
+    }
+
+    //Đẩy lần lượt theo thứ tự cố định của SyncTables
+    private void pushAllTables(String userId) throws IOException {
+        for (SyncableEntity<?, ?> table : syncTables.inSyncOrder()) {
+            if (isStopped()) {
+                return;
+            }
+            syncPusher.push(table, userId, this::isStopped);
+        }
+    }
+
+    //Kéo lần lượt cùng thứ tự; mỗi bảng có con trỏ riêng (khoá theo tên bảng trong SyncPreferences)
+    //Chỉ bảng giao dịch cần ghi nhận thay đổi để kiểm tra ngưỡng ngân sách
+    private void pullAllTables(String userId, List<EntityChange<TransactionEntity>> pulledTransactions) throws IOException {
+        TransactionSyncableEntity transactionTable = syncTables.transactions();
+        for (SyncableEntity<?, ?> table : syncTables.inSyncOrder()) {
+            if (isStopped()) {
+                return;
+            }
+            if (table == transactionTable) {
+                syncPuller.pull(transactionTable, userId, this::isStopped, pulledTransactions);
+            } else {
+                syncPuller.pull(table, userId, this::isStopped);
+            }
+        }
+    }
+
+    private void checkBudgetThresholdAfterPull(List<EntityChange<TransactionEntity>> pulledTransactions) {
+        if (pulledTransactions.isEmpty()) {
+            return;
+        }
+        List<TransactionEntity> oldVersions = new ArrayList<>();
+        List<TransactionEntity> newVersions = new ArrayList<>();
+        for (EntityChange<TransactionEntity> change : pulledTransactions) {
+            newVersions.add(change.after);
+            if (change.before != null) {
+                oldVersions.add(change.before);
+            }
+        }
+        checkBudgetThresholdUseCase.checkAfterPull(oldVersions, newVersions);
     }
 
     private Result handleHttpFailure(int code) {
