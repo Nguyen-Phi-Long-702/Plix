@@ -23,4 +23,10 @@ public interface GoalDao {
 
     @Query("SELECT * FROM goals WHERE is_deleted = 0 ORDER BY deadline ASC")
     LiveData<List<GoalEntity>> getActiveGoals();
+
+    @Query("SELECT * FROM goals WHERE sync_status = 'pending' AND user_id = :userId ORDER BY updated_at ASC")
+    List<GoalEntity> getPendingSync(String userId);
+
+    @Query("UPDATE goals SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
+    void markSynced(String id, long updatedAt);
 }

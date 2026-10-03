@@ -12,7 +12,6 @@ import java.util.List;
 
 @Dao
 public interface CategoryDao {
-
     @Insert
     void insert(CategoryEntity entity);
 
@@ -31,4 +30,10 @@ public interface CategoryDao {
     @Query("SELECT * FROM categories WHERE user_id IS NULL AND is_deleted = 0 " +
             "AND name = :name AND type = :type LIMIT 1")
     CategoryEntity findSystemCategoryByNameAndType(String name, String type);
+
+    @Query("SELECT * FROM categories WHERE sync_status = 'pending' AND user_id = :userId ORDER BY updated_at ASC")
+    List<CategoryEntity> getPendingSync(String userId);
+
+    @Query("UPDATE categories SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
+    void markSynced(String id, long updatedAt);
 }

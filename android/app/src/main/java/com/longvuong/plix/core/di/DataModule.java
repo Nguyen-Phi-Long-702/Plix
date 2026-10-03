@@ -35,6 +35,7 @@ import com.longvuong.plix.data.remote.api.HealthApiService;
 import com.longvuong.plix.data.remote.api.SyncApiService;
 import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.AiRepositoryImpl;
+import com.longvuong.plix.data.local.dao.CorrectionDao;
 
 @Module
 @InstallIn(SingletonComponent.class)
@@ -93,6 +94,12 @@ public class DataModule {
     @Singleton
     public GoalDao provideGoalDao(AppDatabase appDatabase) {
         return appDatabase.goalDao();
+    }
+
+    @Provides
+    @Singleton
+    public CorrectionDao provideCorrectionDao(AppDatabase appDatabase) {
+        return appDatabase.correctionDao();
     }
 
     @Provides
