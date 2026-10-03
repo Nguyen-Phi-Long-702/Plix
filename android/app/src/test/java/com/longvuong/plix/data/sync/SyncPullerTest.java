@@ -3,6 +3,7 @@ package com.longvuong.plix.data.sync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -252,5 +253,29 @@ public class SyncPullerTest {
         assertEquals("pending", saved.syncStatus);
         assertEquals(500L, saved.amount);
         assertFalse(saved.isDeleted);
+    }
+
+    @Test
+    public void upsertBatch_unknownRecord_reportsInsertedChangeWithoutBefore() {
+        List<EntityChange<TransactionEntity>> changes = SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 2000L, 500L, false)), USER_ID);
+        assertEquals(1, changes.size());
+        assertNull(changes.get(0).before);
+        assertEquals(500L, changes.get(0).after.amount);
+    }
+
+    @Test
+    public void upsertBatch_incomingNewer_reportsChangeWithOldAndNewVersion() {
+        fakeTransactionDao.insert(entity("t1", 2000L, "synced", 500L));
+        List<EntityChange<TransactionEntity>> changes = SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 3000L, 900L, false)), USER_ID);
+        assertEquals(1, changes.size());
+        assertEquals(500L, changes.get(0).before.amount);
+        assertEquals(900L, changes.get(0).after.amount);
+    }
+
+    @Test
+    public void upsertBatch_incomingNotNewer_reportsNoChange() {
+        fakeTransactionDao.insert(entity("t1", 2000L, "synced", 500L));
+        assertTrue(SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 2000L, 900L, false)), USER_ID).isEmpty());
+        assertTrue(SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 1500L, 900L, false)), USER_ID).isEmpty());
     }
 }
