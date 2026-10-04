@@ -39,7 +39,15 @@ public class BudgetRepositoryImpl implements BudgetRepository {
     public void insert(BudgetEntity entity, RepositoryCallback<Void> callback) {
         appExecutors.diskIO().execute(() -> {
             try {
-                budgetDao.insert(entity);
+                BudgetEntity deletedWithSameKey = entity.categoryId != null
+                        ? budgetDao.findDeletedCategoryBudget(entity.userId, entity.period, entity.categoryId) : null;
+                if (deletedWithSameKey != null) {
+                    //Dòng cũ chỉ xoá mềm nên vẫn chiếm khoá duy nhất (user, kỳ, danh mục): dùng lại đúng dòng đó (cùng id) thay vì thêm dòng mới
+                    entity.id = deletedWithSameKey.id;
+                    budgetDao.update(entity);
+                } else {
+                    budgetDao.insert(entity);
+                }
                 syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {

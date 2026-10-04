@@ -3,6 +3,7 @@ package com.longvuong.plix.data.local;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -283,6 +284,27 @@ public class AppDatabaseTest {
         List<GoalEntity> afterDelete = getOrAwaitValue(database.goalDao().getActiveGoals());
         assertEquals(0, afterDelete.size());
         assertNotNull(database.goalDao().getById("goal-soft-delete"));
+    }
+
+    @Test
+    public void budget_findDeletedCategoryBudget_returnsOnlySoftDeletedRowWithSameKey() {
+        BudgetEntity entity = new BudgetEntity();
+        entity.id = "budget-deleted";
+        entity.userId = "user-1";
+        entity.period = "2026-10";
+        entity.categoryId = "sys_an_uong";
+        entity.limitAmount = 3000000;
+        entity.thresholdPercent = 80;
+        entity.updatedAt = 1735500000000L;
+        entity.syncStatus = "pending";
+        entity.isDeleted = true;
+        database.budgetDao().insert(entity);
+
+        BudgetEntity found = database.budgetDao().findDeletedCategoryBudget("user-1", "2026-10", "sys_an_uong");
+        assertNotNull(found);
+        assertEquals("budget-deleted", found.id);
+        assertNull(database.budgetDao().findCategoryBudgetByUserAndPeriod("user-1", "2026-10", "sys_an_uong"));
+        assertNull(database.budgetDao().findDeletedCategoryBudget("user-1", "2026-11", "sys_an_uong"));
     }
 
     private <T> T getOrAwaitValue(LiveData<T> liveData) throws InterruptedException {
