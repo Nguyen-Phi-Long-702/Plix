@@ -10,6 +10,8 @@ import com.longvuong.plix.data.repository.TransactionRepository;
 import com.longvuong.plix.data.repository.TransactionRepositoryImpl;
 import com.longvuong.plix.data.repository.SyncRepository;
 import com.longvuong.plix.data.repository.SyncRepositoryImpl;
+import com.longvuong.plix.data.repository.LogoutRepository;
+import com.longvuong.plix.data.repository.LogoutRepositoryImpl;
 
 import javax.inject.Singleton;
 
@@ -134,6 +136,12 @@ public class DataModule {
     @Provides
     @Singleton
     public SyncRepository provideSyncRepository(SyncRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public LogoutRepository provideLogoutRepository(LogoutRepositoryImpl impl) {
         return impl;
     }
 }
