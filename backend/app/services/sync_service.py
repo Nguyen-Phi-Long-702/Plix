@@ -3,6 +3,7 @@ from typing import Dict, List, Tuple, Type
 
 import asyncpg
 
+from app.models.category import CategoryOut
 from app.models.sync import (
     BudgetSyncRecord,
     CategorySyncRecord,
@@ -15,6 +16,7 @@ from app.models.sync import (
     SyncTable,
     TransactionSyncRecord,
 )
+from app.services.category_service import validate_category_write
 
 
 @dataclass(frozen=True)
@@ -138,6 +140,22 @@ SYNC_TABLES: Dict[SyncTable, SyncTableSpec] = {
     )
 }
 
+async def _can_write_category(
+    pool: asyncpg.Pool, user_id: str, record: CategorySyncRecord
+) -> bool:
+    """Gọi lại validate_category_write (đã có sẵn trong category_service.py) cho 1 category trong batch.
+
+    Payload push không có user_id (Sync Payload Schema, mục 1), nên hàm validate
+    phải được đưa CHỦ SỞ HỮU của bản ghi đích: nếu id đã có trong Postgres thì đó
+    là user_id đang lưu (NULL = category hệ thống, hoặc của user khác); nếu id
+    chưa có thì bản ghi sẽ được tạo mới cho chính user đang đăng nhập."""
+    existing = await pool.fetchrow(
+        SYNC_TABLES[SyncTable.categories].owner_sql, record.id
+    )
+    owner_id = user_id if existing is None else existing["user_id"]
+    target = CategoryOut(**record.model_dump(), user_id=owner_id)
+    return validate_category_write(target, user_id)
+
 
 async def push_records(
     pool: asyncpg.Pool,
@@ -161,6 +179,13 @@ async def push_records(
     rejected: List[RejectedRecord] = []
 
     for record in records:
+        # Bảng categories: bản ghi không hợp lệ (category hệ thống / của user
+        # khác) bị bỏ qua TRƯỚC khi chạm vào upsert, không làm fail cả batch.
+        if table is SyncTable.categories and not await _can_write_category(
+            pool, user_id, record
+        ):
+            rejected.append(RejectedRecord(id=record.id, reason="forbidden"))
+            continue
         written_id = await pool.fetchval(
             spec.upsert_sql,
             record.id,
