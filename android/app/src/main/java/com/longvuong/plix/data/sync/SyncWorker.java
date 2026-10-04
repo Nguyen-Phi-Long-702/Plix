@@ -39,12 +39,14 @@ public class SyncWorker extends Worker {
     private final SyncPuller syncPuller;
     private final CheckBudgetThresholdUseCase checkBudgetThresholdUseCase;
     private final DeletedCategoryNotice deletedCategoryNotice;
+    private final SyncLock syncLock;
 
     @AssistedInject
     public SyncWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters,
                       AuthManager authManager, HealthApiService healthApiService, SyncPreferences syncPreferences,
                       SyncTables syncTables, SyncPusher syncPusher, SyncPuller syncPuller,
-                      CheckBudgetThresholdUseCase checkBudgetThresholdUseCase, DeletedCategoryNotice deletedCategoryNotice) {
+                      CheckBudgetThresholdUseCase checkBudgetThresholdUseCase, DeletedCategoryNotice deletedCategoryNotice,
+                      SyncLock syncLock) {
         super(context, workerParameters);
         this.authManager = authManager;
         this.healthApiService = healthApiService;
@@ -54,11 +56,21 @@ public class SyncWorker extends Worker {
         this.syncPuller = syncPuller;
         this.checkBudgetThresholdUseCase = checkBudgetThresholdUseCase;
         this.deletedCategoryNotice = deletedCategoryNotice;
+        this.syncLock = syncLock;
     }
 
     @NonNull
     @Override
     public Result doWork() {
+        syncLock.lock(); //đăng xuất sẽ chờ ở đây tới khi lượt chạy này kết thúc, tránh xoá dữ liệu giữa chừng
+        try {
+            return doWorkLocked();
+        } finally {
+            syncLock.unlock();
+        }
+    }
+
+    private Result doWorkLocked() {
         String userId = authManager.getCurrentUserId();
         if (userId == null) {
             Timber.d("Chưa có phiên đăng nhập trong bộ nhớ, bỏ qua lượt đồng bộ");
