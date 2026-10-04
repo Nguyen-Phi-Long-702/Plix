@@ -32,4 +32,8 @@ public class SyncTables {
     public TransactionSyncableEntity transactions() {
         return transactions;
     }
+
+    public CategorySyncableEntity categories() {
+        return categories;
+    }
 }

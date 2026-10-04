@@ -8,6 +8,7 @@ import androidx.lifecycle.Transformations;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import com.longvuong.plix.data.sync.DeletedCategoryNotice;
 import com.longvuong.plix.data.sync.SyncPreferences;
 import com.longvuong.plix.data.sync.SyncStatus;
 import com.longvuong.plix.data.sync.SyncWorker;
@@ -24,12 +25,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 public class SyncRepositoryImpl implements SyncRepository {
     private final SyncPreferences syncPreferences;
     private final SyncScheduler syncScheduler;
+    private final DeletedCategoryNotice deletedCategoryNotice;
     private final LiveData<SyncStatus> syncStatus;
 
     @Inject
-    public SyncRepositoryImpl(@ApplicationContext Context context, SyncPreferences syncPreferences, SyncScheduler syncScheduler) {
+    public SyncRepositoryImpl(@ApplicationContext Context context, SyncPreferences syncPreferences, SyncScheduler syncScheduler, DeletedCategoryNotice deletedCategoryNotice) {
         this.syncPreferences = syncPreferences;
         this.syncScheduler = syncScheduler;
+        this.deletedCategoryNotice = deletedCategoryNotice;
         LiveData<List<WorkInfo>> workInfos = WorkManager.getInstance(context).getWorkInfosByTagLiveData(SyncWorker.TAG);
         this.syncStatus = Transformations.map(workInfos, infos -> toSyncStatus(infos));
     }
@@ -45,9 +48,18 @@ public class SyncRepositoryImpl implements SyncRepository {
         return syncPreferences.getLastError();
     }
 
-    @Override
     public void requestSync() {
         syncScheduler.requestSync();
+    }
+
+    @Override
+    public LiveData<Boolean> getDeletedCategoryNotice() {
+        return deletedCategoryNotice.getShouldShow();
+    }
+
+    @Override
+    public void onDeletedCategoryNoticeHandled() {
+        deletedCategoryNotice.markHandled();
     }
 
     private SyncStatus toSyncStatus(@Nullable List<WorkInfo> workInfos) {

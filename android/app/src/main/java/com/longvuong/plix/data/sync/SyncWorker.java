@@ -8,6 +8,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.longvuong.plix.core.auth.AuthManager;
+import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.remote.api.HealthApiService;
 import com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase;
@@ -37,12 +38,13 @@ public class SyncWorker extends Worker {
     private final SyncPusher syncPusher;
     private final SyncPuller syncPuller;
     private final CheckBudgetThresholdUseCase checkBudgetThresholdUseCase;
+    private final DeletedCategoryNotice deletedCategoryNotice;
 
     @AssistedInject
     public SyncWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters,
                       AuthManager authManager, HealthApiService healthApiService, SyncPreferences syncPreferences,
                       SyncTables syncTables, SyncPusher syncPusher, SyncPuller syncPuller,
-                      CheckBudgetThresholdUseCase checkBudgetThresholdUseCase) {
+                      CheckBudgetThresholdUseCase checkBudgetThresholdUseCase, DeletedCategoryNotice deletedCategoryNotice) {
         super(context, workerParameters);
         this.authManager = authManager;
         this.healthApiService = healthApiService;
@@ -51,6 +53,7 @@ public class SyncWorker extends Worker {
         this.syncPusher = syncPusher;
         this.syncPuller = syncPuller;
         this.checkBudgetThresholdUseCase = checkBudgetThresholdUseCase;
+        this.deletedCategoryNotice = deletedCategoryNotice;
     }
 
     @NonNull
@@ -68,11 +71,14 @@ public class SyncWorker extends Worker {
                 return Result.retry(); //bị thay thế bởi lượt debounce mới, kết quả này sẽ bị bỏ qua
             }
             List<EntityChange<TransactionEntity>> pulledTransactions = new ArrayList<>();
+            List<EntityChange<CategoryEntity>> pulledCategories = new ArrayList<>();
             try {
-                pullAllTables(userId, pulledTransactions); //đẩy xong cả 5 bảng mới kéo về
+                pullAllTables(userId, pulledTransactions, pulledCategories); //đẩy xong cả 5 bảng mới kéo về
             } finally {
                 //Giao dịch đã ghi vào Room thì phải kiểm tra ngưỡng, kể cả khi lượt kéo bị dừng hoặc lỗi giữa chừng (con trỏ đã tiến qua các lô đó)
                 checkBudgetThresholdAfterPull(pulledTransactions);
+                //Danh mục vừa bị xoá trên thiết bị khác mà giao dịch trên máy vẫn dùng: báo giao diện hiện 1 thông báo
+                deletedCategoryNotice.checkAfterPull(pulledCategories);
             }
             if (isStopped()) {
                 return Result.retry(); //bị huỷ giữa chừng khi đang kéo, kết quả này sẽ bị bỏ qua
@@ -107,15 +113,19 @@ public class SyncWorker extends Worker {
     }
 
     //Kéo lần lượt cùng thứ tự; mỗi bảng có con trỏ riêng (khoá theo tên bảng trong SyncPreferences)
-    //Chỉ bảng giao dịch cần ghi nhận thay đổi để kiểm tra ngưỡng ngân sách
-    private void pullAllTables(String userId, List<EntityChange<TransactionEntity>> pulledTransactions) throws IOException {
+    //Bảng giao dịch ghi nhận thay đổi để kiểm tra ngưỡng ngân sách, bảng danh mục ghi nhận thay đổi để phát hiện danh mục vừa bị xoá
+    private void pullAllTables(String userId, List<EntityChange<TransactionEntity>> pulledTransactions,
+                               List<EntityChange<CategoryEntity>> pulledCategories) throws IOException {
         TransactionSyncableEntity transactionTable = syncTables.transactions();
+        CategorySyncableEntity categoryTable = syncTables.categories();
         for (SyncableEntity<?, ?> table : syncTables.inSyncOrder()) {
             if (isStopped()) {
                 return;
             }
             if (table == transactionTable) {
                 syncPuller.pull(transactionTable, userId, this::isStopped, pulledTransactions);
+            } else if (table == categoryTable) {
+                syncPuller.pull(categoryTable, userId, this::isStopped, pulledCategories);
             } else {
                 syncPuller.pull(table, userId, this::isStopped);
             }

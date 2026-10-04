@@ -12,4 +12,8 @@ public interface SyncRepository {
     String getLastSyncError();
 
     void requestSync();
+
+    LiveData<Boolean> getDeletedCategoryNotice();
+
+    void onDeletedCategoryNoticeHandled();
 }

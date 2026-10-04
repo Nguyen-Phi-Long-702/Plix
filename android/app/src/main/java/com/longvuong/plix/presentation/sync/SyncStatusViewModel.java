@@ -28,4 +28,12 @@ public class SyncStatusViewModel extends ViewModel {
     public String getLastSyncError() {
         return syncRepository.getLastSyncError();
     }
+
+    public LiveData<Boolean> getDeletedCategoryNotice() {
+        return syncRepository.getDeletedCategoryNotice();
+    }
+
+    public void onDeletedCategoryNoticeHandled() {
+        syncRepository.onDeletedCategoryNoticeHandled();
+    }
 }

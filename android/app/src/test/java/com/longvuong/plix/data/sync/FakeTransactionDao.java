@@ -109,4 +109,15 @@ class FakeTransactionDao implements TransactionDao {
             }
         }
     }
+
+    @Override
+    public int countActiveByCategoryIds(List<String> categoryIds) {
+        int count = 0;
+        for (TransactionEntity entity : storage) {
+            if (!entity.isDeleted && entity.categoryId != null && categoryIds.contains(entity.categoryId)) {
+                count++;
+            }
+        }
+        return count;
+    }
 }

@@ -44,4 +44,7 @@ public interface TransactionDao {
 
     @Query("UPDATE transactions SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
     void markSynced(String id, long updatedAt);
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE is_deleted = 0 AND category_id IN (:categoryIds)")
+    int countActiveByCategoryIds(List<String> categoryIds);
 }
