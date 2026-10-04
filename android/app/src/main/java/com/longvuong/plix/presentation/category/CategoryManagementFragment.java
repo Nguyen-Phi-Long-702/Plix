@@ -41,8 +41,7 @@ public class CategoryManagementFragment extends Fragment {
     private TextView textEmptyState;
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_category_management, container, false);
     }
     @Override
@@ -151,7 +150,7 @@ public class CategoryManagementFragment extends Fragment {
     private void showDeleteConfirmationDialog(CategoryEntity category) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Xoá danh mục \"" + category.name + "\"?")
-                .setMessage("Các giao dịch đang dùng danh mục này sẽ hiển thị \"Chưa phân loại\". " + "Hành động này không thể hoàn tác.")
+                .setMessage("Các giao dịch đang dùng danh mục này sẽ hiển thị \"Danh mục không xác định\". " + "Hành động này không thể hoàn tác.")
                 .setNegativeButton("Huỷ", null)
                 .setPositiveButton("Xoá", (d, which) -> viewModel.deleteCategory(category))
                 .show();
