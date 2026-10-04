@@ -1,7 +1,26 @@
 import asyncio
 
-from app.models.sync import TransactionSyncRecord
-from app.services.sync_service import (_HAS_MORE_TRANSACTIONS_SQL, _PULL_TRANSACTIONS_SQL, _UPSERT_TRANSACTION_SQL, pull_transactions, push_transactions)
+from app.models.sync import (
+    BudgetSyncRecord,
+    CorrectionSyncRecord,
+    GoalSyncRecord,
+    SyncTable,
+    TransactionSyncRecord,
+)
+from app.services.sync_service import SYNC_TABLES, pull_records, push_records
+
+_TRANSACTIONS_SPEC = SYNC_TABLES[SyncTable.transactions]
+_UPSERT_TRANSACTION_SQL = _TRANSACTIONS_SPEC.upsert_sql
+_PULL_TRANSACTIONS_SQL = _TRANSACTIONS_SPEC.pull_sql
+_HAS_MORE_TRANSACTIONS_SQL = _TRANSACTIONS_SPEC.has_more_sql
+
+
+def push_transactions(pool, user_id, records):
+    return push_records(pool, SyncTable.transactions, user_id, records)
+
+
+def pull_transactions(pool, user_id, since, limit):
+    return pull_records(pool, SyncTable.transactions, user_id, since, limit)
 
 
 class FakeSyncPool:
@@ -210,3 +229,197 @@ def test_has_more_sql_uses_strict_greater_than_and_filters_by_user():
     assert "updated_at > $2" in _HAS_MORE_TRANSACTIONS_SQL
     assert "updated_at >= " not in _HAS_MORE_TRANSACTIONS_SQL
     assert "user_id = $1" in _HAS_MORE_TRANSACTIONS_SQL
+
+
+# ---------------------------------------------------------------------------
+# Ngày 31: cơ chế đồng bộ chung cho cả 5 bảng
+# ---------------------------------------------------------------------------
+
+
+def test_sync_tables_cover_exactly_the_five_synced_tables():
+    assert {table.value for table in SYNC_TABLES} == {
+        "transactions",
+        "categories",
+        "budgets",
+        "goals",
+        "corrections",
+    }
+    assert set(SYNC_TABLES) == set(SyncTable)
+
+
+def test_every_table_upsert_sql_is_owner_guarded_strict_and_never_deletes():
+    for table, spec in SYNC_TABLES.items():
+        sql = spec.upsert_sql
+        name = table.value
+        assert f"INSERT INTO {name}" in sql, name
+        assert f"{name}.updated_at < EXCLUDED.updated_at" in sql, name
+        assert "<=" not in sql, name
+        assert f"{name}.user_id = EXCLUDED.user_id" in sql, name
+        assert "DELETE FROM" not in sql.upper(), name
+
+
+def test_every_table_pull_sql_filters_by_user_and_never_filters_tombstones():
+    for table, spec in SYNC_TABLES.items():
+        sql = spec.pull_sql
+        name = table.value
+        assert f"FROM {name}" in sql, name
+        assert "updated_at >= $2" in sql, name
+        assert "ORDER BY updated_at ASC, id ASC" in sql, name
+        assert "LIMIT $3" in sql, name
+        where_clause = sql.split("WHERE")[1]
+        assert "user_id = $1" in where_clause, name
+        assert "is_deleted" not in where_clause, name
+        assert "user_id" not in sql.split("FROM")[0], name
+        assert "updated_at > $2" in spec.has_more_sql, name
+        assert "user_id = $1" in spec.has_more_sql, name
+
+
+def test_every_table_owner_sql_looks_up_user_id_by_record_id():
+    for table, spec in SYNC_TABLES.items():
+        assert spec.owner_sql == f"SELECT user_id FROM {table.value} WHERE id = $1"
+
+
+def test_budget_upsert_receives_user_id_and_record_fields_in_order():
+    pool = FakeSyncPool(fetchval_results=["bud-1"])
+    record = BudgetSyncRecord(
+        id="bud-1",
+        updated_at=2000,
+        is_deleted=False,
+        period="2026-10",
+        limit_amount=2000000,
+    )
+
+    response = asyncio.run(push_records(pool, SyncTable.budgets, "user-1", [record]))
+
+    assert response.upserted_ids == ["bud-1"]
+    _, args = pool.calls[0]
+    assert args == (
+        "bud-1",  # id
+        "user-1",  # user_id lấy từ tham số (JWT), không nằm trong record
+        "2026-10",  # period
+        None,  # category_id (mặc định)
+        2000000,  # limit_amount
+        80,  # threshold_percent (mặc định)
+        2000,  # updated_at
+        False,  # is_deleted
+    )
+
+
+def test_goal_upsert_receives_user_id_and_record_fields_in_order():
+    pool = FakeSyncPool(fetchval_results=["goal-1"])
+    record = GoalSyncRecord(
+        id="goal-1",
+        updated_at=2000,
+        is_deleted=False,
+        name="Mua laptop",
+        target_amount=20000000,
+        deadline=1800000000000,
+    )
+
+    response = asyncio.run(push_records(pool, SyncTable.goals, "user-1", [record]))
+
+    assert response.upserted_ids == ["goal-1"]
+    _, args = pool.calls[0]
+    assert args == (
+        "goal-1",  # id
+        "user-1",  # user_id lấy từ tham số (JWT)
+        "Mua laptop",  # name
+        20000000,  # target_amount
+        0,  # current_amount (mặc định)
+        1800000000000,  # deadline
+        2000,  # updated_at
+        False,  # is_deleted
+    )
+
+
+def test_correction_upsert_receives_user_id_and_record_fields_in_order():
+    pool = FakeSyncPool(fetchval_results=["cor-1"])
+    record = CorrectionSyncRecord(
+        id="cor-1",
+        updated_at=2000,
+        is_deleted=False,
+        transaction_id="tx-1",
+        corrected_category_id="sys_an_uong",
+        created_at=1790000000000,
+    )
+
+    response = asyncio.run(
+        push_records(pool, SyncTable.corrections, "user-1", [record])
+    )
+
+    assert response.upserted_ids == ["cor-1"]
+    _, args = pool.calls[0]
+    assert args == (
+        "cor-1",  # id
+        "user-1",  # user_id lấy từ tham số (JWT)
+        "tx-1",  # transaction_id
+        None,  # predicted_category_id (mặc định)
+        "sys_an_uong",  # corrected_category_id
+        1790000000000,  # created_at
+        2000,  # updated_at
+        False,  # is_deleted
+    )
+
+
+def test_budget_owned_by_another_user_is_rejected_as_forbidden():
+    pool = FakeSyncPool(fetchval_results=[None, "user-2"])
+    record = BudgetSyncRecord(
+        id="bud-1",
+        updated_at=2000,
+        is_deleted=False,
+        period="2026-10",
+        limit_amount=2000000,
+    )
+
+    response = asyncio.run(push_records(pool, SyncTable.budgets, "user-1", [record]))
+
+    assert response.upserted_ids == []
+    assert [(item.id, item.reason) for item in response.rejected] == [
+        ("bud-1", "forbidden")
+    ]
+    owner_query, owner_args = pool.calls[1]
+    assert "FROM budgets" in owner_query
+    assert owner_args == ("bud-1",)
+
+
+def test_pull_reads_from_the_requested_table_and_keeps_its_own_columns():
+    rows = {
+        SyncTable.budgets: {
+            "id": "bud-1",
+            "updated_at": 1000,
+            "is_deleted": False,
+            "period": "2026-10",
+            "category_id": None,
+            "limit_amount": 2000000,
+            "threshold_percent": 80,
+        },
+        SyncTable.goals: {
+            "id": "goal-1",
+            "updated_at": 1000,
+            "is_deleted": True,
+            "name": "Mua laptop",
+            "target_amount": 20000000,
+            "current_amount": 500000,
+            "deadline": 1800000000000,
+        },
+        SyncTable.corrections: {
+            "id": "cor-1",
+            "updated_at": 1000,
+            "is_deleted": False,
+            "transaction_id": "tx-1",
+            "predicted_category_id": None,
+            "corrected_category_id": "sys_an_uong",
+            "created_at": 999,
+        },
+    }
+    for table, row in rows.items():
+        pool = FakePullPool([row])
+
+        response = asyncio.run(pull_records(pool, table, "user-1", 0, 500))
+
+        query, args = pool.fetch_calls[0]
+        assert f"FROM {table.value}" in query, table
+        assert args == ("user-1", 0, 500), table
+        assert len(response.records) == 1, table
+        assert response.records[0].id == row["id"], table
+        assert response.records[0].is_deleted is row["is_deleted"], table

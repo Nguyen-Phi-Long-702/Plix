@@ -1,48 +1,152 @@
-from typing import List
+from dataclasses import dataclass
+from typing import Dict, List, Tuple, Type
 
 import asyncpg
 
-from app.models.sync import RejectedRecord, SyncPullResponse, SyncPushResponse, TransactionSyncRecord
+from app.models.sync import (
+    BudgetSyncRecord,
+    CategorySyncRecord,
+    CorrectionSyncRecord,
+    GoalSyncRecord,
+    RejectedRecord,
+    SyncPullResponse,
+    SyncPushResponse,
+    SyncRecordBase,
+    SyncTable,
+    TransactionSyncRecord,
+)
 
-# Upsert 1 giao dịch theo id. Quy tắc last-write-wins (Master Plan Mục 18.3):
-# chỉ ghi đè khi incoming.updated_at LỚN HƠN HẲN bản đang lưu (so sánh `<`
-# nghiêm ngặt, không phải `<=`) — trùng updated_at thì bản đang lưu thắng.
-# Điều kiện user_id đảm bảo không bao giờ ghi đè giao dịch của user khác.
-# RETURNING id chỉ trả về dòng khi thật sự có INSERT hoặc UPDATE; nếu bị bỏ qua
-# (WHERE sai) thì không trả gì. Không có lệnh DELETE nào — không xoá vật lý.
-_UPSERT_TRANSACTION_SQL = """
-INSERT INTO transactions
-    (id, user_id, amount, type, category_id, note, payment_method,
-     occurred_at, is_recurring, recurrence_rule, recurrence_parent_id,
-     updated_at, is_deleted)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+
+@dataclass(frozen=True)
+class SyncTableSpec:
+    """Mô tả 1 bảng tham gia đồng bộ. `columns` là các cột RIÊNG của bảng,
+    không gồm id, user_id, updated_at, is_deleted (4 cột này bảng nào cũng có).
+    Tên field của record_model trùng đúng tên cột trong Postgres."""
+
+    table: SyncTable
+    record_model: Type[SyncRecordBase]
+    columns: Tuple[str, ...]
+    upsert_sql: str
+    owner_sql: str
+    pull_sql: str
+    has_more_sql: str
+
+
+def _build_spec(
+    table: SyncTable,
+    record_model: Type[SyncRecordBase],
+    columns: Tuple[str, ...],
+) -> SyncTableSpec:
+    """Dựng 4 câu SQL cho 1 bảng. Tên bảng và tên cột chỉ lấy từ enum SyncTable
+    và danh sách cột viết cứng bên dưới, không bao giờ từ dữ liệu client gửi lên.
+
+    upsert_sql — Quy tắc last-write-wins: chỉ ghi đè khi
+    incoming.updated_at LỚN HƠN HẲN bản đang lưu (so sánh `<` nghiêm ngặt, không
+    phải `<=`) — trùng updated_at thì bản đang lưu thắng. Điều kiện user_id đảm
+    bảo không bao giờ ghi đè bản ghi của user khác. RETURNING id chỉ trả về dòng
+    khi thật sự có INSERT hoặc UPDATE; nếu bị bỏ qua (WHERE sai) thì không trả
+    gì. Không có lệnh DELETE nào — không xoá vật lý.
+
+    has_more_sql — Sync Payload Schema, mục 4: true nếu còn bản ghi có
+    updated_at LỚN HƠN updated_at lớn nhất của batch vừa trả về.
+    """
+    name = table.value
+    all_columns = ("id", "user_id") + columns + ("updated_at", "is_deleted")
+    insert_columns = ", ".join(all_columns)
+    placeholders = ", ".join("$%d" % index for index in range(1, len(all_columns) + 1))
+    assignments = ",\n    ".join(
+        "%s = EXCLUDED.%s" % (column, column)
+        for column in columns + ("updated_at", "is_deleted")
+    )
+    select_columns = ", ".join(("id", "updated_at", "is_deleted") + columns)
+
+    upsert_sql = f"""
+INSERT INTO {name}
+    ({insert_columns})
+VALUES ({placeholders})
 ON CONFLICT (id) DO UPDATE SET
-    amount = EXCLUDED.amount,
-    type = EXCLUDED.type,
-    category_id = EXCLUDED.category_id,
-    note = EXCLUDED.note,
-    payment_method = EXCLUDED.payment_method,
-    occurred_at = EXCLUDED.occurred_at,
-    is_recurring = EXCLUDED.is_recurring,
-    recurrence_rule = EXCLUDED.recurrence_rule,
-    recurrence_parent_id = EXCLUDED.recurrence_parent_id,
-    updated_at = EXCLUDED.updated_at,
-    is_deleted = EXCLUDED.is_deleted
-WHERE transactions.user_id = EXCLUDED.user_id
-  AND transactions.updated_at < EXCLUDED.updated_at
+    {assignments}
+WHERE {name}.user_id = EXCLUDED.user_id
+  AND {name}.updated_at < EXCLUDED.updated_at
 RETURNING id
 """
+    pull_sql = f"""
+SELECT {select_columns}
+FROM {name}
+WHERE user_id = $1 AND updated_at >= $2
+ORDER BY updated_at ASC, id ASC
+LIMIT $3
+"""
+    has_more_sql = f"""
+SELECT EXISTS (
+    SELECT 1 FROM {name}
+    WHERE user_id = $1 AND updated_at > $2
+)
+"""
+    return SyncTableSpec(
+        table=table,
+        record_model=record_model,
+        columns=columns,
+        upsert_sql=upsert_sql,
+        owner_sql=f"SELECT user_id FROM {name} WHERE id = $1",
+        pull_sql=pull_sql,
+        has_more_sql=has_more_sql,
+    )
 
-_FIND_TRANSACTION_OWNER_SQL = "SELECT user_id FROM transactions WHERE id = $1"
+
+# Nguồn duy nhất cho 5 bảng đồng bộ — khoá là enum SyncTable, nên bảng nào
+# ngoài enum đều không có route. Cột lấy từ Master Plan Mục 14.3.
+SYNC_TABLES: Dict[SyncTable, SyncTableSpec] = {
+    spec.table: spec
+    for spec in (
+        _build_spec(
+            SyncTable.transactions,
+            TransactionSyncRecord,
+            (
+                "amount",
+                "type",
+                "category_id",
+                "note",
+                "payment_method",
+                "occurred_at",
+                "is_recurring",
+                "recurrence_rule",
+                "recurrence_parent_id",
+            ),
+        ),
+        _build_spec(SyncTable.categories, CategorySyncRecord, ("name", "type")),
+        _build_spec(
+            SyncTable.budgets,
+            BudgetSyncRecord,
+            ("period", "category_id", "limit_amount", "threshold_percent"),
+        ),
+        _build_spec(
+            SyncTable.goals,
+            GoalSyncRecord,
+            ("name", "target_amount", "current_amount", "deadline"),
+        ),
+        _build_spec(
+            SyncTable.corrections,
+            CorrectionSyncRecord,
+            (
+                "transaction_id",
+                "predicted_category_id",
+                "corrected_category_id",
+                "created_at",
+            ),
+        ),
+    )
+}
 
 
-async def push_transactions(
+async def push_records(
     pool: asyncpg.Pool,
+    table: SyncTable,
     user_id: str,
-    records: List[TransactionSyncRecord],
+    records: List[SyncRecordBase],
 ) -> SyncPushResponse:
-    """Upsert từng giao dịch trong batch lên Postgres. `user_id` luôn lấy từ JWT
-    (do router truyền vào), không bao giờ lấy từ dữ liệu client gửi lên.
+    """Upsert từng bản ghi trong batch của 1 bảng lên Postgres. `user_id` luôn
+    lấy từ JWT (do router truyền vào), không bao giờ lấy từ dữ liệu client gửi lên.
 
     Kết quả từng record:
     - Được INSERT/UPDATE (mới, hoặc updated_at lớn hơn bản đang lưu) -> upserted_ids.
@@ -52,23 +156,16 @@ async def push_transactions(
     - Bị bỏ qua vì id đã thuộc user khác -> rejected (forbidden), không làm
       fail cả batch.
     """
+    spec = SYNC_TABLES[table]
     upserted_ids: List[str] = []
     rejected: List[RejectedRecord] = []
 
     for record in records:
         written_id = await pool.fetchval(
-            _UPSERT_TRANSACTION_SQL,
+            spec.upsert_sql,
             record.id,
             user_id,
-            record.amount,
-            record.type,
-            record.category_id,
-            record.note,
-            record.payment_method,
-            record.occurred_at,
-            record.is_recurring,
-            record.recurrence_rule,
-            record.recurrence_parent_id,
+            *[getattr(record, column) for column in spec.columns],
             record.updated_at,
             record.is_deleted,
         )
@@ -76,7 +173,7 @@ async def push_transactions(
             upserted_ids.append(record.id)
             continue
 
-        owner_id = await pool.fetchval(_FIND_TRANSACTION_OWNER_SQL, record.id)
+        owner_id = await pool.fetchval(spec.owner_sql, record.id)
         if owner_id == user_id:
             upserted_ids.append(record.id)
         else:
@@ -85,46 +182,25 @@ async def push_transactions(
     return SyncPushResponse(upserted_ids=upserted_ids, rejected=rejected)
 
 
-
-_PULL_TRANSACTIONS_SQL = """
-SELECT id, updated_at, is_deleted, amount, type, category_id, note,
-       payment_method, occurred_at, is_recurring, recurrence_rule,
-       recurrence_parent_id
-FROM transactions
-WHERE user_id = $1 AND updated_at >= $2
-ORDER BY updated_at ASC, id ASC
-LIMIT $3
-"""
-
-# has_more (Sync Payload Schema, mục 4): true nếu còn bản ghi có updated_at
-# LỚN HƠN updated_at lớn nhất của batch vừa trả về.
-_HAS_MORE_TRANSACTIONS_SQL = """
-SELECT EXISTS (
-    SELECT 1 FROM transactions
-    WHERE user_id = $1 AND updated_at > $2
-)
-"""
-
-
-async def pull_transactions(
+async def pull_records(
     pool: asyncpg.Pool,
+    table: SyncTable,
     user_id: str,
     since: int,
     limit: int,
-) -> SyncPullResponse[TransactionSyncRecord]:
-    """Trả tối đa `limit` giao dịch của user có updated_at >= since (kể cả
+) -> SyncPullResponse:
+    """Trả tối đa `limit` bản ghi của user có updated_at >= since (kể cả
     tombstone), sắp xếp tăng dần theo updated_at, kèm cờ has_more.
     `user_id` luôn lấy từ JWT (do router truyền vào)."""
-    rows = await pool.fetch(_PULL_TRANSACTIONS_SQL, user_id, since, limit)
-    records = [TransactionSyncRecord(**dict(row)) for row in rows]
+    spec = SYNC_TABLES[table]
+    response_model = SyncPullResponse[spec.record_model]
+
+    rows = await pool.fetch(spec.pull_sql, user_id, since, limit)
+    records = [spec.record_model(**dict(row)) for row in rows]
 
     if not records:
-        return SyncPullResponse[TransactionSyncRecord](records=[], has_more=False)
+        return response_model(records=[], has_more=False)
 
     max_updated_at = records[-1].updated_at
-    has_more = await pool.fetchval(
-        _HAS_MORE_TRANSACTIONS_SQL, user_id, max_updated_at
-    )
-    return SyncPullResponse[TransactionSyncRecord](
-        records=records, has_more=has_more
-    )
+    has_more = await pool.fetchval(spec.has_more_sql, user_id, max_updated_at)
+    return response_model(records=records, has_more=has_more)
