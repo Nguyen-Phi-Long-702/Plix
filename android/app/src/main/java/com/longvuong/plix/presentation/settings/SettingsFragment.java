@@ -15,6 +15,7 @@ import androidx.navigation.Navigation;
 import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.notification.NotificationHelper;
+import com.longvuong.plix.domain.usecase.auth.LogoutOutcome;
 import com.longvuong.plix.presentation.common.UiState;
 
 import javax.inject.Inject;
@@ -31,6 +32,8 @@ public class SettingsFragment extends Fragment {
     private View rowRetrainAi;
     private View badgeNewCorrections;
     private ProgressBar progressRetrainAi;
+    private View rowLogout;
+    private ProgressBar progressLogout;
 
     @Nullable
     @Override
@@ -54,6 +57,11 @@ public class SettingsFragment extends Fragment {
         progressRetrainAi = view.findViewById(R.id.progressRetrainAi);
         rowRetrainAi.setOnClickListener(v -> viewModel.retrain());
         viewModel.getRetrainState().observe(getViewLifecycleOwner(), this::renderRetrainState);
+
+        rowLogout = view.findViewById(R.id.rowLogout);
+        progressLogout = view.findViewById(R.id.progressLogout);
+        rowLogout.setOnClickListener(v -> viewModel.logout());
+        viewModel.getLogoutState().observe(getViewLifecycleOwner(), this::renderLogoutState);
     }
 
     @Override
@@ -76,6 +84,22 @@ public class SettingsFragment extends Fragment {
             rowRetrainAi.setEnabled(true);
             progressRetrainAi.setVisibility(View.GONE);
             String message = ((UiState.Error<Void>) state).message;
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    private void renderLogoutState(UiState<LogoutOutcome> state) {
+        boolean loading = state instanceof UiState.Loading;
+        rowLogout.setEnabled(!loading);
+        progressLogout.setVisibility(loading ? View.VISIBLE : View.GONE);
+        if (state instanceof UiState.Success) {
+            LogoutOutcome outcome = ((UiState.Success<LogoutOutcome>) state).data;
+            if (!outcome.isLoggedOut) {
+                LogoutConfirmationDialog.show(requireContext(), outcome.pendingCount, viewModel::cancelLogout, viewModel::confirmLogoutAnyway);
+            }
+            //Đã đăng xuất: MainActivity tự đưa người dùng về màn hình đăng nhập (luồng "cần đăng nhập lại" có sẵn)
+        } else if (state instanceof UiState.Error) {
+            String message = ((UiState.Error<LogoutOutcome>) state).message;
             Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
         }
     }
