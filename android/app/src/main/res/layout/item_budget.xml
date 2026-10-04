@@ -42,6 +42,17 @@
             android:textSize="15sp"
             android:textStyle="bold"
             tools:text="45%" />
+
+        <ImageButton
+            android:id="@+id/buttonDeleteBudget"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Xoá ngân sách"
+            android:padding="10dp"
+            android:src="@drawable/ic_delete"
+            android:tint="@android:color/darker_gray" />
     </LinearLayout>
     <ProgressBar
         android:id="@+id/progressBudget"

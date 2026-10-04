@@ -3,6 +3,7 @@ package com.longvuong.plix.presentation.budget;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.content.res.ColorStateList;
@@ -24,17 +25,19 @@ import java.util.Locale;
 import java.util.Map;
 
 public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetViewHolder> {
-    public interface OnBudgetClickListener {
+    public interface OnBudgetActionListener {
         void onBudgetClick(BudgetEntity budget);
+
+        void onDeleteBudget(BudgetEntity budget, String displayName);
     }
 
-    private final OnBudgetClickListener clickListener;
+    private final OnBudgetActionListener actionListener;
     private List<BudgetEntity> budgets = new ArrayList<>();
     private Map<String, String> categoryNamesById = new HashMap<>();
     private Map<String, BudgetProgress> progressByBudgetId = new HashMap<>();
 
-    public BudgetAdapter(OnBudgetClickListener clickListener) {
-        this.clickListener = clickListener;
+    public BudgetAdapter(OnBudgetActionListener actionListener) {
+        this.actionListener = actionListener;
     }
 
     public void submitList(List<BudgetEntity> newBudgets) {
@@ -67,7 +70,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
 
     @Override
     public void onBindViewHolder(@NonNull BudgetViewHolder holder, int position) {
-        holder.bind(budgets.get(position), categoryNamesById, progressByBudgetId, clickListener);
+        holder.bind(budgets.get(position), categoryNamesById, progressByBudgetId, actionListener);
     }
 
     @Override
@@ -79,6 +82,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         private final TextView textBudgetName;
         private final TextView textThreshold;
         private final TextView textPercent;
+        private final ImageButton buttonDeleteBudget;
         private final ProgressBar progressBudget;
         private final TextView textSpentOverLimit;
 
@@ -87,11 +91,12 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             textBudgetName = itemView.findViewById(R.id.textBudgetName);
             textThreshold = itemView.findViewById(R.id.textThreshold);
             textPercent = itemView.findViewById(R.id.textPercent);
+            buttonDeleteBudget = itemView.findViewById(R.id.buttonDeleteBudget);
             progressBudget = itemView.findViewById(R.id.progressBudget);
             textSpentOverLimit = itemView.findViewById(R.id.textSpentOverLimit);
         }
 
-        void bind(BudgetEntity budget, Map<String, String> categoryNamesById, Map<String, BudgetProgress> progressByBudgetId, OnBudgetClickListener clickListener) {
+        void bind(BudgetEntity budget, Map<String, String> categoryNamesById, Map<String, BudgetProgress> progressByBudgetId, OnBudgetActionListener actionListener) {
             String name;
             if (budget.categoryId == null) {
                 name = "Ngân sách tổng";
@@ -116,7 +121,8 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             }
             progressBudget.setProgressTintList(ColorStateList.valueOf(ContextCompat.getColor(itemView.getContext(), colorRes)));
             textSpentOverLimit.setText("Đã chi " + formatCurrency(spentAmount) + " / " + formatCurrency(budget.limitAmount));
-            itemView.setOnClickListener(v -> clickListener.onBudgetClick(budget));
+            itemView.setOnClickListener(v -> actionListener.onBudgetClick(budget));
+            buttonDeleteBudget.setOnClickListener(v -> actionListener.onDeleteBudget(budget, name));
         }
         private String formatCurrency(long amount) {
             NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
