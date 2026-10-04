@@ -36,4 +36,7 @@ public interface CategoryDao {
 
     @Query("UPDATE categories SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
     void markSynced(String id, long updatedAt);
+
+    @Query("DELETE FROM categories WHERE user_id = :userId")
+    void deleteAllByUserId(String userId);
 }

@@ -47,4 +47,7 @@ public interface TransactionDao {
 
     @Query("SELECT COUNT(*) FROM transactions WHERE is_deleted = 0 AND category_id IN (:categoryIds)")
     int countActiveByCategoryIds(List<String> categoryIds);
+
+    @Query("DELETE FROM transactions WHERE user_id = :userId")
+    void deleteAllByUserId(String userId);
 }

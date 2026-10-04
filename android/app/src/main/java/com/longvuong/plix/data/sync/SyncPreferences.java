@@ -57,4 +57,16 @@ public class SyncPreferences {
     private static String pullCursorKey(String userId, String table) {
         return KEY_PULL_CURSOR_PREFIX + userId + "_" + table;
     }
+
+    //Đăng xuất xoá dữ liệu cục bộ nên phải xoá luôn con trỏ của user đó, lần đăng nhập sau mới kéo lại toàn bộ (con trỏ về 0)
+    public void clearPullCursors(String userId) {
+        String prefix = KEY_PULL_CURSOR_PREFIX + userId + "_";
+        SharedPreferences.Editor editor = prefs.edit();
+        for (String key : prefs.getAll().keySet()) {
+            if (key.startsWith(prefix)) {
+                editor.remove(key);
+            }
+        }
+        editor.apply();
+    }
 }

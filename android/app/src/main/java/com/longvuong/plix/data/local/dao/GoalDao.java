@@ -29,4 +29,7 @@ public interface GoalDao {
 
     @Query("UPDATE goals SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
     void markSynced(String id, long updatedAt);
+
+    @Query("DELETE FROM goals WHERE user_id = :userId")
+    void deleteAllByUserId(String userId);
 }

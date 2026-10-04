@@ -25,4 +25,7 @@ public interface CorrectionDao {
 
     @Query("UPDATE corrections SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
     void markSynced(String id, long updatedAt);
+
+    @Query("DELETE FROM corrections WHERE user_id = :userId")
+    void deleteAllByUserId(String userId);
 }

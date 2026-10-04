@@ -120,4 +120,9 @@ class FakeTransactionDao implements TransactionDao {
         }
         return count;
     }
+
+    @Override
+    public void deleteAllByUserId(String userId) {
+        storage.removeIf(entity -> userId.equals(entity.userId));
+    }
 }

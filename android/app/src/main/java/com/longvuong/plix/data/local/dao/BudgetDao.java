@@ -38,4 +38,7 @@ public interface BudgetDao {
 
     @Query("UPDATE budgets SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
     void markSynced(String id, long updatedAt);
+
+    @Query("DELETE FROM budgets WHERE user_id = :userId")
+    void deleteAllByUserId(String userId);
 }
