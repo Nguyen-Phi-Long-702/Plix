@@ -278,4 +278,59 @@ public class SyncPullerTest {
         assertTrue(SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 2000L, 900L, false)), USER_ID).isEmpty());
         assertTrue(SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 1500L, 900L, false)), USER_ID).isEmpty());
     }
+
+
+    //Mô phỏng 1 thiết bị nhận lần lượt 2 phiên bản của cùng 1 bản ghi (2 lần kéo khác nhau)
+    private List<EntityChange<TransactionEntity>> applyOneByOne(FakeTransactionDao dao, TransactionSyncRecordDto first, TransactionSyncRecordDto second) {
+        TransactionSyncableEntity target = new TransactionSyncableEntity(dao, null);
+        SyncPuller.upsertBatch(target, Collections.singletonList(first), USER_ID);
+        return SyncPuller.upsertBatch(target, Collections.singletonList(second), USER_ID);
+    }
+
+    @Test
+    public void upsertBatch_localPendingSameUpdatedAtAsIncoming_keepsLocalAndStaysPending() {
+        fakeTransactionDao.insert(entity("t1", 5000L, "pending", 500L));
+
+        List<EntityChange<TransactionEntity>> changes = SyncPuller.upsertBatch(table, Collections.singletonList(record("t1", 5000L, 900L, false)), USER_ID);
+
+        TransactionEntity saved = fakeTransactionDao.getById("t1");
+        assertEquals(500L, saved.amount);
+        assertEquals("pending", saved.syncStatus);
+        assertEquals(5000L, saved.updatedAt);
+        assertTrue(changes.isEmpty());
+    }
+
+    @Test
+    public void upsertBatch_differentUpdatedAt_newerWinsInEitherArrivalOrder() {
+        TransactionSyncRecordDto older = record("t1", 2000L, 111L, false);
+        TransactionSyncRecordDto newer = record("t1", 3000L, 222L, false);
+        FakeTransactionDao daoOlderArrivesFirst = new FakeTransactionDao();
+        FakeTransactionDao daoNewerArrivesFirst = new FakeTransactionDao();
+
+        applyOneByOne(daoOlderArrivesFirst, older, newer);
+        applyOneByOne(daoNewerArrivesFirst, newer, older);
+
+        assertEquals(222L, daoOlderArrivesFirst.getById("t1").amount);
+        assertEquals(3000L, daoOlderArrivesFirst.getById("t1").updatedAt);
+        assertEquals(222L, daoNewerArrivesFirst.getById("t1").amount);
+        assertEquals(3000L, daoNewerArrivesFirst.getById("t1").updatedAt);
+    }
+
+    @Test
+    public void upsertBatch_sameUpdatedAt_firstStoredVersionWinsAndLaterOneNeverOverwrites() {
+        TransactionSyncRecordDto fromDeviceA = record("t1", 4000L, 111L, false);
+        TransactionSyncRecordDto fromDeviceB = record("t1", 4000L, 222L, false);
+        FakeTransactionDao daoAFirst = new FakeTransactionDao();
+        FakeTransactionDao daoBFirst = new FakeTransactionDao();
+
+        List<EntityChange<TransactionEntity>> changesWhenBArrivesSecond = applyOneByOne(daoAFirst, fromDeviceA, fromDeviceB);
+        List<EntityChange<TransactionEntity>> changesWhenAArrivesSecond = applyOneByOne(daoBFirst, fromDeviceB, fromDeviceA);
+
+        assertEquals(111L, daoAFirst.getById("t1").amount); //A đến trước thì A thắng
+        assertEquals(222L, daoBFirst.getById("t1").amount); //B đến trước thì B thắng
+        assertEquals(4000L, daoAFirst.getById("t1").updatedAt);
+        assertEquals(4000L, daoBFirst.getById("t1").updatedAt);
+        assertTrue(changesWhenBArrivesSecond.isEmpty()); //bản đến sau bị bỏ qua, không ghi gì
+        assertTrue(changesWhenAArrivesSecond.isEmpty());
+    }
 }
