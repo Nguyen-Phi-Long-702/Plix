@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 from app.models.sync import (
     BudgetSyncRecord,
@@ -423,3 +424,24 @@ def test_pull_reads_from_the_requested_table_and_keeps_its_own_columns():
         assert len(response.records) == 1, table
         assert response.records[0].id == row["id"], table
         assert response.records[0].is_deleted is row["is_deleted"], table
+
+
+# ---------------------------------------------------------------------------
+# Ngày 32: tombstone vĩnh viễn + gửi trùng yêu cầu
+# ---------------------------------------------------------------------------
+
+
+def test_every_table_upsert_sql_copies_is_deleted_and_updated_at_without_special_rules():
+    for table, spec in SYNC_TABLES.items():
+        sql = spec.upsert_sql
+        assert "is_deleted = EXCLUDED.is_deleted" in sql, table.value
+        assert "updated_at = EXCLUDED.updated_at" in sql, table.value
+        # is_deleted chỉ là 1 cột bình thường: điều kiện ghi đè không có luật riêng cho nó.
+        assert "is_deleted" not in sql.split("WHERE")[1], table.value
+
+
+def test_sync_service_and_router_never_issue_a_physical_delete():
+    app_dir = Path(__file__).resolve().parents[1]
+    for relative_path in ("services/sync_service.py", "routers/sync.py"):
+        source = (app_dir / relative_path).read_text(encoding="utf-8")
+        assert "DELETE FROM" not in source.upper(), relative_path
