@@ -6,6 +6,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import okhttp3.MediaType;
+import okhttp3.ResponseBody;
 
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.remote.dto.SyncPullResponseDto;
@@ -21,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 import retrofit2.Response;
+import retrofit2.HttpException;
 
 public class SyncPullerTest {
     private static final String USER_ID = "user-1";
@@ -77,6 +80,11 @@ public class SyncPullerTest {
 
     private Response<SyncPullResponseDto<TransactionSyncRecordDto>> page(List<TransactionSyncRecordDto> records, boolean hasMore) {
         return Response.success(new SyncPullResponseDto<>(records, hasMore));
+    }
+
+    //Máy chủ trả mã lỗi HTTP (ví dụ 500, 503)
+    private Response<SyncPullResponseDto<TransactionSyncRecordDto>> httpError(int code) {
+        return Response.error(code, ResponseBody.create("", MediaType.get("application/json")));
     }
 
     //Máy chủ giả: dữ liệu đã sắp tăng dần theo updated_at, lọc >= since, cắt theo limit, has_more = còn bản ghi có updated_at > max(updated_at của lô này)
@@ -193,6 +201,54 @@ public class SyncPullerTest {
         };
         assertThrows(IllegalStateException.class, () -> SyncPuller.pullAll(table, server, 0L, () -> false, failingOnSecond));
         assertEquals(1499L, savedCursor); //con trỏ lô 1, không tiến lên lô 2
+    }
+
+    @Test
+    public void pullAll_serverErrorOnFirstCall_neverAppliesAndKeepsExistingCursor() {
+        savedCursor = 7000L; //con trỏ đã có từ các lần kéo trước
+        SyncPuller.PageFetcher<TransactionSyncRecordDto> failingServer = (since, limit) -> httpError(500);
+        assertThrows(HttpException.class, () -> SyncPuller.pullAll(table, failingServer, 7000L, () -> false, recordingApplier));
+        assertEquals(0, applyCount);
+        assertEquals(7000L, savedCursor);
+        assertTrue(fakeTransactionDao.getAllOnce().isEmpty());
+    }
+
+    @Test
+    public void pullAll_serverErrorOnSecondCall_keepsCursorOfFirstBatch() {
+        List<TransactionSyncRecordDto> firstPage = distinctRecords(3);
+        final int[] fetchCount = {0};
+        SyncPuller.PageFetcher<TransactionSyncRecordDto> flakyServer = (since, limit) -> {
+            fetchCount[0]++;
+            if (fetchCount[0] == 1) {
+                return page(firstPage, true);
+            }
+            return httpError(503);
+        };
+        assertThrows(HttpException.class, () -> SyncPuller.pullAll(table, flakyServer, 0L, () -> false, recordingApplier));
+        assertEquals(1, applyCount);
+        assertEquals(FIRST_UPDATED_AT + 2, savedCursor); //giữ nguyên ở lô thành công gần nhất
+    }
+
+    @Test
+    public void pullAll_freshInstallReceivesTombstone_storesItAsDeletedAndKeepsItHidden() throws IOException {
+        FakePullServer server = new FakePullServer(Arrays.asList(
+                record("t1", 2000L, 500L, false),
+                record("t2", 3000L, 700L, true)));
+        SyncPuller.pullAll(table, server, 0L, () -> false, recordingApplier); //cài lại app: Room trống, con trỏ = 0
+        assertTrue(fakeTransactionDao.getById("t2").isDeleted);
+        assertEquals(1, fakeTransactionDao.getAllOnce().size());
+        assertEquals("t1", fakeTransactionDao.getAllOnce().get(0).id);
+        assertEquals(3000L, savedCursor);
+    }
+
+    @Test
+    public void pullAll_exactly500Records_stopsAfterOneCallWhenServerSaysNoMore() throws IOException {
+        FakePullServer server = new FakePullServer(distinctRecords(500));
+        SyncPuller.pullAll(table, server, 0L, () -> false, recordingApplier);
+        assertEquals(Collections.singletonList(0L), server.sinceValues);
+        assertEquals(1, applyCount);
+        assertEquals(500, fakeTransactionDao.getAllOnce().size());
+        assertEquals(FIRST_UPDATED_AT + 499, savedCursor);
     }
 
     @Test
