@@ -1,5 +1,17 @@
+from enum import Enum
 from typing import Generic, List, Literal, Optional, TypeVar
 from pydantic import BaseModel, Field
+
+class SyncTable(str, Enum):
+    """5 bảng tham gia đồng bộ - giá trị chính là phần <bảng> trong URL
+    /api/v1/sync/<bảng>/push và /api/v1/sync/<bảng>/pull."""
+
+    transactions = "transactions"
+    categories = "categories"
+    budgets = "budgets"
+    goals = "goals"
+    corrections = "corrections"
+
 
 class SyncRecordBase(BaseModel):
     id: str

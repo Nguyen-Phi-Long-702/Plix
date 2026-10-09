@@ -14,3 +14,5 @@ if not DATABASE_URL:
     raise RuntimeError("Thiếu biến môi trường DATABASE_URL — kiểm tra file .env")
 
 RETRAIN_COOLDOWN_SECONDS = int(os.getenv("RETRAIN_COOLDOWN_SECONDS", "3600"))
+
+MAX_PULL_LIMIT = int(os.getenv("MAX_PULL_LIMIT", "500"))
