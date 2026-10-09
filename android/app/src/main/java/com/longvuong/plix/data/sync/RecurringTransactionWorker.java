@@ -24,19 +24,19 @@ import dagger.assisted.AssistedInject;
 @HiltWorker
 public class RecurringTransactionWorker extends Worker {
     public static final String UNIQUE_WORK_NAME = "recurring_transaction_worker";
-
     private static final String TAG = "RecurringTxWorker";
     private static final String RECURRENCE_PREFIX = "MONTHLY:";
     private static final int MONTHS_PER_YEAR = 12;
-
     private final TransactionDao transactionDao;
     private final AuthManager authManager;
+    private final SyncScheduler syncScheduler;
 
     @AssistedInject
-    public RecurringTransactionWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters, TransactionDao transactionDao, AuthManager authManager) {
+    public RecurringTransactionWorker(@Assisted @NonNull Context context, @Assisted @NonNull WorkerParameters workerParameters, TransactionDao transactionDao, AuthManager authManager, SyncScheduler syncScheduler) {
         super(context, workerParameters);
         this.transactionDao = transactionDao;
         this.authManager = authManager;
+        this.syncScheduler = syncScheduler;
     }
 
     @NonNull
@@ -48,6 +48,7 @@ public class RecurringTransactionWorker extends Worker {
         }
         try {
             generateMissingInstances(transactionDao, System.currentTimeMillis());
+            syncScheduler.requestSync();
             return Result.success();
         } catch (Exception e) {
             Log.e(TAG, "Sinh giao dich dinh ky that bai", e);

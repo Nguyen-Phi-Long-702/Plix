@@ -8,6 +8,10 @@ import com.longvuong.plix.data.local.AppDatabase;
 import com.longvuong.plix.data.local.dao.TransactionDao;
 import com.longvuong.plix.data.repository.TransactionRepository;
 import com.longvuong.plix.data.repository.TransactionRepositoryImpl;
+import com.longvuong.plix.data.repository.SyncRepository;
+import com.longvuong.plix.data.repository.SyncRepositoryImpl;
+import com.longvuong.plix.data.repository.LogoutRepository;
+import com.longvuong.plix.data.repository.LogoutRepositoryImpl;
 
 import javax.inject.Singleton;
 
@@ -29,8 +33,12 @@ import com.longvuong.plix.data.repository.GoalRepository;
 import com.longvuong.plix.data.repository.GoalRepositoryImpl;
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.data.remote.api.AiApiService;
+import com.longvuong.plix.data.remote.api.HealthApiService;
+import com.longvuong.plix.data.remote.api.SyncApiService;
 import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.AiRepositoryImpl;
+import com.longvuong.plix.data.local.dao.CorrectionDao;
+
 @Module
 @InstallIn(SingletonComponent.class)
 public class DataModule {
@@ -92,6 +100,12 @@ public class DataModule {
 
     @Provides
     @Singleton
+    public CorrectionDao provideCorrectionDao(AppDatabase appDatabase) {
+        return appDatabase.correctionDao();
+    }
+
+    @Provides
+    @Singleton
     public GoalRepository provideGoalRepository(GoalRepositoryImpl impl) {
         return impl;
     }
@@ -104,6 +118,30 @@ public class DataModule {
     @Provides
     @Singleton
     public AiRepository provideAiRepository(AiRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public SyncApiService provideSyncApiService(AuthManager authManager) {
+        return authManager.getBackendRetrofit().create(SyncApiService.class);
+    }
+
+    @Provides
+    @Singleton
+    public HealthApiService provideHealthApiService(AuthManager authManager) {
+        return authManager.getBackendRetrofit().create(HealthApiService.class);
+    }
+
+    @Provides
+    @Singleton
+    public SyncRepository provideSyncRepository(SyncRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public LogoutRepository provideLogoutRepository(LogoutRepositoryImpl impl) {
         return impl;
     }
 }

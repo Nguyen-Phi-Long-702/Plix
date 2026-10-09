@@ -8,6 +8,7 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.data.local.dao.CategoryDao;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+import com.longvuong.plix.data.sync.SyncScheduler;
 
 import java.util.List;
 
@@ -16,16 +17,17 @@ import javax.inject.Singleton;
 
 @Singleton
 public class CategoryRepositoryImpl implements CategoryRepository {
-
     private final CategoryDao categoryDao;
     private final AppExecutors appExecutors;
     private final ErrorMapper errorMapper;
+    private final SyncScheduler syncScheduler;
 
     @Inject
-    public CategoryRepositoryImpl(CategoryDao categoryDao, AppExecutors appExecutors, ErrorMapper errorMapper) {
+    public CategoryRepositoryImpl(CategoryDao categoryDao, AppExecutors appExecutors, ErrorMapper errorMapper, SyncScheduler syncScheduler) {
         this.categoryDao = categoryDao;
         this.appExecutors = appExecutors;
         this.errorMapper = errorMapper;
+        this.syncScheduler = syncScheduler;
     }
 
     @Override
@@ -39,6 +41,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
         appExecutors.diskIO().execute(() -> {
             try {
                 categoryDao.insert(entity);
+                syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {
                 notifyError(callback, e);
@@ -51,6 +54,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
         appExecutors.diskIO().execute(() -> {
             try {
                 categoryDao.update(entity);
+                syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {
                 notifyError(callback, e);
@@ -79,4 +83,6 @@ public class CategoryRepositoryImpl implements CategoryRepository {
         Result<Void> error = errorMapper.mapThrowable(e);
         appExecutors.mainThread().execute(() -> callback.onResult(error));
     }
+
+
 }

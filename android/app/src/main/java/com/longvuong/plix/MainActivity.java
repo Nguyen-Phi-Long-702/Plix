@@ -16,10 +16,14 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.graphics.Insets;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.core.notification.NotificationHelper;
+import com.longvuong.plix.presentation.sync.SyncIndicatorMenuProvider;
+import com.longvuong.plix.presentation.sync.SyncStatusViewModel;
 
 import javax.inject.Inject;
 
@@ -49,17 +53,27 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.nav_host_fragment);
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         navController = navHostFragment.getNavController();
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         NavigationUI.setupWithNavController(bottomNavigationView, navController);
 
         //Chỉ hiện thanh điều hướng dưới khi đang ở trong mainGraph
-        navController.addOnDestinationChangedListener((controller, destination, arguments) ->
-                updateBottomNavVisibility(destination));
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> updateBottomNavVisibility(destination));
 
+        SyncStatusViewModel syncStatusViewModel = new ViewModelProvider(this).get(SyncStatusViewModel.class);
+        addMenuProvider(new SyncIndicatorMenuProvider(this, syncStatusViewModel, navController));
+
+        //Sau khi kéo dữ liệu về, nếu có danh mục bị xoá trên thiết bị khác mà giao dịch vẫn dùng: hiện 1 lần rồi đánh dấu đã xử lý
+        syncStatusViewModel.getDeletedCategoryNotice().observe(this, shouldShow -> {
+            if (Boolean.TRUE.equals(shouldShow)) {
+                Snackbar.make(findViewById(android.R.id.content),
+                        "Một số giao dịch đã được chuyển sang \"Danh mục không xác định\" do danh mục gốc đã bị xoá trên thiết bị khác",
+                        Snackbar.LENGTH_LONG).show();
+                syncStatusViewModel.onDeletedCategoryNoticeHandled();
+            }
+        });
         authManager.getSessionExpiredLiveData().observe(this, expired -> {
             if (Boolean.TRUE.equals(expired)) {
                 navController.navigate(

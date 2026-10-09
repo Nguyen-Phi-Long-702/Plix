@@ -6,16 +6,19 @@ import androidx.lifecycle.ViewModel;
 
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
+import com.longvuong.plix.data.repository.SyncRepository;
 import javax.inject.Inject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class AuthViewModel extends ViewModel {
     private final AuthManager authManager;
+    private final SyncRepository syncRepository;
 
     @Inject
-    public AuthViewModel(AuthManager authManager) {
+    public AuthViewModel(AuthManager authManager, SyncRepository syncRepository) {
         this.authManager = authManager;
+        this.syncRepository = syncRepository;
     }
 
     private final MutableLiveData<String> authSuccessToken = new MutableLiveData<>();
@@ -38,6 +41,7 @@ public class AuthViewModel extends ViewModel {
         authManager.login(email, password, new AuthManager.AuthCallback() {
             @Override
             public void onSuccess(AuthResponseDto response) {
+                syncRepository.requestSync(); //đăng nhập xong kéo dữ liệu của tài khoản về (máy mới/cài lại app)
                 authSuccessToken.postValue(response.accessToken);
             }
 

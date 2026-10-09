@@ -7,6 +7,8 @@ import com.longvuong.plix.data.local.entity.TransactionEntity;
 
 import org.junit.Before;
 import org.junit.Test;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class CheckBudgetThresholdUseCaseTest {
     private static final String PERIOD = "2026-09";
@@ -125,5 +127,71 @@ public class CheckBudgetThresholdUseCaseTest {
         useCase.checkAfterUpdate(oldTx, newTx);
         assertEquals(1, fakeNotifier.notifiedBudgets.size());
         assertEquals("budget-food", fakeNotifier.notifiedBudgets.get(0).id);
+    }
+
+    @Test
+    public void checkAfterPull_pulledTransactionPushesBudgetOverThreshold_notifies() {
+        fakeBudgetRepository.insert(budget("budget-1", null, 1_000_000), r -> {});
+        fakeTransactionRepository.seed(transaction("tx-local", null, 500_000, TS)); //giao dịch có sẵn trên máy
+        TransactionEntity pulledTx = transaction("tx-pulled", null, 400_000, TS); //giao dịch từ thiết bị khác
+        fakeTransactionRepository.seed(pulledTx); //đã ghi vào Room trước khi gọi check
+        useCase.checkAfterPull(Collections.<TransactionEntity>emptyList(), Collections.singletonList(pulledTx));
+        assertEquals(1, fakeNotifier.notifiedBudgets.size());
+        assertEquals("budget-1", fakeNotifier.notifiedBudgets.get(0).id);
+        assertEquals(900_000L, (long) fakeNotifier.notifiedSpentAmounts.get(0));
+    }
+
+    @Test
+    public void checkAfterPull_severalPulledTransactionsSameBudget_notifiesOnlyOnce() {
+        fakeBudgetRepository.insert(budget("budget-1", null, 1_000_000), r -> {});
+        fakeTransactionRepository.seed(transaction("tx-local", null, 500_000, TS));
+        TransactionEntity pulledA = transaction("tx-a", null, 200_000, TS);
+        TransactionEntity pulledB = transaction("tx-b", null, 200_000, TS);
+        fakeTransactionRepository.seed(pulledA);
+        fakeTransactionRepository.seed(pulledB);
+        useCase.checkAfterPull(Collections.<TransactionEntity>emptyList(), Arrays.asList(pulledA, pulledB));
+        assertEquals(1, fakeNotifier.notifiedBudgets.size());
+        assertEquals(900_000L, (long) fakeNotifier.notifiedSpentAmounts.get(0));
+    }
+
+    @Test
+    public void checkAfterPull_pulledEditOverwritesLocalAndCrossesThreshold_notifies() {
+        fakeBudgetRepository.insert(budget("budget-1", null, 1_000_000), r -> {});
+        TransactionEntity oldVersion = transaction("tx-1", null, 100_000, TS);
+        TransactionEntity newVersion = transaction("tx-1", null, 850_000, TS); //thiết bị khác sửa 100k thành 850k
+        fakeTransactionRepository.seed(newVersion); //Room hiện đang lưu bản mới
+        useCase.checkAfterPull(Collections.singletonList(oldVersion), Collections.singletonList(newVersion));
+        assertEquals(1, fakeNotifier.notifiedBudgets.size());
+        assertEquals(850_000L, (long) fakeNotifier.notifiedSpentAmounts.get(0));
+    }
+
+    @Test
+    public void checkAfterPull_alreadyAboveThresholdBeforePull_doesNotNotifyAgain() {
+        fakeBudgetRepository.insert(budget("budget-overall", null, 1_000_000), r -> {});
+        fakeBudgetRepository.insert(budget("budget-food", "sys_an_uong", 1_000_000), r -> {});
+        fakeTransactionRepository.seed(transaction("tx-local", "sys_an_uong", 850_000, TS)); //đã ở 85%, vượt ngưỡng 80% từ trước khi kéo
+        TransactionEntity pulledTx = transaction("tx-pulled", "sys_an_uong", 50_000, TS);
+        fakeTransactionRepository.seed(pulledTx);
+        useCase.checkAfterPull(Collections.<TransactionEntity>emptyList(), Collections.singletonList(pulledTx));
+        //Cả ngân sách tổng và ngân sách danh mục: trước khi kéo 85%, sau khi kéo 90% -> không phải "vừa vượt" nên không báo lại
+        assertEquals(0, fakeNotifier.notifiedBudgets.size());
+    }
+
+    @Test
+    public void checkAfterPull_pulledTransactionStillBelowThreshold_doesNotNotify() {
+        fakeBudgetRepository.insert(budget("budget-1", null, 1_000_000), r -> {});
+        fakeTransactionRepository.seed(transaction("tx-local", null, 100_000, TS));
+        TransactionEntity pulledTx = transaction("tx-pulled", null, 200_000, TS);
+        fakeTransactionRepository.seed(pulledTx);
+        useCase.checkAfterPull(Collections.<TransactionEntity>emptyList(), Collections.singletonList(pulledTx));
+        assertEquals(0, fakeNotifier.notifiedBudgets.size()); //10% -> 30%, chưa tới 80%
+    }
+
+    @Test
+    public void checkAfterPull_nothingPulled_doesNotNotifyOrCrash() {
+        fakeBudgetRepository.insert(budget("budget-1", null, 1_000_000), r -> {});
+        fakeTransactionRepository.seed(transaction("tx-local", null, 900_000, TS));
+        useCase.checkAfterPull(Collections.<TransactionEntity>emptyList(), Collections.<TransactionEntity>emptyList());
+        assertEquals(0, fakeNotifier.notifiedBudgets.size());
     }
 }

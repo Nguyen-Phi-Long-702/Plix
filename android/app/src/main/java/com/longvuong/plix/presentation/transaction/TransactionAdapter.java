@@ -87,12 +87,8 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             buttonDelete = itemView.findViewById(R.id.buttonDeleteTransaction);
         }
 
-        void bind(TransactionEntity transaction, Map<String, String> categoryNamesById,
-                  OnTransactionActionListener actionListener) {
-            String categoryName = transaction.categoryId != null
-                    ? categoryNamesById.get(transaction.categoryId) : null;
-            textCategoryName.setText(categoryName != null ? categoryName : "Chưa phân loại");
-
+        void bind(TransactionEntity transaction, Map<String, String> categoryNamesById, OnTransactionActionListener actionListener) {
+            textCategoryName.setText(categoryLabel(transaction, categoryNamesById));
             String date = Instant.ofEpochMilli(transaction.occurredAt)
                     .atZone(ZoneId.systemDefault())
                     .format(DATE_FORMATTER);
@@ -107,6 +103,18 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
             itemView.setOnClickListener(v -> actionListener.onEditTransaction(transaction));
             buttonDelete.setOnClickListener(v -> actionListener.onDeleteTransaction(transaction));
+        }
+
+        //Chưa chọn danh mục -> "Chưa phân loại"; có danh mục nhưng không còn trong danh sách đang dùng (đã bị xoá) -> "Danh mục không xác định"
+        private String categoryLabel(TransactionEntity transaction, Map<String, String> categoryNamesById) {
+            if (transaction.categoryId == null) {
+                return "Chưa phân loại";
+            }
+            if (categoryNamesById.isEmpty()) {
+                return ""; //danh mục chưa tải xong (tải xong luôn có 12 danh mục hệ thống), tránh nháy chữ "Danh mục không xác định"
+            }
+            String categoryName = categoryNamesById.get(transaction.categoryId);
+            return categoryName != null ? categoryName : "Danh mục không xác định";
         }
 
         private String formatCurrency(long amount) {

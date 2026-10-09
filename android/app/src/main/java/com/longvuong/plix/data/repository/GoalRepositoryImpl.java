@@ -8,6 +8,7 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.data.local.dao.GoalDao;
 import com.longvuong.plix.data.local.entity.GoalEntity;
+import com.longvuong.plix.data.sync.SyncScheduler;
 
 import java.util.List;
 
@@ -19,12 +20,14 @@ public class GoalRepositoryImpl implements GoalRepository {
     private final GoalDao goalDao;
     private final AppExecutors appExecutors;
     private final ErrorMapper errorMapper;
+    private final SyncScheduler syncScheduler;
 
     @Inject
-    public GoalRepositoryImpl(GoalDao goalDao, AppExecutors appExecutors, ErrorMapper errorMapper) {
+    public GoalRepositoryImpl(GoalDao goalDao, AppExecutors appExecutors, ErrorMapper errorMapper, SyncScheduler syncScheduler) {
         this.goalDao = goalDao;
         this.appExecutors = appExecutors;
         this.errorMapper = errorMapper;
+        this.syncScheduler = syncScheduler;
     }
 
     @Override
@@ -38,6 +41,7 @@ public class GoalRepositoryImpl implements GoalRepository {
         appExecutors.diskIO().execute(() -> {
             try {
                 goalDao.insert(entity);
+                syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {
                 notifyError(callback, e);
@@ -50,6 +54,7 @@ public class GoalRepositoryImpl implements GoalRepository {
         appExecutors.diskIO().execute(() -> {
             try {
                 goalDao.update(entity);
+                syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {
                 notifyError(callback, e);

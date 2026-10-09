@@ -89,4 +89,40 @@ class FakeTransactionDao implements TransactionDao {
         }
         return result;
     }
+
+    @Override
+    public List<TransactionEntity> getPendingSync(String userId) {
+        List<TransactionEntity> result = new ArrayList<>();
+        for (TransactionEntity entity : storage) {
+            if ("pending".equals(entity.syncStatus) && userId.equals(entity.userId)) {
+                result.add(entity);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void markSynced(String id, long updatedAt) {
+        for (TransactionEntity entity : storage) {
+            if (entity.id.equals(id) && entity.updatedAt == updatedAt) {
+                entity.syncStatus = "synced";
+            }
+        }
+    }
+
+    @Override
+    public int countActiveByCategoryIds(List<String> categoryIds) {
+        int count = 0;
+        for (TransactionEntity entity : storage) {
+            if (!entity.isDeleted && entity.categoryId != null && categoryIds.contains(entity.categoryId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    @Override
+    public void deleteAllByUserId(String userId) {
+        storage.removeIf(entity -> userId.equals(entity.userId));
+    }
 }

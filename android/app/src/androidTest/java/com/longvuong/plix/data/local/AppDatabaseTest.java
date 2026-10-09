@@ -3,6 +3,7 @@ package com.longvuong.plix.data.local;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -283,6 +284,95 @@ public class AppDatabaseTest {
         List<GoalEntity> afterDelete = getOrAwaitValue(database.goalDao().getActiveGoals());
         assertEquals(0, afterDelete.size());
         assertNotNull(database.goalDao().getById("goal-soft-delete"));
+    }
+
+    @Test
+    public void budget_findDeletedCategoryBudget_returnsOnlySoftDeletedRowWithSameKey() {
+        BudgetEntity entity = new BudgetEntity();
+        entity.id = "budget-deleted";
+        entity.userId = "user-1";
+        entity.period = "2026-10";
+        entity.categoryId = "sys_an_uong";
+        entity.limitAmount = 3000000;
+        entity.thresholdPercent = 80;
+        entity.updatedAt = 1735500000000L;
+        entity.syncStatus = "pending";
+        entity.isDeleted = true;
+        database.budgetDao().insert(entity);
+
+        BudgetEntity found = database.budgetDao().findDeletedCategoryBudget("user-1", "2026-10", "sys_an_uong");
+        assertNotNull(found);
+        assertEquals("budget-deleted", found.id);
+        assertNull(database.budgetDao().findCategoryBudgetByUserAndPeriod("user-1", "2026-10", "sys_an_uong"));
+        assertNull(database.budgetDao().findDeletedCategoryBudget("user-1", "2026-11", "sys_an_uong"));
+    }
+
+    @Test
+    public void allFiveTables_softDeletedPendingRecord_stillReturnedByGetPendingSync() {
+        TransactionEntity transaction = new TransactionEntity();
+        transaction.id = "tx-pending-deleted";
+        transaction.userId = "user-1";
+        transaction.amount = 20000;
+        transaction.type = "expense";
+        transaction.occurredAt = 1735500000000L;
+        transaction.updatedAt = 1735500100000L;
+        transaction.syncStatus = "pending";
+        transaction.isDeleted = true;
+        database.transactionDao().insert(transaction);
+
+        CategoryEntity category = new CategoryEntity();
+        category.id = "cat-pending-deleted";
+        category.userId = "user-1";
+        category.name = "Danh mục đã xoá";
+        category.type = "expense";
+        category.updatedAt = 1735500100000L;
+        category.syncStatus = "pending";
+        category.isDeleted = true;
+        database.categoryDao().insert(category);
+
+        BudgetEntity budget = new BudgetEntity();
+        budget.id = "budget-pending-deleted";
+        budget.userId = "user-1";
+        budget.period = "2026-10";
+        budget.limitAmount = 3000000;
+        budget.thresholdPercent = 80;
+        budget.updatedAt = 1735500100000L;
+        budget.syncStatus = "pending";
+        budget.isDeleted = true;
+        database.budgetDao().insert(budget);
+
+        GoalEntity goal = new GoalEntity();
+        goal.id = "goal-pending-deleted";
+        goal.userId = "user-1";
+        goal.name = "Mục tiêu đã xoá";
+        goal.targetAmount = 50000000;
+        goal.deadline = 1767225600000L;
+        goal.updatedAt = 1735500100000L;
+        goal.syncStatus = "pending";
+        goal.isDeleted = true;
+        database.goalDao().insert(goal);
+
+        CorrectionEntity correction = new CorrectionEntity();
+        correction.id = "corr-pending-deleted";
+        correction.userId = "user-1";
+        correction.transactionId = "tx-pending-deleted";
+        correction.correctedCategoryId = "sys_an_uong";
+        correction.createdAt = 1735500000000L;
+        correction.updatedAt = 1735500100000L;
+        correction.syncStatus = "pending";
+        correction.isDeleted = true;
+        database.correctionDao().insert(correction);
+
+        assertTrue(onlyElement(database.transactionDao().getPendingSync("user-1")).isDeleted);
+        assertTrue(onlyElement(database.categoryDao().getPendingSync("user-1")).isDeleted);
+        assertTrue(onlyElement(database.budgetDao().getPendingSync("user-1")).isDeleted);
+        assertTrue(onlyElement(database.goalDao().getPendingSync("user-1")).isDeleted);
+        assertTrue(onlyElement(database.correctionDao().getPendingSync("user-1")).isDeleted);
+    }
+
+    private <T> T onlyElement(List<T> list) {
+        assertEquals(1, list.size());
+        return list.get(0);
     }
 
     private <T> T getOrAwaitValue(LiveData<T> liveData) throws InterruptedException {

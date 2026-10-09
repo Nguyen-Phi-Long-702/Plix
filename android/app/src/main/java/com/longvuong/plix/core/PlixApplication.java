@@ -12,6 +12,7 @@ import com.longvuong.plix.data.sync.RecurringTransactionWorker;
 import com.longvuong.plix.BuildConfig;
 import com.longvuong.plix.core.error.GlobalExceptionHandler;
 import com.longvuong.plix.data.local.AppDatabase;
+import com.longvuong.plix.data.sync.SyncScheduler;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +22,6 @@ import timber.log.Timber;
 
 @HiltAndroidApp
 public class PlixApplication extends Application implements Configuration.Provider {
-
     @Inject
     AppDatabase appDatabase;
 
@@ -30,6 +30,9 @@ public class PlixApplication extends Application implements Configuration.Provid
 
     @Inject
     GlobalExceptionHandler globalExceptionHandler;
+
+    @Inject
+    SyncScheduler syncScheduler;
 
     @Override
     public void onCreate() {
@@ -40,6 +43,7 @@ public class PlixApplication extends Application implements Configuration.Provid
             Timber.plant(new Timber.DebugTree());
         }
         scheduleRecurringTransactionWorker();
+        syncScheduler.schedulePeriodicSync();
     }
 
     private void scheduleRecurringTransactionWorker() {
@@ -52,8 +56,6 @@ public class PlixApplication extends Application implements Configuration.Provid
 
     @Override
     public Configuration getWorkManagerConfiguration() {
-        return new Configuration.Builder()
-                .setWorkerFactory(hiltWorkerFactory)
-                .build();
+        return new Configuration.Builder().setWorkerFactory(hiltWorkerFactory).build();
     }
 }

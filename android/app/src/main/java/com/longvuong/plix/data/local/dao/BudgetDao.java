@@ -29,4 +29,16 @@ public interface BudgetDao {
 
     @Query("SELECT * FROM budgets WHERE user_id = :userId AND period = :period AND category_id = :categoryId AND is_deleted = 0 LIMIT 1")
     BudgetEntity findCategoryBudgetByUserAndPeriod(String userId, String period, String categoryId);
+
+    @Query("SELECT * FROM budgets WHERE user_id = :userId AND period = :period AND category_id = :categoryId AND is_deleted = 1 LIMIT 1")
+    BudgetEntity findDeletedCategoryBudget(String userId, String period, String categoryId);
+
+    @Query("SELECT * FROM budgets WHERE sync_status = 'pending' AND user_id = :userId ORDER BY updated_at ASC")
+    List<BudgetEntity> getPendingSync(String userId);
+
+    @Query("UPDATE budgets SET sync_status = 'synced' WHERE id = :id AND updated_at = :updatedAt")
+    void markSynced(String id, long updatedAt);
+
+    @Query("DELETE FROM budgets WHERE user_id = :userId")
+    void deleteAllByUserId(String userId);
 }

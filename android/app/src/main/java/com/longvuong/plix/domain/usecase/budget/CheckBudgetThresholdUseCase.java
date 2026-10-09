@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -72,6 +73,51 @@ public class CheckBudgetThresholdUseCase {
                 checkScopeOnce(visitedScopes, newTransaction.userId, periodOf(newTransaction.occurredAt), newTransaction.categoryId, beforeList, afterList);
             }
         });
+    }
+
+    //Sau khi kéo dữ liệu từ máy chủ: oldVersions = bản cũ của các giao dịch được ghi đè, newVersions = bản vừa ghi vào Room (gồm cả giao dịch mới)
+    //Chi tiêu trước khi kéo được dựng lại từ dữ liệu hiện tại: bỏ bản mới, thêm lại bản cũ
+    public void checkAfterPull(List<TransactionEntity> oldVersions, List<TransactionEntity> newVersions) {
+        if (newVersions.isEmpty()) {
+            return;
+        }
+        transactionRepository.getAllOnce(result -> {
+            if (!(result instanceof Result.Success)) {
+                return;
+            }
+            List<TransactionEntity> afterList = ((Result.Success<List<TransactionEntity>>) result).data;
+            List<TransactionEntity> beforeList = restoreBeforePull(afterList, oldVersions, newVersions);
+
+            Set<String> visitedScopes = new LinkedHashSet<>();
+            checkPulledScopes(visitedScopes, oldVersions, beforeList, afterList);
+            checkPulledScopes(visitedScopes, newVersions, beforeList, afterList);
+        });
+    }
+
+    private void checkPulledScopes(Set<String> visitedScopes, List<TransactionEntity> pulledTransactions,
+                                   List<TransactionEntity> beforeList, List<TransactionEntity> afterList) {
+        for (TransactionEntity transaction : pulledTransactions) {
+            String period = periodOf(transaction.occurredAt);
+            checkScopeOnce(visitedScopes, transaction.userId, period, null, beforeList, afterList);
+            if (transaction.categoryId != null) {
+                checkScopeOnce(visitedScopes, transaction.userId, period, transaction.categoryId, beforeList, afterList);
+            }
+        }
+    }
+
+    private static List<TransactionEntity> restoreBeforePull(List<TransactionEntity> afterList, List<TransactionEntity> oldVersions, List<TransactionEntity> newVersions) {
+        Set<String> pulledIds = new HashSet<>();
+        for (TransactionEntity transaction : newVersions) {
+            pulledIds.add(transaction.id);
+        }
+        List<TransactionEntity> result = new ArrayList<>();
+        for (TransactionEntity transaction : afterList) {
+            if (!pulledIds.contains(transaction.id)) {
+                result.add(transaction);
+            }
+        }
+        result.addAll(oldVersions);
+        return result;
     }
 
     private void checkScopeOnce(Set<String> visitedScopes, String userId, String period, @Nullable String categoryId,

@@ -49,6 +49,8 @@ public class AuthManager {
     private volatile String refreshToken;
     //livedata phát tín hiệu khi phiên đăng nhập cần đăng nhập lại (refresh cũng thất bại)
     private final MutableLiveData<Boolean> sessionExpiredLiveData = new MutableLiveData<>(false);
+    //Bật trong lúc đồng bộ lần cuối khi đăng xuất: refresh token thất bại thì không đá người dùng ra màn hình đăng nhập, để hộp thoại xác nhận hiện ra đúng kế hoạch
+    private volatile boolean sessionExpiredSignalSuppressed;
     @Inject
     public AuthManager(EncryptedTokenStore encryptedTokenStore) {
         this.encryptedTokenStore = encryptedTokenStore;
@@ -147,7 +149,23 @@ public class AuthManager {
         return sessionExpiredLiveData;
     }
     public void notifySessionExpired() {
+        if (sessionExpiredSignalSuppressed) {
+            return;
+        }
         sessionExpiredLiveData.postValue(true);
+    }
+    public void setSessionExpiredSignalSuppressed(boolean suppressed) {
+        this.sessionExpiredSignalSuppressed = suppressed;
+    }
+    //Xoá phiên đăng nhập (token trong RAM + token đã mã hoá) rồi phát tín hiệu "cần đăng nhập lại"
+    //MainActivity đã có sẵn luồng điều hướng về màn hình đăng nhập khi nhận tín hiệu này nên đăng xuất dùng lại luôn
+    public void logout() {
+        this.accessToken = null;
+        this.refreshToken = null;
+        if (encryptedTokenStore != null) {
+            encryptedTokenStore.clearTokens();
+        }
+        sessionExpiredLiveData.postValue(true); //phát thẳng, không đi qua notifySessionExpired() vì cờ chặn có thể đang bật
     }
     public void onSessionExpiredHandled() {
         sessionExpiredLiveData.postValue(false);

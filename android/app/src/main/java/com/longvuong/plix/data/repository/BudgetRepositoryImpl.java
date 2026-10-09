@@ -8,6 +8,7 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.data.local.dao.BudgetDao;
 import com.longvuong.plix.data.local.entity.BudgetEntity;
+import com.longvuong.plix.data.sync.SyncScheduler;
 
 import java.util.List;
 
@@ -19,12 +20,14 @@ public class BudgetRepositoryImpl implements BudgetRepository {
     private final BudgetDao budgetDao;
     private final AppExecutors appExecutors;
     private final ErrorMapper errorMapper;
+    private final SyncScheduler syncScheduler;
 
     @Inject
-    public BudgetRepositoryImpl(BudgetDao budgetDao, AppExecutors appExecutors, ErrorMapper errorMapper) {
+    public BudgetRepositoryImpl(BudgetDao budgetDao, AppExecutors appExecutors, ErrorMapper errorMapper, SyncScheduler syncScheduler) {
         this.budgetDao = budgetDao;
         this.appExecutors = appExecutors;
         this.errorMapper = errorMapper;
+        this.syncScheduler = syncScheduler;
     }
 
     @Override
@@ -36,7 +39,16 @@ public class BudgetRepositoryImpl implements BudgetRepository {
     public void insert(BudgetEntity entity, RepositoryCallback<Void> callback) {
         appExecutors.diskIO().execute(() -> {
             try {
-                budgetDao.insert(entity);
+                BudgetEntity deletedWithSameKey = entity.categoryId != null
+                        ? budgetDao.findDeletedCategoryBudget(entity.userId, entity.period, entity.categoryId) : null;
+                if (deletedWithSameKey != null) {
+                    //Dòng cũ chỉ xoá mềm nên vẫn chiếm khoá duy nhất (user, kỳ, danh mục): dùng lại đúng dòng đó (cùng id) thay vì thêm dòng mới
+                    entity.id = deletedWithSameKey.id;
+                    budgetDao.update(entity);
+                } else {
+                    budgetDao.insert(entity);
+                }
+                syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {
                 notifyError(callback, e);
@@ -49,6 +61,7 @@ public class BudgetRepositoryImpl implements BudgetRepository {
         appExecutors.diskIO().execute(() -> {
             try {
                 budgetDao.update(entity);
+                syncScheduler.requestSync();
                 notifySuccess(callback);
             } catch (Exception e) {
                 notifyError(callback, e);
