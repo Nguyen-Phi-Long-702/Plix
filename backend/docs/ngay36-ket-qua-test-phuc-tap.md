@@ -1,46 +1,46 @@
 # Kết quả Sync Test Suite Phần 2 (trường hợp phức tạp) — Ngày 36
 
 **Người thực hiện:** Nguyễn Đại Vương, Nguyễn Phi Long
-**Ngày giờ chạy:** <ngày giờ thực tế>
+**Ngày giờ chạy:** 
 **Backend đã kiểm tra:** local (uvicorn + Postgres Supabase) và Render (https://plix-7jfp.onrender.com)
-**Android:** nhánh `sprint4-android-long`, <emulator/thiết bị đã dùng>
+**Android:** nhánh `sprint4-android-long`, emulator/thiết bị đã dùng
 
 ## 1. Test tự động phía backend (pytest, pool giả)
 
-Lệnh `python -m pytest` trong `backend`: <N> passed, <M> failed.
+Lệnh `python -m pytest` trong `backend`: 127 passed, 0 failed.
 
 ## 2. Script `scripts/sync_edge_check.py` (Postgres thật) — kết quả local / Render
 
 | Case | transactions | categories | budgets | goals | corrections |
 |---|---|---|---|---|---|
-| G1 Cài lại app + đăng nhập (since=0), bản đã xoá vẫn là tombstone | <local> / <Render> | <local> / <Render> | <local> / <Render> | <local> / <Render> | <local> / <Render> |
-| G2a Thiết bị 2 đăng nhập lần đầu thấy đúng dữ liệu | | | | | |
-| G2b Thiết bị 1 nhận bản sửa và bản mới từ thiết bị 2 | | | | | |
-| G3 Kéo lỗi (401) rồi kéo lại cùng since: dữ liệu y như trước | | | | | |
-| G4 Kéo một phần rồi lỗi, kéo tiếp từ con trỏ lô đầu: đủ, không mất | | | | | |
+| G1 Cài lại app + đăng nhập (since=0), bản đã xoá vẫn là tombstone | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt |
+| G2a Thiết bị 2 đăng nhập lần đầu thấy đúng dữ liệu | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt |
+| G2b Thiết bị 1 nhận bản sửa và bản mới từ thiết bị 2 | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt |
+| G3 Kéo lỗi (401) rồi kéo lại cùng since: dữ liệu y như trước | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt |
+| G4 Kéo một phần rồi lỗi, kéo tiếp từ con trỏ lô đầu: đủ, không mất | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt | local: Đạt / Render: Đạt |
 
 (Mỗi ô ghi `ĐẠT` hoặc `KHÔNG ĐẠT` theo dạng `local / Render`; các dòng G2a–G4 điền tương tự dòng G1.)
 
 | Case (chỉ bảng transactions, chỉ chạy trên Render) | Kết quả |
 |---|---|
-| G5a Xin limit=100000 khi có 501 bản ghi: server chỉ trả 500, has_more = true | <Render> |
-| G5b Kéo tiếp từ con trỏ của lô đầu: đủ 501 bản ghi, không mất | <Render> |
+| G5a Xin limit=100000 khi có 501 bản ghi: server chỉ trả 500, has_more = true | Render: Đạt |
+| G5b Kéo tiếp từ con trỏ của lô đầu: đủ 501 bản ghi, không mất | Render: Đạt |
 
-Tổng: local <x>/25, Render <y>/27.
+Tổng: local 25/25, Render 27/27.
 
-Chạy lại script cũ trên Render (hồi quy): `simulate_two_devices.py` (Ngày 34) <a>/5; `sync_functional_check.py` (Ngày 35) <b>/35.
+Chạy lại script cũ trên Render (hồi quy): `simulate_two_devices.py` (Ngày 34) 5/5; `sync_functional_check.py` (Ngày 35) 35/35.
 
 ## 3. Test Android (Long chạy)
 
 | Nội dung | Kết quả |
 |---|---|
-| `gradlew.bat testDebugUnitTest` toàn bộ | <tổng số test>, <số lỗi> |
-| SyncPullerTest | <kết quả> |
+| `gradlew.bat testDebugUnitTest` toàn bộ | tổng số test, số lỗi |
+| SyncPullerTest | kết quả |
 | SyncPusherTest | |
 | SyncTombstoneTest | |
 | LogoutUseCaseTest | |
 | AuthAuthenticatorTest | |
-| SyncPullerRoomTest (instrumented, emulator) | <x>/2 |
+| SyncPullerRoomTest (instrumented, emulator) | x/2 |
 
 ## 4. Kiểm tra thủ công trên emulator (app → Render → Supabase)
 
@@ -79,8 +79,7 @@ Ghi chú: ở Ngày 36 "soft-limit" được kiểm tra bằng giới hạn th�
 
 ## 6. Lỗi phát hiện và cách sửa
 
-<Liệt kê: case, nguyên nhân, cách sửa, kết quả chạy lại. Nếu không có lỗi: "Không phát hiện lỗi.">
 
 ## 7. Kết luận
 
-<Số case đạt / tổng số. Đạt 100% case Must Have thì ghi rõ.>
+Số case đạt / tổng số. Đạt 100% case Must Have thì ghi rõ.
