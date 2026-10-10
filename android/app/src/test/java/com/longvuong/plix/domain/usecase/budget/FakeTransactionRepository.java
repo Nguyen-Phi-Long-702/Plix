@@ -47,4 +47,9 @@ class FakeTransactionRepository implements TransactionRepository {
     public void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback) {
         callback.onResult(new Result.Success<>(new ArrayList<>(transactions)));
     }
+
+    @Override
+    public void countPendingByCategory(String userId, String categoryId, String excludeTransactionId, RepositoryCallback<Integer> callback) {
+        callback.onResult(new Result.Success<>(0));
+    }
 }

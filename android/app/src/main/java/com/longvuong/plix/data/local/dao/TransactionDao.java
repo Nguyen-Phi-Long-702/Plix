@@ -48,6 +48,10 @@ public interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transactions WHERE is_deleted = 0 AND category_id IN (:categoryIds)")
     int countActiveByCategoryIds(List<String> categoryIds);
 
+    @Query("SELECT COUNT(*) FROM transactions WHERE user_id = :userId AND category_id = :categoryId "
+            + "AND id != :excludeTransactionId AND sync_status = 'pending' AND is_deleted = 0")
+    int countPendingByCategory(String userId, String categoryId, String excludeTransactionId);
+
     @Query("DELETE FROM transactions WHERE user_id = :userId")
     void deleteAllByUserId(String userId);
 }

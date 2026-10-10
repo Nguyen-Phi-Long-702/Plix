@@ -15,6 +15,9 @@ class FakeTransactionRepository implements TransactionRepository {
     boolean updateCalled;
     TransactionEntity lastInserted;
     TransactionEntity lastUpdated;
+    Result<Integer> countPendingResult = new Result.Success<>(0);
+    boolean countPendingCalled;
+    String lastExcludedTransactionId;
 
     @Override
     public LiveData<List<TransactionEntity>> getAll() {
@@ -48,5 +51,12 @@ class FakeTransactionRepository implements TransactionRepository {
     @Override
     public void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback) {
         callback.onResult(new Result.Success<>(new ArrayList<>()));
+    }
+
+    @Override
+    public void countPendingByCategory(String userId, String categoryId, String excludeTransactionId, RepositoryCallback<Integer> callback) {
+        countPendingCalled = true;
+        lastExcludedTransactionId = excludeTransactionId;
+        callback.onResult(countPendingResult);
     }
 }

@@ -10,6 +10,10 @@ public interface AiRepository {
     void categorize(String note, RepositoryCallback<CategorySuggestion> callback);
 
     void cancelPendingCategorize();
+
+    void checkAnomaly(String categoryId, long amount, RepositoryCallback<AnomalyResult> callback);
+
+    void cancelPendingAnomalyCheck();
     void submitCorrection(String transactionId, @Nullable String predictedCategoryId, String correctedCategoryId, RepositoryCallback<Void> callback);
 
     void retrain(RepositoryCallback<Void> callback);

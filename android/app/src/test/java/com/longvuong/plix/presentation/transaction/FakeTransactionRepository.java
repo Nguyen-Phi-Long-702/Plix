@@ -16,6 +16,7 @@ class FakeTransactionRepository implements TransactionRepository {
 
     boolean insertCalled;
     TransactionEntity lastInserted;
+    Result<Integer> countPendingResult = new Result.Success<>(0);
 
     private final Map<String, TransactionEntity> storage = new HashMap<>();
 
@@ -55,5 +56,10 @@ class FakeTransactionRepository implements TransactionRepository {
     @Override
     public void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback) {
         callback.onResult(new Result.Success<>(new ArrayList<>(storage.values())));
+    }
+
+    @Override
+    public void countPendingByCategory(String userId, String categoryId, String excludeTransactionId, RepositoryCallback<Integer> callback) {
+        callback.onResult(countPendingResult);
     }
 }

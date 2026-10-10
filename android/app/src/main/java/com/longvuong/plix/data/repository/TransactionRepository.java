@@ -19,4 +19,6 @@ public interface TransactionRepository {
     void getById(String id, RepositoryCallback<TransactionEntity> callback);
 
     void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback);
+
+    void countPendingByCategory(String userId, String categoryId, String excludeTransactionId, RepositoryCallback<Integer> callback);
 }
