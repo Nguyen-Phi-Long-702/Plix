@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollRoot"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -11,7 +12,85 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
+        <LinearLayout
+            android:id="@+id/layoutAnomalyChecking"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
 
+            <ProgressBar
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Đang kiểm tra mức chi tiêu..."
+                android:textColor="@android:color/darker_gray" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutAnomalyBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_anomaly_banner"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/imageAnomalyIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="10dp"
+                android:importantForAccessibility="no"
+                app:tint="@color/warn_strong"
+                tools:src="@drawable/ic_anomaly_high" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textAnomalyTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/warn_strong"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="Chi tiêu cao bất thường" />
+
+                <TextView
+                    android:id="@+id/textAnomalyExplanation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/warn_strong"
+                    android:textSize="13sp"
+                    tools:text="Giao dịch này cao hơn mức chi tiêu trung bình cho danh mục Ăn uống của bạn (trung bình 45.000đ, giao dịch này 350.000đ)" />
+
+                <TextView
+                    android:id="@+id/textAnomalyPendingNote"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:alpha="0.8"
+                    android:text="Kết quả có thể chưa tính giao dịch mới nhất đang chờ đồng bộ"
+                    android:textColor="@color/warn_strong"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggleType"
             android:layout_width="match_parent"
