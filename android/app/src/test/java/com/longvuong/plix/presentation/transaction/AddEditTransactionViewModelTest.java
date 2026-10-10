@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 public class AddEditTransactionViewModelTest {
-
+    private static final String INSUFFICIENT_DATA_MESSAGE = "Danh mục này chưa có đủ giao dịch để Plix nhận diện bất thường (cần tối thiểu 5 giao dịch). Cứ tiếp tục ghi chép — tính năng sẽ tự bật khi có đủ dữ liệu.";
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
@@ -308,6 +308,39 @@ public class AddEditTransactionViewModelTest {
 
         AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) viewModel.getAnomalyBannerState().getValue()).data;
         assertTrue(banner.showPendingNote);
+    }
+
+    @Test
+    public void save_anomalyInsufficientData_showsPositiveInfoBannerAndKeepsScreenOpen() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+
+        viewModel.save();
+        fakeAiRepository.completeAnomaly(new Result.Success<>(
+                new AnomalyResult(AnomalyResult.Level.INSUFFICIENT_DATA, null)));
+
+        UiState<AnomalyBannerUiModel> state = viewModel.getAnomalyBannerState().getValue();
+        assertTrue(state instanceof UiState.Success); //không phải UiState.Error: chưa đủ dữ liệu không phải là lỗi
+        AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) state).data;
+        assertEquals(AnomalyBannerUiModel.Kind.INSUFFICIENT_DATA, banner.kind);
+        assertEquals(INSUFFICIENT_DATA_MESSAGE, banner.explanation);
+        assertTrue(!banner.showPendingNote);
+        assertEquals(Boolean.FALSE, viewModel.getCloseScreen().getValue());
+    }
+
+    @Test
+    public void save_anomalyInsufficientData_usesFixedMessageEvenWhenServerSendsExplanation() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        fakeTransactionRepository.countPendingResult = new Result.Success<>(2);
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+
+        viewModel.save();
+        fakeAiRepository.completeAnomaly(new Result.Success<>(
+                new AnomalyResult(AnomalyResult.Level.INSUFFICIENT_DATA, "Not enough data")));
+
+        AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) viewModel.getAnomalyBannerState().getValue()).data;
+        assertEquals(INSUFFICIENT_DATA_MESSAGE, banner.explanation);
+        assertTrue(!banner.showPendingNote);
     }
 
     @Test
