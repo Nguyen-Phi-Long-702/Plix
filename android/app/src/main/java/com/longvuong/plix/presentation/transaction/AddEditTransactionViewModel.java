@@ -16,6 +16,9 @@ import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.CategoryRepository;
 import com.longvuong.plix.data.repository.CategorySuggestion;
 import com.longvuong.plix.data.repository.TransactionRepository;
+import com.longvuong.plix.data.repository.AnomalyResult;
+import com.longvuong.plix.domain.usecase.transaction.AnomalyCheckOutcome;
+import com.longvuong.plix.domain.usecase.transaction.CheckTransactionAnomalyUseCase;
 import com.longvuong.plix.domain.usecase.transaction.AddTransactionUseCase;
 import com.longvuong.plix.domain.usecase.transaction.UpdateTransactionUseCase;
 import com.longvuong.plix.domain.validation.FormValidator;
@@ -46,12 +49,16 @@ public class AddEditTransactionViewModel extends ViewModel {
     private static final String KEY_LOADED = "draft_loaded";
     private static final long CATEGORIZE_DEBOUNCE_MS = 500;
     private static final float LOW_CONFIDENCE_THRESHOLD = 0.4f;
+    private static final String ANOMALY_TITLE_HIGH = "Chi tiêu cao bất thường";
+    private static final String ANOMALY_TITLE_LOW = "Chi tiêu thấp bất thường";
+    private static final String ANOMALY_LOW_REMINDER = " Chỉ để bạn lưu ý, không phải lỗi.";
     private final SavedStateHandle savedStateHandle;
     private final AddTransactionUseCase addTransactionUseCase;
     private final UpdateTransactionUseCase updateTransactionUseCase;
     private final FormValidator formValidator;
     private final AuthManager authManager;
     private final AiRepository aiRepository;
+    private final CheckTransactionAnomalyUseCase checkTransactionAnomalyUseCase;
 
     private final ScheduledExecutorService categorizeDebounceExecutor =
             Executors.newSingleThreadScheduledExecutor(runnable -> {
@@ -64,6 +71,8 @@ public class AddEditTransactionViewModel extends ViewModel {
     private volatile String suggestedCategoryId;
     private volatile boolean suggestedCategoryLowConfidence;
     private final MediatorLiveData<UiState<CategorySuggestionUiModel>> categorySuggestionState = new MediatorLiveData<>();
+    private final MutableLiveData<UiState<AnomalyBannerUiModel>> anomalyBannerState = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> closeScreen = new MutableLiveData<>(false);
 
     private final String editingTransactionId;
     private TransactionEntity loadedEntity;
@@ -83,14 +92,15 @@ public class AddEditTransactionViewModel extends ViewModel {
             UpdateTransactionUseCase updateTransactionUseCase,
             FormValidator formValidator,
             AuthManager authManager,
-            AiRepository aiRepository) {
+            AiRepository aiRepository,
+            CheckTransactionAnomalyUseCase checkTransactionAnomalyUseCase) {
         this.savedStateHandle = savedStateHandle;
         this.addTransactionUseCase = addTransactionUseCase;
         this.updateTransactionUseCase = updateTransactionUseCase;
         this.formValidator = formValidator;
         this.authManager = authManager;
         this.aiRepository = aiRepository;
-
+        this.checkTransactionAnomalyUseCase = checkTransactionAnomalyUseCase;
         this.editingTransactionId = savedStateHandle.get(ARG_TRANSACTION_ID);
 
         Boolean alreadyLoaded = savedStateHandle.get(KEY_LOADED);
@@ -107,6 +117,7 @@ public class AddEditTransactionViewModel extends ViewModel {
             updateFilteredCategories();
         });
         categorySuggestionState.setValue(new UiState.Empty<>());
+        anomalyBannerState.setValue(new UiState.Empty<>());
         categorySuggestionState.addSource(aiRepository.observeConnectivity(), isConnected -> {
             if (Boolean.FALSE.equals(isConnected)) {
                 hideSuggestionDueToOffline(); //mất mạng -> ẩn hẳn khối gợi ý
@@ -291,12 +302,16 @@ public class AddEditTransactionViewModel extends ViewModel {
 
         String transactionIdForCorrection = entity.id;
         String correctedCategoryIdForCorrection = entity.categoryId;
+        String savedUserId = entity.userId;
+        String savedType = entity.type;
+        long savedAmount = entity.amount;
 
         saveState.setValue(new UiState.Loading<>());
         RepositoryCallback<Void> callback = result -> {
             saveState.setValue(toUiState(result));
             if (result instanceof Result.Success) {
                 reportCorrectionIfNeeded(transactionIdForCorrection, predictedCategoryIdSnapshot, correctedCategoryIdForCorrection);
+                startAnomalyCheckOrClose(transactionIdForCorrection, savedUserId, savedType, correctedCategoryIdForCorrection, savedAmount);
             }
         };
 
@@ -315,6 +330,49 @@ public class AddEditTransactionViewModel extends ViewModel {
             //Best-effort, không cập nhật UI: đây là tín hiệu học cho AI, không ảnh hưởng tới giao dịch đã lưu thành công
         });
     }
+
+
+    public LiveData<UiState<AnomalyBannerUiModel>> getAnomalyBannerState() {
+        return anomalyBannerState;
+    }
+
+    public LiveData<Boolean> getCloseScreen() {
+        return closeScreen;
+    }
+
+    private void startAnomalyCheckOrClose(String transactionId, @Nullable String userId, String type,
+                                          @Nullable String categoryId, long amount) {
+        boolean applicable = "expense".equals(type) && categoryId != null && userId != null;
+        if (!applicable || isOffline()) {
+            closeScreen.setValue(true); //thu nhập / chưa có danh mục / mất mạng -> không kiểm tra, đóng như cũ
+            return;
+        }
+        anomalyBannerState.setValue(new UiState.Loading<>());
+        checkTransactionAnomalyUseCase.execute(userId, transactionId, categoryId, amount, result -> {
+            if (result instanceof Result.Success) {
+                AnomalyCheckOutcome outcome = ((Result.Success<AnomalyCheckOutcome>) result).data;
+                AnomalyResult.Level level = outcome.result.level;
+                if (level == AnomalyResult.Level.HIGH || level == AnomalyResult.Level.LOW) {
+                    anomalyBannerState.setValue(new UiState.Success<>(buildAnomalyBanner(outcome)));
+                    return; //ở lại màn hình để người dùng đọc cảnh báo
+                }
+            }
+            //Bình thường / chưa đủ dữ liệu / lỗi: giao dịch đã lưu xong, lỗi AI không được chặn luồng -> đóng như cũ
+            anomalyBannerState.setValue(new UiState.Empty<>());
+            closeScreen.setValue(true);
+        });
+    }
+
+    private AnomalyBannerUiModel buildAnomalyBanner(AnomalyCheckOutcome outcome) {
+        boolean high = outcome.result.level == AnomalyResult.Level.HIGH;
+        String explanation = outcome.result.explanation != null ? outcome.result.explanation : "";
+        if (!high) {
+            explanation = (explanation + ANOMALY_LOW_REMINDER).trim();
+        }
+        return new AnomalyBannerUiModel(high, high ? ANOMALY_TITLE_HIGH : ANOMALY_TITLE_LOW,
+                explanation, outcome.hasOtherPendingInCategory);
+    }
+
     public LiveData<UiState<CategorySuggestionUiModel>> getCategorySuggestionState() {
         return categorySuggestionState;
     }
@@ -416,6 +474,7 @@ public class AddEditTransactionViewModel extends ViewModel {
             pendingCategorizeTask.cancel(false);
         }
         aiRepository.cancelPendingCategorize();
+        aiRepository.cancelPendingAnomalyCheck();
         categorizeDebounceExecutor.shutdownNow();
     }
     private UiState<Void> toUiState(Result<Void> result) {

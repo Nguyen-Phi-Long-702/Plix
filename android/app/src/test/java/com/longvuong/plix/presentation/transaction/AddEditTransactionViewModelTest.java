@@ -10,6 +10,8 @@ import androidx.lifecycle.SavedStateHandle;
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
+import com.longvuong.plix.data.repository.AnomalyResult;
+import com.longvuong.plix.domain.usecase.transaction.CheckTransactionAnomalyUseCase;
 import com.longvuong.plix.domain.usecase.transaction.AddTransactionUseCase;
 import com.longvuong.plix.domain.usecase.transaction.UpdateTransactionUseCase;
 import com.longvuong.plix.domain.validation.FormValidator;
@@ -88,7 +90,7 @@ public class AddEditTransactionViewModelTest {
                 fakeTransactionRepository, formValidator, fakeCheckBudgetThresholdUseCase());
         return new AddEditTransactionViewModel(savedStateHandle, fakeTransactionRepository,
                 fakeCategoryRepository, addUseCase, updateUseCase, formValidator, authManager,
-                aiRepository);
+                aiRepository, new CheckTransactionAnomalyUseCase(aiRepository, fakeTransactionRepository));
     }
 
     private com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase fakeCheckBudgetThresholdUseCase() {
@@ -244,6 +246,131 @@ public class AddEditTransactionViewModelTest {
         fakeAiRepository.setConnected(false);
 
         assertTrue(viewModel.getCategorySuggestionState().getValue() instanceof UiState.Empty);
+    }
+
+    private AddEditTransactionViewModel createReadyToSaveExpense(FakeAiRepository fakeAiRepository) {
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.setAmount(350000);
+        viewModel.setCategoryId("sys_an_uong");
+        return viewModel;
+    }
+
+    @Test
+    public void save_anomalyHigh_showsBannerAndKeepsScreenOpen() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+
+        viewModel.save();
+
+        assertTrue(fakeAiRepository.checkAnomalyCalled);
+        assertEquals("sys_an_uong", fakeAiRepository.lastAnomalyCategoryId);
+        assertEquals(350000L, fakeAiRepository.lastAnomalyAmount);
+        assertTrue(viewModel.getAnomalyBannerState().getValue() instanceof UiState.Loading);
+        assertEquals(Boolean.FALSE, viewModel.getCloseScreen().getValue());
+
+        fakeAiRepository.completeAnomaly(new Result.Success<>(
+                new AnomalyResult(AnomalyResult.Level.HIGH, "Cao hơn mức trung bình")));
+
+        UiState<AnomalyBannerUiModel> state = viewModel.getAnomalyBannerState().getValue();
+        assertTrue(state instanceof UiState.Success);
+        AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) state).data;
+        assertTrue(banner.high);
+        assertEquals("Chi tiêu cao bất thường", banner.title);
+        assertEquals("Cao hơn mức trung bình", banner.explanation);
+        assertTrue(!banner.showPendingNote);
+        assertEquals(Boolean.FALSE, viewModel.getCloseScreen().getValue());
+    }
+
+    @Test
+    public void save_anomalyLow_showsLowBannerWithReminder() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+
+        viewModel.save();
+        fakeAiRepository.completeAnomaly(new Result.Success<>(
+                new AnomalyResult(AnomalyResult.Level.LOW, "Thấp hơn mức trung bình.")));
+
+        AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) viewModel.getAnomalyBannerState().getValue()).data;
+        assertTrue(!banner.high);
+        assertEquals("Chi tiêu thấp bất thường", banner.title);
+        assertEquals("Thấp hơn mức trung bình. Chỉ để bạn lưu ý, không phải lỗi.", banner.explanation);
+    }
+
+    @Test
+    public void save_anomalyWithOtherPending_showsPendingNote() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        fakeTransactionRepository.countPendingResult = new Result.Success<>(2);
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+
+        viewModel.save();
+        fakeAiRepository.completeAnomaly(new Result.Success<>(
+                new AnomalyResult(AnomalyResult.Level.HIGH, "Cao")));
+
+        AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) viewModel.getAnomalyBannerState().getValue()).data;
+        assertTrue(banner.showPendingNote);
+    }
+
+    @Test
+    public void save_anomalyNormal_closesScreenWithoutBanner() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+
+        viewModel.save();
+        fakeAiRepository.completeAnomaly(new Result.Success<>(
+                new AnomalyResult(AnomalyResult.Level.NORMAL, null)));
+
+        assertTrue(viewModel.getAnomalyBannerState().getValue() instanceof UiState.Empty);
+        assertEquals(Boolean.TRUE, viewModel.getCloseScreen().getValue());
+    }
+
+    @Test
+    public void save_anomalyApiError_closesScreenSilently() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+
+        viewModel.save();
+        fakeAiRepository.completeAnomaly(new Result.Error<>(ErrorType.NETWORK, "Mat mang", null));
+
+        assertTrue(viewModel.getAnomalyBannerState().getValue() instanceof UiState.Empty);
+        assertEquals(Boolean.TRUE, viewModel.getCloseScreen().getValue());
+    }
+
+    @Test
+    public void save_offline_skipsAnomalyCheckAndClosesScreen() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        fakeAiRepository.setConnected(false);
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+
+        viewModel.save();
+
+        assertTrue(!fakeAiRepository.checkAnomalyCalled);
+        assertEquals(Boolean.TRUE, viewModel.getCloseScreen().getValue());
+    }
+
+    @Test
+    public void save_income_skipsAnomalyCheckAndClosesScreen() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.setType("income");
+        viewModel.setAmount(10000000);
+        viewModel.setCategoryId("sys_luong");
+
+        viewModel.save();
+
+        assertTrue(!fakeAiRepository.checkAnomalyCalled);
+        assertEquals(Boolean.TRUE, viewModel.getCloseScreen().getValue());
+    }
+
+    @Test
+    public void save_noCategory_skipsAnomalyCheckAndClosesScreen() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.setAmount(350000);
+
+        viewModel.save();
+
+        assertTrue(!fakeAiRepository.checkAnomalyCalled);
+        assertEquals(Boolean.TRUE, viewModel.getCloseScreen().getValue());
     }
 
     private static void waitUntil(BooleanSupplier condition, long timeoutMs) throws InterruptedException {
