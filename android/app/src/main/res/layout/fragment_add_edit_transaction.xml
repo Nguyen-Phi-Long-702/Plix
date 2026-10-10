@@ -91,6 +91,34 @@
                     android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutAnomalyInsufficient"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_anomaly_info"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="10dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_anomaly_insufficient"
+                app:tint="@color/info_text" />
+
+            <TextView
+                android:id="@+id/textAnomalyInsufficient"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/info_text"
+                android:textSize="13sp"
+                tools:text="Danh mục này chưa có đủ giao dịch để Plix nhận diện bất thường (cần tối thiểu 5 giao dịch). Cứ tiếp tục ghi chép — tính năng sẽ tự bật khi có đủ dữ liệu." />
+        </LinearLayout>
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggleType"
             android:layout_width="match_parent"

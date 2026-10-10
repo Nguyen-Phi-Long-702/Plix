@@ -17,4 +17,6 @@
     <color name="sync_error">@color/budget_progress_warning</color>
     <color name="warn_tint">#FBF0DA</color>
     <color name="warn_strong">#8A5B0F</color>
+    <color name="info_tint">#ECF1EE</color>
+    <color name="info_text">#5B6A62</color>
 </resources>
