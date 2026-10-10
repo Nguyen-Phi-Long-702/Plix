@@ -274,7 +274,7 @@ public class AddEditTransactionViewModelTest {
         UiState<AnomalyBannerUiModel> state = viewModel.getAnomalyBannerState().getValue();
         assertTrue(state instanceof UiState.Success);
         AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) state).data;
-        assertTrue(banner.high);
+        assertEquals(AnomalyBannerUiModel.Kind.HIGH, banner.kind);
         assertEquals("Chi tiêu cao bất thường", banner.title);
         assertEquals("Cao hơn mức trung bình", banner.explanation);
         assertTrue(!banner.showPendingNote);
@@ -291,7 +291,7 @@ public class AddEditTransactionViewModelTest {
                 new AnomalyResult(AnomalyResult.Level.LOW, "Thấp hơn mức trung bình.")));
 
         AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) viewModel.getAnomalyBannerState().getValue()).data;
-        assertTrue(!banner.high);
+        assertEquals(AnomalyBannerUiModel.Kind.LOW, banner.kind);
         assertEquals("Chi tiêu thấp bất thường", banner.title);
         assertEquals("Thấp hơn mức trung bình. Chỉ để bạn lưu ý, không phải lỗi.", banner.explanation);
     }

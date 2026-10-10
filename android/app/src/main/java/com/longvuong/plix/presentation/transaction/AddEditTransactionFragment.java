@@ -89,6 +89,8 @@ public class AddEditTransactionFragment extends Fragment {
     private TextView textAnomalyTitle;
     private TextView textAnomalyExplanation;
     private TextView textAnomalyPendingNote;
+    private LinearLayout layoutAnomalyInsufficient;
+    private TextView textAnomalyInsufficient;
     private List<CategoryEntity> currentCategoryOptions = new ArrayList<>();
     private boolean formPopulated = false;
     private boolean suppressAmountWatcher = false;
@@ -158,6 +160,8 @@ public class AddEditTransactionFragment extends Fragment {
         textAnomalyTitle = view.findViewById(R.id.textAnomalyTitle);
         textAnomalyExplanation = view.findViewById(R.id.textAnomalyExplanation);
         textAnomalyPendingNote = view.findViewById(R.id.textAnomalyPendingNote);
+        layoutAnomalyInsufficient = view.findViewById(R.id.layoutAnomalyInsufficient);
+        textAnomalyInsufficient = view.findViewById(R.id.textAnomalyInsufficient);
     }
 
     private void setupTypeToggle() {
@@ -393,19 +397,29 @@ public class AddEditTransactionFragment extends Fragment {
         if (state instanceof UiState.Loading) {
             layoutAnomalyChecking.setVisibility(View.VISIBLE);
             layoutAnomalyBanner.setVisibility(View.GONE);
+            layoutAnomalyInsufficient.setVisibility(View.GONE);
             scrollRoot.post(() -> scrollRoot.smoothScrollTo(0, 0));
         } else if (state instanceof UiState.Success) {
             AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) state).data;
             layoutAnomalyChecking.setVisibility(View.GONE);
-            layoutAnomalyBanner.setVisibility(View.VISIBLE);
-            imageAnomalyIcon.setImageResource(banner.high ? R.drawable.ic_anomaly_high : R.drawable.ic_anomaly_low);
-            textAnomalyTitle.setText(banner.title);
-            textAnomalyExplanation.setText(banner.explanation);
-            textAnomalyPendingNote.setVisibility(banner.showPendingNote ? View.VISIBLE : View.GONE);
+            if (banner.kind == AnomalyBannerUiModel.Kind.INSUFFICIENT_DATA) {
+                layoutAnomalyBanner.setVisibility(View.GONE);
+                layoutAnomalyInsufficient.setVisibility(View.VISIBLE);
+                textAnomalyInsufficient.setText(banner.explanation);
+            } else {
+                layoutAnomalyInsufficient.setVisibility(View.GONE);
+                layoutAnomalyBanner.setVisibility(View.VISIBLE);
+                imageAnomalyIcon.setImageResource(banner.kind == AnomalyBannerUiModel.Kind.HIGH
+                        ? R.drawable.ic_anomaly_high : R.drawable.ic_anomaly_low);
+                textAnomalyTitle.setText(banner.title);
+                textAnomalyExplanation.setText(banner.explanation);
+                textAnomalyPendingNote.setVisibility(banner.showPendingNote ? View.VISIBLE : View.GONE);
+            }
             scrollRoot.post(() -> scrollRoot.smoothScrollTo(0, 0));
         } else {
             layoutAnomalyChecking.setVisibility(View.GONE);
             layoutAnomalyBanner.setVisibility(View.GONE);
+            layoutAnomalyInsufficient.setVisibility(View.GONE);
         }
     }
 

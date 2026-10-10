@@ -52,6 +52,7 @@ public class AddEditTransactionViewModel extends ViewModel {
     private static final String ANOMALY_TITLE_HIGH = "Chi tiêu cao bất thường";
     private static final String ANOMALY_TITLE_LOW = "Chi tiêu thấp bất thường";
     private static final String ANOMALY_LOW_REMINDER = " Chỉ để bạn lưu ý, không phải lỗi.";
+    private static final String ANOMALY_INSUFFICIENT_DATA_MESSAGE = "Danh mục này chưa có đủ giao dịch để Plix nhận diện bất thường (cần tối thiểu 5 giao dịch). Cứ tiếp tục ghi chép — tính năng sẽ tự bật khi có đủ dữ liệu.";
     private final SavedStateHandle savedStateHandle;
     private final AddTransactionUseCase addTransactionUseCase;
     private final UpdateTransactionUseCase updateTransactionUseCase;
@@ -356,8 +357,12 @@ public class AddEditTransactionViewModel extends ViewModel {
                     anomalyBannerState.setValue(new UiState.Success<>(buildAnomalyBanner(outcome)));
                     return; //ở lại màn hình để người dùng đọc cảnh báo
                 }
+                if (level == AnomalyResult.Level.INSUFFICIENT_DATA) {
+                    anomalyBannerState.setValue(new UiState.Success<>(buildInsufficientDataBanner()));
+                    return; //ở lại màn hình để người dùng đọc lời nhắn (không phải cảnh báo, không phải lỗi)
+                }
             }
-            //Bình thường / chưa đủ dữ liệu / lỗi: giao dịch đã lưu xong, lỗi AI không được chặn luồng -> đóng như cũ
+            //Bình thường/lỗi: giao dịch đã lưu xong, lỗi AI không được chặn luồng -> đóng như cũ
             anomalyBannerState.setValue(new UiState.Empty<>());
             closeScreen.setValue(true);
         });
@@ -369,8 +374,16 @@ public class AddEditTransactionViewModel extends ViewModel {
         if (!high) {
             explanation = (explanation + ANOMALY_LOW_REMINDER).trim();
         }
-        return new AnomalyBannerUiModel(high, high ? ANOMALY_TITLE_HIGH : ANOMALY_TITLE_LOW,
+        return new AnomalyBannerUiModel(
+                high ? AnomalyBannerUiModel.Kind.HIGH : AnomalyBannerUiModel.Kind.LOW,
+                high ? ANOMALY_TITLE_HIGH : ANOMALY_TITLE_LOW,
                 explanation, outcome.hasOtherPendingInCategory);
+    }
+
+    private AnomalyBannerUiModel buildInsufficientDataBanner() {
+        //Lời nhắn cố định, giọng tích cực: không dùng lời giải thích của máy chủ, không tiêu đề, không dòng chú thích đang chờ đồng bộ
+        return new AnomalyBannerUiModel(AnomalyBannerUiModel.Kind.INSUFFICIENT_DATA, "",
+                ANOMALY_INSUFFICIENT_DATA_MESSAGE, false);
     }
 
     public LiveData<UiState<CategorySuggestionUiModel>> getCategorySuggestionState() {
