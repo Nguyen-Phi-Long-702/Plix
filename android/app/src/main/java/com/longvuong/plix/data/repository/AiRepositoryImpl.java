@@ -19,6 +19,7 @@ import com.longvuong.plix.data.remote.dto.CategorizeRequestDto;
 import com.longvuong.plix.data.remote.dto.CategorizeResponseDto;
 import com.longvuong.plix.data.remote.dto.CorrectionRequestDto;
 import com.longvuong.plix.data.remote.dto.RetrainResponseDto;
+import com.longvuong.plix.data.remote.dto.AnomalyResponseDto;
 import com.longvuong.plix.core.network.NetworkObserver;
 
 import java.io.IOException;
@@ -35,6 +36,11 @@ public class AiRepositoryImpl implements AiRepository {
 
     private static final String PREF_NAME = "ai_prefs";
     private static final String KEY_PENDING_CORRECTION_COUNT = "pending_correction_count";
+    //Giá trị status do /anomaly trả về
+    private static final String STATUS_HIGH = "high";
+    private static final String STATUS_LOW = "low";
+    private static final String STATUS_NORMAL = "normal";
+    private static final String STATUS_INSUFFICIENT_DATA = "insufficient_data";
 
     private final AiApiService aiApiService;
     private final CategoryDao categoryDao;
@@ -44,6 +50,7 @@ public class AiRepositoryImpl implements AiRepository {
     private final NetworkObserver networkObserver;
 
     private volatile Call<CategorizeResponseDto> currentCall;
+    private volatile Call<AnomalyResponseDto> currentAnomalyCall;
 
     @Inject
     public AiRepositoryImpl(AiApiService aiApiService, CategoryDao categoryDao,
@@ -92,6 +99,67 @@ public class AiRepositoryImpl implements AiRepository {
         Call<CategorizeResponseDto> call = currentCall;
         if (call != null) {
             call.cancel();
+        }
+    }
+
+    @Override
+    public void checkAnomaly(String categoryId, long amount, RepositoryCallback<AnomalyResult> callback) {
+        Call<AnomalyResponseDto> call = aiApiService.checkAnomaly(categoryId, amount);
+        currentAnomalyCall = call;
+
+        appExecutors.networkIO().execute(() -> {
+            try {
+                Response<AnomalyResponseDto> response = call.execute();
+                Result<AnomalyResult> result;
+                if (response.isSuccessful() && response.body() != null) {
+                    AnomalyResponseDto dto = response.body();
+                    AnomalyResult.Level level = mapAnomalyLevel(dto.status);
+                    if (level != null) {
+                        result = new Result.Success<>(new AnomalyResult(level, dto.explanation));
+                    } else {
+                        result = new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
+                    }
+                } else if (response.isSuccessful()) {
+                    result = new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
+                } else {
+                    result = errorMapper.mapHttpCode(response.code());
+                }
+                Result<AnomalyResult> finalResult = result;
+                appExecutors.mainThread().execute(() -> callback.onResult(finalResult));
+            } catch (Exception e) {
+                if (call.isCanceled()) {
+                    return;
+                }
+                Result<AnomalyResult> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
+
+    @Override
+    public void cancelPendingAnomalyCheck() {
+        Call<AnomalyResponseDto> call = currentAnomalyCall;
+        if (call != null) {
+            call.cancel();
+        }
+    }
+
+    @Nullable
+    private AnomalyResult.Level mapAnomalyLevel(@Nullable String status) {
+        if (status == null) {
+            return null;
+        }
+        switch (status) {
+            case STATUS_HIGH:
+                return AnomalyResult.Level.HIGH;
+            case STATUS_LOW:
+                return AnomalyResult.Level.LOW;
+            case STATUS_NORMAL:
+                return AnomalyResult.Level.NORMAL;
+            case STATUS_INSUFFICIENT_DATA:
+                return AnomalyResult.Level.INSUFFICIENT_DATA;
+            default:
+                return null; //status lạ -> coi là phản hồi không hợp lệ
         }
     }
 

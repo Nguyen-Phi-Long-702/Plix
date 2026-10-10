@@ -8,6 +8,7 @@ import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.CategorySuggestion;
+import com.longvuong.plix.data.repository.AnomalyResult;
 
 class FakeAiRepository implements AiRepository {
 
@@ -33,6 +34,32 @@ class FakeAiRepository implements AiRepository {
     @Override
     public void cancelPendingCategorize() {
         pendingCategorizeCallback = null; //giả lập request thật đã bị huỷ -> callback cũ không còn được gọi nữa
+    }
+
+    volatile boolean checkAnomalyCalled;
+    String lastAnomalyCategoryId;
+    long lastAnomalyAmount;
+    private RepositoryCallback<AnomalyResult> pendingAnomalyCallback;
+
+    @Override
+    public void checkAnomaly(String categoryId, long amount, RepositoryCallback<AnomalyResult> callback) {
+        lastAnomalyCategoryId = categoryId;
+        lastAnomalyAmount = amount;
+        pendingAnomalyCallback = callback; //test tự quyết định lúc nào trả kết quả
+        checkAnomalyCalled = true;
+    }
+
+    void completeAnomaly(Result<AnomalyResult> result) {
+        RepositoryCallback<AnomalyResult> callback = pendingAnomalyCallback;
+        pendingAnomalyCallback = null;
+        if (callback != null) {
+            callback.onResult(result);
+        }
+    }
+
+    @Override
+    public void cancelPendingAnomalyCheck() {
+        pendingAnomalyCallback = null;
     }
 
     @Override
