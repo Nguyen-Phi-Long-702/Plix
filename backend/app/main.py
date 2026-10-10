@@ -10,7 +10,7 @@ from app.core.config import DATABASE_URL
 from app.core.middleware import MaxBodySizeMiddleware
 from app.core.security import verify_jwt
 from app.models.error_response import ErrorResponse
-from app.routers import categories, categorize, correction, health, retrain, sync
+from app.routers import anomaly, categories, categorize, correction, health, retrain, sync
 
 
 API_PREFIX = "/api/v1"
@@ -52,6 +52,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     body = ErrorResponse(error_code="VALIDATION_ERROR", message=str(exc.errors()))
     return JSONResponse(status_code=422, content=body.model_dump())
 
+app.include_router(anomaly.router, prefix=API_PREFIX)
 app.include_router(categories.router, prefix=API_PREFIX)
 app.include_router(categorize.router, prefix=API_PREFIX)
 app.include_router(correction.router, prefix=API_PREFIX)
