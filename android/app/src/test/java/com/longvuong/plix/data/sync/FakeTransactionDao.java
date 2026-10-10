@@ -122,6 +122,21 @@ class FakeTransactionDao implements TransactionDao {
     }
 
     @Override
+    public int countPendingByCategory(String userId, String categoryId, String excludeTransactionId) {
+        int count = 0;
+        for (TransactionEntity entity : storage) {
+            if (userId.equals(entity.userId)
+                    && categoryId.equals(entity.categoryId)
+                    && !entity.id.equals(excludeTransactionId)
+                    && "pending".equals(entity.syncStatus)
+                    && !entity.isDeleted) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    @Override
     public void deleteAllByUserId(String userId) {
         storage.removeIf(entity -> userId.equals(entity.userId));
     }

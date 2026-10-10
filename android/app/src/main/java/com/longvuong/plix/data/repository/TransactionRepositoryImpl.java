@@ -99,4 +99,17 @@ public class TransactionRepositoryImpl implements TransactionRepository {
             }
         });
     }
+
+    @Override
+    public void countPendingByCategory(String userId, String categoryId, String excludeTransactionId, RepositoryCallback<Integer> callback) {
+        appExecutors.diskIO().execute(() -> {
+            try {
+                int count = transactionDao.countPendingByCategory(userId, categoryId, excludeTransactionId);
+                appExecutors.mainThread().execute(() -> callback.onResult(new Result.Success<>(count)));
+            } catch (Exception e) {
+                Result<Integer> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
 }
