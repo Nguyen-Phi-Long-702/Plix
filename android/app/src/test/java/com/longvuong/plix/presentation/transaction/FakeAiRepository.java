@@ -9,6 +9,7 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.CategorySuggestion;
 import com.longvuong.plix.data.repository.AnomalyResult;
+import com.longvuong.plix.data.repository.ForecastResult;
 
 class FakeAiRepository implements AiRepository {
 
@@ -60,6 +61,14 @@ class FakeAiRepository implements AiRepository {
     @Override
     public void cancelPendingAnomalyCheck() {
         pendingAnomalyCallback = null;
+    }
+
+    @Override
+    public void getForecast(RepositoryCallback<ForecastResult> callback) {
+    }
+
+    @Override
+    public void cancelPendingForecast() {
     }
 
     @Override

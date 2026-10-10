@@ -20,6 +20,7 @@ import com.longvuong.plix.data.remote.dto.CategorizeResponseDto;
 import com.longvuong.plix.data.remote.dto.CorrectionRequestDto;
 import com.longvuong.plix.data.remote.dto.RetrainResponseDto;
 import com.longvuong.plix.data.remote.dto.AnomalyResponseDto;
+import com.longvuong.plix.data.remote.dto.ForecastResponseDto;
 import com.longvuong.plix.core.network.NetworkObserver;
 
 import java.io.IOException;
@@ -51,6 +52,7 @@ public class AiRepositoryImpl implements AiRepository {
 
     private volatile Call<CategorizeResponseDto> currentCall;
     private volatile Call<AnomalyResponseDto> currentAnomalyCall;
+    private volatile Call<ForecastResponseDto> currentForecastCall;
 
     @Inject
     public AiRepositoryImpl(AiApiService aiApiService, CategoryDao categoryDao,
@@ -142,6 +144,52 @@ public class AiRepositoryImpl implements AiRepository {
         if (call != null) {
             call.cancel();
         }
+    }
+
+    @Override
+    public void getForecast(RepositoryCallback<ForecastResult> callback) {
+        Call<ForecastResponseDto> call = aiApiService.getForecast();
+        currentForecastCall = call;
+
+        appExecutors.networkIO().execute(() -> {
+            try {
+                Response<ForecastResponseDto> response = call.execute();
+                Result<ForecastResult> result;
+                if (response.isSuccessful() && response.body() != null) {
+                    result = mapForecastResponse(response.body());
+                } else if (response.isSuccessful()) {
+                    result = new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
+                } else {
+                    result = errorMapper.mapHttpCode(response.code());
+                }
+                Result<ForecastResult> finalResult = result;
+                appExecutors.mainThread().execute(() -> callback.onResult(finalResult));
+            } catch (Exception e) {
+                if (call.isCanceled()) {
+                    return;
+                }
+                Result<ForecastResult> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
+
+    @Override
+    public void cancelPendingForecast() {
+        Call<ForecastResponseDto> call = currentForecastCall;
+        if (call != null) {
+            call.cancel();
+        }
+    }
+
+    private Result<ForecastResult> mapForecastResponse(ForecastResponseDto dto) {
+        if (STATUS_INSUFFICIENT_DATA.equals(dto.status)) {
+            return new Result.Success<>(new ForecastResult(ForecastResult.Status.INSUFFICIENT_DATA, null));
+        }
+        if (dto.status != null && dto.forecastNetAmount != null) {
+            return new Result.Success<>(new ForecastResult(ForecastResult.Status.OK, Math.round(dto.forecastNetAmount)));
+        }
+        return new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
     }
 
     @Nullable

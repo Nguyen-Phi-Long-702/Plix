@@ -14,6 +14,11 @@ public interface AiRepository {
     void checkAnomaly(String categoryId, long amount, RepositoryCallback<AnomalyResult> callback);
 
     void cancelPendingAnomalyCheck();
+
+    void getForecast(RepositoryCallback<ForecastResult> callback);
+
+    void cancelPendingForecast();
+
     void submitCorrection(String transactionId, @Nullable String predictedCategoryId, String correctedCategoryId, RepositoryCallback<Void> callback);
 
     void retrain(RepositoryCallback<Void> callback);
