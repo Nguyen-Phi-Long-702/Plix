@@ -58,3 +58,44 @@ def test_anomaly_requires_amount():
     response = client.get("/api/v1/anomaly", params={"category_id": "cat-an-uong"})
 
     assert response.status_code == 422
+
+
+def test_anomaly_returns_insufficient_data_for_new_category():
+    pool = FakeAnomalyPool(amounts=[], category_row=None)
+    client = TestClient(_build_test_app(pool))
+
+    response = client.get(
+        "/api/v1/anomaly", params={"category_id": "cat-moi", "amount": 50000}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "insufficient_data",
+        "explanation": (
+            "Chưa đủ dữ liệu để đánh giá bất thường cho danh mục này "
+            "(cần ít nhất 5 giao dịch đã đồng bộ)."
+        ),
+    }
+    assert pool.fetch_args == ("user-1", "cat-moi")
+
+
+def test_anomaly_returns_flagged_low_with_iqr_explanation():
+    pool = FakeAnomalyPool(
+        amounts=[40000, 45000, 50000, 55000, 60000],
+        category_row={"name": "Ăn uống"},
+    )
+    client = TestClient(_build_test_app(pool))
+
+    response = client.get(
+        "/api/v1/anomaly", params={"category_id": "cat-an-uong", "amount": 20000}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "flagged_low",
+        "explanation": (
+            "Giao dịch này thấp hơn mức chi tiêu thông thường cho danh mục [Ăn uống] của bạn "
+            "(trung vị 50.000đ, giao dịch này 20.000đ)."
+        ),
+    }
+    assert pool.fetch_args == ("user-1", "cat-an-uong")
