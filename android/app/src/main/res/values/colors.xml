@@ -19,4 +19,5 @@
     <color name="warn_strong">#8A5B0F</color>
     <color name="info_tint">#ECF1EE</color>
     <color name="info_text">#5B6A62</color>
+    <color name="forecast_line">#0C7968</color>
 </resources>
