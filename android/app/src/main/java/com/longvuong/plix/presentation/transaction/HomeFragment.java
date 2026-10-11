@@ -33,6 +33,11 @@ public class HomeFragment extends Fragment {
                 Navigation.findNavController(view)
                         .navigate(R.id.action_homeFragment_to_addEditTransactionFragment));
 
+        FloatingActionButton fabQuickAdd = view.findViewById(R.id.fabQuickAdd);
+        fabQuickAdd.setOnClickListener(v ->
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_homeFragment_to_quickAddNlFragment));
+
         View buttonViewTransactionList = view.findViewById(R.id.buttonViewTransactionList);
         buttonViewTransactionList.setOnClickListener(v ->
                 Navigation.findNavController(view)
