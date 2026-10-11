@@ -24,6 +24,8 @@ import com.longvuong.plix.data.remote.dto.ForecastResponseDto;
 import com.longvuong.plix.core.network.NetworkObserver;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,6 +44,8 @@ public class AiRepositoryImpl implements AiRepository {
     private static final String STATUS_LOW = "low";
     private static final String STATUS_NORMAL = "normal";
     private static final String STATUS_INSUFFICIENT_DATA = "insufficient_data";
+    //Độ trễ giả lập của parseNl dữ liệu giả, để nhìn thấy trạng thái "Đang phân tích"
+    private static final long MOCK_PARSE_NL_DELAY_MS = 800L;
 
     private final AiApiService aiApiService;
     private final CategoryDao categoryDao;
@@ -180,6 +184,24 @@ public class AiRepositoryImpl implements AiRepository {
         if (call != null) {
             call.cancel();
         }
+    }
+
+    @Override
+    public void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback) {
+        //Dữ liệu giả: backend /parse-nl chưa xong nên chưa gọi mạng — Sau này thay bằng lời gọi Retrofit thật
+        appExecutors.networkIO().execute(() -> {
+            try {
+                Thread.sleep(MOCK_PARSE_NL_DELAY_MS); //giả lập độ trễ mạng để nhìn thấy trạng thái "Đang phân tích"
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            List<ParseNlItem> items = new ArrayList<>();
+            items.add(new ParseNlItem(50_000L, "sys_an_uong", 0.9f)); //giống câu mẫu "phở 50k, grab 35k"
+            items.add(new ParseNlItem(35_000L, "sys_di_chuyen", 0.9f));
+            Result<List<ParseNlItem>> result = new Result.Success<>(items);
+            appExecutors.mainThread().execute(() -> callback.onResult(result));
+        });
     }
 
     private Result<ForecastResult> mapForecastResponse(ForecastResponseDto dto) {

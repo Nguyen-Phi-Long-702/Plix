@@ -9,6 +9,9 @@ import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.AnomalyResult;
 import com.longvuong.plix.data.repository.CategorySuggestion;
 import com.longvuong.plix.data.repository.ForecastResult;
+import com.longvuong.plix.data.repository.ParseNlItem;
+
+import java.util.List;
 
 class FakeAiRepository implements AiRepository {
     Result<AnomalyResult> anomalyResult;
@@ -32,6 +35,10 @@ class FakeAiRepository implements AiRepository {
 
     @Override
     public void cancelPendingForecast() {
+    }
+
+    @Override
+    public void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback) {
     }
 
     @Override

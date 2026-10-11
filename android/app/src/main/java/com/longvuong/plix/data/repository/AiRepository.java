@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 
 import com.longvuong.plix.core.error.RepositoryCallback;
+import java.util.List;
 
 public interface AiRepository {
 
@@ -18,6 +19,8 @@ public interface AiRepository {
     void getForecast(RepositoryCallback<ForecastResult> callback);
 
     void cancelPendingForecast();
+
+    void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback);
 
     void submitCorrection(String transactionId, @Nullable String predictedCategoryId, String correctedCategoryId, RepositoryCallback<Void> callback);
 

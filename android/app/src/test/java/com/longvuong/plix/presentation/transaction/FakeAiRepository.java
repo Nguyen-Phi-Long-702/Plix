@@ -10,6 +10,9 @@ import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.CategorySuggestion;
 import com.longvuong.plix.data.repository.AnomalyResult;
 import com.longvuong.plix.data.repository.ForecastResult;
+import com.longvuong.plix.data.repository.ParseNlItem;
+
+import java.util.List;
 
 class FakeAiRepository implements AiRepository {
 
@@ -35,6 +38,10 @@ class FakeAiRepository implements AiRepository {
     @Override
     public void cancelPendingCategorize() {
         pendingCategorizeCallback = null; //giả lập request thật đã bị huỷ -> callback cũ không còn được gọi nữa
+    }
+
+    @Override
+    public void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback) {
     }
 
     volatile boolean checkAnomalyCalled;
