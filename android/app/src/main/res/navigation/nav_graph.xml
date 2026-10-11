@@ -48,6 +48,9 @@
                 <action
                     android:id="@+id/action_homeFragment_to_transactionListFragment"
                     app:destination="@id/transactionListFragment" />
+                <action
+                    android:id="@+id/action_homeFragment_to_quickAddNlFragment"
+                    app:destination="@id/quickAddNlFragment" />
             </fragment>
             <fragment
                 android:id="@+id/addEditTransactionFragment"
@@ -69,6 +72,11 @@
                     android:id="@+id/action_transactionListFragment_to_addEditTransactionFragment"
                     app:destination="@id/addEditTransactionFragment" />
             </fragment>
+            <fragment
+                android:id="@+id/quickAddNlFragment"
+                android:name="com.longvuong.plix.presentation.transaction.QuickAddNlFragment"
+                android:label="Nhập nhanh (AI)"
+                tools:layout="@layout/fragment_quick_add_nl" />
         </navigation>
         <navigation
             android:id="@+id/budgetGoalGraph"
