@@ -40,8 +40,23 @@ class FakeAiRepository implements AiRepository {
         pendingCategorizeCallback = null; //giả lập request thật đã bị huỷ -> callback cũ không còn được gọi nữa
     }
 
+    int parseNlCallCount;
+    String lastParseNlText;
+    private RepositoryCallback<List<ParseNlItem>> pendingParseNlCallback;
+
     @Override
     public void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback) {
+        parseNlCallCount++;
+        lastParseNlText = text;
+        pendingParseNlCallback = callback; //chưa gọi ngay - test tự quyết định lúc nào trả kết quả để bắt được UiState.Loading
+    }
+
+    void completeParseNl(Result<List<ParseNlItem>> result) {
+        RepositoryCallback<List<ParseNlItem>> callback = pendingParseNlCallback;
+        pendingParseNlCallback = null;
+        if (callback != null) {
+            callback.onResult(result);
+        }
     }
 
     volatile boolean checkAnomalyCalled;
