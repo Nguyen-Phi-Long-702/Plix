@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ErrorMapper {
-
+    private static final String AI_BUSY_MESSAGE = "AI đang bận, vui lòng nhập tay";
     private final Gson gson = new Gson();
 
     @Inject
@@ -53,6 +53,11 @@ public class ErrorMapper {
             return new Result.Error<>(ErrorType.SERVER, "Máy chủ đang bận, thử lại sau", null);
         }
         return new Result.Error<>(ErrorType.UNKNOWN, "Đã xảy ra lỗi không xác định (mã " + code + ")", null);
+    }
+
+    //Dịch vụ dự phòng Gemini lỗi, quá thời gian chờ hoặc hết hạn mức: không phải lỗi kỹ thuật, chỉ cần báo người dùng nhập tay
+    public <T> Result<T> mapAiBusy() {
+        return new Result.Error<>(ErrorType.AI_BUSY, AI_BUSY_MESSAGE, null);
     }
 
     @Nullable

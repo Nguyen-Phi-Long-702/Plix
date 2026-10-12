@@ -76,4 +76,14 @@ public class ErrorMapperTest {
         assertEquals(ErrorType.SERVER, error.type);
         assertEquals("Yêu cầu không hợp lệ, vui lòng thử lại", error.message);
     }
+
+    @Test
+    public void mapAiBusy_returnsAiBusyErrorWithFriendlyMessage() {
+        Result<Object> result = errorMapper.mapAiBusy();
+
+        assertTrue(result instanceof Result.Error);
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.AI_BUSY, error.type);
+        assertEquals("AI đang bận, vui lòng nhập tay", error.message);
+    }
 }
