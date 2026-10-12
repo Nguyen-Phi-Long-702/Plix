@@ -76,7 +76,13 @@
                 android:id="@+id/quickAddNlFragment"
                 android:name="com.longvuong.plix.presentation.transaction.QuickAddNlFragment"
                 android:label="Nhập nhanh (AI)"
-                tools:layout="@layout/fragment_quick_add_nl" />
+                tools:layout="@layout/fragment_quick_add_nl">
+                <action
+                    android:id="@+id/action_quickAddNlFragment_to_addEditTransactionFragment"
+                    app:destination="@id/addEditTransactionFragment"
+                    app:popUpTo="@id/quickAddNlFragment"
+                    app:popUpToInclusive="true" />
+            </fragment>
         </navigation>
         <navigation
             android:id="@+id/budgetGoalGraph"

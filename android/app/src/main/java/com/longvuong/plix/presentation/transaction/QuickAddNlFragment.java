@@ -43,6 +43,8 @@ public class QuickAddNlFragment extends Fragment {
     private SuggestedTransactionAdapter adapter;
     private TextInputEditText editQuickText;
     private MaterialButton buttonAnalyze;
+    private View layoutAiBusy;
+    private MaterialButton buttonEnterManually;
     private TextView textError;
     private TextView textEmptyResult;
     private View layoutResult;
@@ -72,9 +74,11 @@ public class QuickAddNlFragment extends Fragment {
         setupAnalyzeButton();
         setupRecyclerView();
         setupSaveButton();
+        setupEnterManuallyButton();
 
         viewModel.getParseState().observe(getViewLifecycleOwner(), this::renderParseState);
         viewModel.getSaveState().observe(getViewLifecycleOwner(), this::renderSaveState);
+        viewModel.getAiBusy().observe(getViewLifecycleOwner(), this::renderAiBusy);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(),
                 categories -> categoryOptions = categories != null ? categories : new ArrayList<>());
     }
@@ -82,6 +86,8 @@ public class QuickAddNlFragment extends Fragment {
     private void bindViews(View view) {
         editQuickText = view.findViewById(R.id.editQuickText);
         buttonAnalyze = view.findViewById(R.id.buttonAnalyze);
+        layoutAiBusy = view.findViewById(R.id.layoutAiBusy);
+        buttonEnterManually = view.findViewById(R.id.buttonEnterManually);
         textError = view.findViewById(R.id.textError);
         textEmptyResult = view.findViewById(R.id.textEmptyResult);
         layoutResult = view.findViewById(R.id.layoutResult);
@@ -118,9 +124,20 @@ public class QuickAddNlFragment extends Fragment {
         buttonSaveSuggestions.setOnClickListener(v -> viewModel.saveSelected());
     }
 
+    private void setupEnterManuallyButton() {
+        buttonEnterManually.setOnClickListener(v ->
+                NavHostFragment.findNavController(this)
+                        .navigate(R.id.action_quickAddNlFragment_to_addEditTransactionFragment));
+    }
+
+    private void renderAiBusy(Boolean aiBusy) {
+        layoutAiBusy.setVisibility(Boolean.TRUE.equals(aiBusy) ? View.VISIBLE : View.GONE);
+    }
+
     private void renderParseState(UiState<SuggestionListUiModel> state) {
         parsing = state instanceof UiState.Loading;
-        textError.setVisibility(state instanceof UiState.Error ? View.VISIBLE : View.GONE);
+        boolean aiBusy = Boolean.TRUE.equals(viewModel.getAiBusy().getValue());
+        textError.setVisibility(state instanceof UiState.Error && !aiBusy ? View.VISIBLE : View.GONE);
         textEmptyResult.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
         layoutResult.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
 
