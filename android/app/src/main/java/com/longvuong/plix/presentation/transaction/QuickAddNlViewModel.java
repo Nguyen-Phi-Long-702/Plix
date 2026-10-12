@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.longvuong.plix.core.auth.AuthManager;
+import com.longvuong.plix.core.error.ErrorType;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
@@ -48,6 +49,8 @@ public class QuickAddNlViewModel extends ViewModel {
     //null = chưa lưu; Loading = đang lưu; Success = số giao dịch đã lưu; Error = lỗi hợp lệ hoặc lỗi ghi cơ sở dữ liệu
     private final MutableLiveData<UiState<Integer>> saveState = new MutableLiveData<>();
 
+    //true = lần phân tích gần nhất báo "AI đang bận" (dịch vụ dự phòng Gemini lỗi/hết hạn mức) -> UI hiện thông báo kèm lối nhập tay
+    private final MutableLiveData<Boolean> aiBusy = new MutableLiveData<>(false);
     private final List<SuggestionDraft> drafts = new ArrayList<>();
 
     @Inject
@@ -71,6 +74,10 @@ public class QuickAddNlViewModel extends ViewModel {
         return saveState;
     }
 
+    public LiveData<Boolean> getAiBusy() {
+        return aiBusy;
+    }
+
     //Danh sách danh mục đang dùng, để hộp thoại sửa hiển thị cho người dùng chọn
     public LiveData<List<CategoryEntity>> getActiveCategories() {
         return categoryRepository.getActiveCategories();
@@ -84,6 +91,7 @@ public class QuickAddNlViewModel extends ViewModel {
         if (isBusy()) {
             return; //đang phân tích hoặc đang lưu, bỏ qua lần bấm thứ hai
         }
+        aiBusy.setValue(false); //bắt đầu lần phân tích mới -> gỡ thông báo "AI đang bận" của lần trước
         String trimmed = text.trim();
         if (trimmed.isEmpty()) {
             parseState.setValue(new UiState.Error<>(EMPTY_TEXT_MESSAGE));
@@ -151,6 +159,9 @@ public class QuickAddNlViewModel extends ViewModel {
     private void onParseResult(Result<List<ParseNlItem>> result) {
         if (result instanceof Result.Error) {
             Result.Error<List<ParseNlItem>> error = (Result.Error<List<ParseNlItem>>) result;
+            if (error.type == ErrorType.AI_BUSY) {
+                aiBusy.setValue(true); //đặt trước parseState để Fragment đọc đúng giá trị khi vẽ trạng thái lỗi
+            }
             parseState.setValue(new UiState.Error<>(error.message));
             return;
         }

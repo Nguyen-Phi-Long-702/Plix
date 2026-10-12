@@ -187,6 +187,53 @@ public class QuickAddNlViewModelTest {
     }
 
     @Test
+    public void init_aiBusyIsFalse() {
+        assertEquals(Boolean.FALSE, viewModel.getAiBusy().getValue());
+    }
+
+    @Test
+    public void submit_aiBusyError_setsAiBusyAndParseStateError() {
+        viewModel.submit("phở 50k");
+        fakeAiRepository.completeParseNl(new Result.Error<>(ErrorType.AI_BUSY, "AI đang bận, vui lòng nhập tay", null));
+
+        assertEquals(Boolean.TRUE, viewModel.getAiBusy().getValue());
+        UiState<SuggestionListUiModel> state = viewModel.getParseState().getValue();
+        assertTrue(state instanceof UiState.Error);
+        assertEquals("AI đang bận, vui lòng nhập tay", ((UiState.Error<SuggestionListUiModel>) state).message);
+    }
+
+    @Test
+    public void submit_networkError_doesNotSetAiBusy() {
+        viewModel.submit("phở 50k");
+        fakeAiRepository.completeParseNl(new Result.Error<>(ErrorType.NETWORK, "Không có kết nối mạng", null));
+
+        assertEquals(Boolean.FALSE, viewModel.getAiBusy().getValue());
+    }
+
+    @Test
+    public void submit_afterAiBusy_resetsAiBusyAndCallsRepositoryAgain() {
+        viewModel.submit("phở 50k");
+        fakeAiRepository.completeParseNl(new Result.Error<>(ErrorType.AI_BUSY, "AI đang bận, vui lòng nhập tay", null));
+
+        viewModel.submit("phở 50k");
+
+        assertEquals(Boolean.FALSE, viewModel.getAiBusy().getValue());
+        assertTrue(viewModel.getParseState().getValue() instanceof UiState.Loading);
+        assertEquals(2, fakeAiRepository.parseNlCallCount);
+    }
+
+    @Test
+    public void submit_blankTextAfterAiBusy_resetsAiBusy() {
+        viewModel.submit("phở 50k");
+        fakeAiRepository.completeParseNl(new Result.Error<>(ErrorType.AI_BUSY, "AI đang bận, vui lòng nhập tay", null));
+
+        viewModel.submit("   ");
+
+        assertEquals(Boolean.FALSE, viewModel.getAiBusy().getValue());
+        assertTrue(viewModel.getParseState().getValue() instanceof UiState.Error);
+    }
+
+    @Test
     public void submit_whileLoading_doesNotCallRepositoryAgain() {
         viewModel.submit("phở 50k");
         viewModel.submit("phở 50k");
