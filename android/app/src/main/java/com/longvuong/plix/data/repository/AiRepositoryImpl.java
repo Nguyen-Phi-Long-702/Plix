@@ -196,12 +196,27 @@ public class AiRepositoryImpl implements AiRepository {
                 Thread.currentThread().interrupt();
                 return;
             }
-            List<ParseNlItem> items = new ArrayList<>();
-            items.add(new ParseNlItem(50_000L, "sys_an_uong", 0.9f)); //giống câu mẫu "phở 50k, grab 35k"
-            items.add(new ParseNlItem(35_000L, "sys_di_chuyen", 0.9f));
-            Result<List<ParseNlItem>> result = new Result.Success<>(items);
-            appExecutors.mainThread().execute(() -> callback.onResult(result));
+            Result<List<ParseNlItem>> result;
+            try {
+                List<ParseNlItem> items = new ArrayList<>();
+                items.add(newParseNlItem(50_000L, "sys_an_uong", 0.9f)); //giống câu mẫu "phở 50k, grab 35k"
+                items.add(newParseNlItem(35_000L, "sys_di_chuyen", 0.9f));
+                result = new Result.Success<>(items);
+            } catch (Exception e) {
+                result = errorMapper.mapThrowable(e); //đọc Room lỗi -> trả Result.Error, không để crash
+            }
+            Result<List<ParseNlItem>> finalResult = result;
+            appExecutors.mainThread().execute(() -> callback.onResult(finalResult));
         });
+    }
+
+    //Tra category_id ra danh mục đầy đủ từ Room (Mục 12.1c); danh mục không có hoặc đã bị xoá -> category = null
+    private ParseNlItem newParseNlItem(long amount, String categoryId, float confidence) {
+        CategoryEntity category = categoryDao.getById(categoryId);
+        if (category != null && category.isDeleted) {
+            category = null;
+        }
+        return new ParseNlItem(amount, category, confidence);
     }
 
     private Result<ForecastResult> mapForecastResponse(ForecastResponseDto dto) {

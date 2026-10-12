@@ -33,8 +33,8 @@ public class QuickAddNlViewModelTest {
 
     private Result<List<ParseNlItem>> twoItemsResult() {
         List<ParseNlItem> items = new ArrayList<>();
-        items.add(new ParseNlItem(50_000L, "sys_an_uong", 0.9f));
-        items.add(new ParseNlItem(35_000L, "sys_di_chuyen", 0.9f));
+        items.add(new ParseNlItem(50_000L, null, 0.9f));
+        items.add(new ParseNlItem(35_000L, null, 0.9f));
         return new Result.Success<>(items);
     }
 
