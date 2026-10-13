@@ -4,6 +4,8 @@ import re
 from functools import lru_cache
 from typing import Dict, List, NamedTuple, Optional, Tuple
 
+import asyncpg
+
 from app.services.ai.tfidf import CSV_PATH, tokenize
 
 THOUSAND_MULTIPLIER = 1000
@@ -101,3 +103,31 @@ def parse_text(text: str) -> List[ParsedPart]:
         category_name, confidence = match_category(remove_money(part))
         parts.append(ParsedPart(amount, category_name, confidence))
     return parts
+
+
+# Nguồn của item trong response /parse-nl: parser tự viết (rule-based).
+SOURCE_RULE = "rule"
+
+
+async def parse_quick_add(
+    pool: asyncpg.Pool, user_id: str, text: str
+) -> List[Tuple[Optional[int], Optional[str], float]]:
+    """Parse câu nhập nhanh, đổi tên category sang category_id theo whitelist của user
+    (category hệ thống + category của chính user, chưa xoá). Tên không có trong whitelist: None."""
+    parts = parse_text(text)
+    rows = await pool.fetch(
+        """
+        SELECT id, name FROM categories
+        WHERE is_deleted = false
+          AND (user_id IS NULL OR user_id = $1)
+        ORDER BY user_id NULLS FIRST
+        """,
+        user_id,
+    )
+    category_id_by_name: Dict[str, str] = {}
+    for row in rows:
+        category_id_by_name.setdefault(row["name"], row["id"])
+    return [
+        (part.amount, category_id_by_name.get(part.category_name), part.confidence)
+        for part in parts
+    ]

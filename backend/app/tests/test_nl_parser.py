@@ -1,8 +1,11 @@
+import asyncio
+
 import pytest
 
 from app.services.ai.nl_parser import (
     extract_money,
     match_category,
+    parse_quick_add,
     parse_text,
     remove_money,
     split_sentences,
@@ -164,3 +167,59 @@ def test_parse_text_unknown_words_keep_amount_but_no_category():
 def test_parse_text_empty_text_returns_empty_list():
     assert parse_text("") == []
     assert parse_text("   ") == []
+
+
+class FakeCategoryPool:
+    def __init__(self, rows):
+        self._rows = rows
+        self.fetch_args = None
+
+    async def fetch(self, query, *args):
+        assert "FROM categories" in query
+        self.fetch_args = args
+        return self._rows
+
+
+def test_parse_quick_add_maps_category_name_to_whitelist_id():
+    pool = FakeCategoryPool(
+        [
+            {"id": "sys_an_uong", "name": "Ăn uống"},
+            {"id": "sys_di_chuyen", "name": "Di chuyển"},
+        ]
+    )
+
+    items = asyncio.run(parse_quick_add(pool, "user-1", "phở 50k, grab 35k"))
+
+    assert pool.fetch_args == ("user-1",)
+    assert [(amount, category_id) for amount, category_id, _ in items] == [
+        (50000, "sys_an_uong"),
+        (35000, "sys_di_chuyen"),
+    ]
+    assert items[0][2] == pytest.approx(1.0)
+    assert items[1][2] == pytest.approx(0.75)
+
+
+def test_parse_quick_add_category_missing_from_whitelist_gives_none():
+    # "Di chuyển" không còn trong whitelist của user (đã xoá) -> category_id None, amount vẫn giữ
+    pool = FakeCategoryPool([{"id": "sys_an_uong", "name": "Ăn uống"}])
+
+    items = asyncio.run(parse_quick_add(pool, "user-1", "phở 50k, grab 35k"))
+
+    assert [(amount, category_id) for amount, category_id, _ in items] == [
+        (50000, "sys_an_uong"),
+        (35000, None),
+    ]
+
+
+def test_parse_quick_add_system_category_wins_over_same_name_user_category():
+    # Query xếp category hệ thống (user_id NULL) lên trước; trùng tên thì lấy dòng đầu
+    pool = FakeCategoryPool(
+        [
+            {"id": "sys_an_uong", "name": "Ăn uống"},
+            {"id": "user-cat-1", "name": "Ăn uống"},
+        ]
+    )
+
+    items = asyncio.run(parse_quick_add(pool, "user-1", "phở 50k"))
+
+    assert items[0][1] == "sys_an_uong"
