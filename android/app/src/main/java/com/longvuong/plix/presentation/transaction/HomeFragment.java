@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -37,6 +38,10 @@ public class HomeFragment extends Fragment {
         fabQuickAdd.setOnClickListener(v ->
                 Navigation.findNavController(view)
                         .navigate(R.id.action_homeFragment_to_quickAddNlFragment));
+
+        HomeViewModel viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        viewModel.getQuickAddVisible().observe(getViewLifecycleOwner(), visible ->
+                fabQuickAdd.setVisibility(visible ? View.VISIBLE : View.GONE));
 
         View buttonViewTransactionList = view.findViewById(R.id.buttonViewTransactionList);
         buttonViewTransactionList.setOnClickListener(v ->
