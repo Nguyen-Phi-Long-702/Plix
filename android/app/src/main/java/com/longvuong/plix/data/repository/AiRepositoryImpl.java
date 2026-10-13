@@ -40,8 +40,8 @@ public class AiRepositoryImpl implements AiRepository {
     private static final String PREF_NAME = "ai_prefs";
     private static final String KEY_PENDING_CORRECTION_COUNT = "pending_correction_count";
     //Giá trị status do /anomaly trả về
-    private static final String STATUS_HIGH = "high";
-    private static final String STATUS_LOW = "low";
+    private static final String STATUS_HIGH = "flagged_high";
+    private static final String STATUS_LOW = "flagged_low";
     private static final String STATUS_NORMAL = "normal";
     private static final String STATUS_INSUFFICIENT_DATA = "insufficient_data";
     //Độ trễ giả lập của parseNl dữ liệu giả, để nhìn thấy trạng thái "Đang phân tích"
