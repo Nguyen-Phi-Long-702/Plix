@@ -56,6 +56,7 @@ public class AnalyticsFragment extends Fragment {
     private TextView textTotalIncome;
     private TextView textTotalExpense;
     private ForecastViewModel forecastViewModel;
+    private View cardForecast;
     private ProgressBar progressForecast;
     private TextView textForecastMessage;
     private View layoutForecastContent;
@@ -84,6 +85,7 @@ public class AnalyticsFragment extends Fragment {
 
         viewModel.getAnalyticsState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(), this::onCategoriesChanged);
+        forecastViewModel.getForecastVisible().observe(getViewLifecycleOwner(), visible -> cardForecast.setVisibility(visible ? View.VISIBLE : View.GONE));
         forecastViewModel.getForecastState().observe(getViewLifecycleOwner(), this::renderForecastState);
         forecastViewModel.loadForecast();
     }
@@ -98,6 +100,7 @@ public class AnalyticsFragment extends Fragment {
         textTotalIncome = view.findViewById(R.id.textTotalIncome);
         textTotalExpense = view.findViewById(R.id.textTotalExpense);
         textSavingsRate = view.findViewById(R.id.textSavingsRate);
+        cardForecast = view.findViewById(R.id.cardForecast);
         progressForecast = view.findViewById(R.id.progressForecast);
         textForecastMessage = view.findViewById(R.id.textForecastMessage);
         layoutForecastContent = view.findViewById(R.id.layoutForecastContent);

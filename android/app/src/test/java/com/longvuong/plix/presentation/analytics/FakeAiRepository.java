@@ -2,6 +2,7 @@ package com.longvuong.plix.presentation.analytics;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
@@ -14,7 +15,7 @@ import com.longvuong.plix.data.repository.ParseNlItem;
 import java.util.List;
 
 class FakeAiRepository implements AiRepository {
-
+    private final MutableLiveData<Boolean> connectivity = new MutableLiveData<>(true);
     int getForecastCallCount;
     boolean cancelForecastCalled;
     private RepositoryCallback<ForecastResult> pendingForecastCallback;
@@ -73,7 +74,11 @@ class FakeAiRepository implements AiRepository {
 
     @Override
     public LiveData<Boolean> observeConnectivity() {
-        return null;
+        return connectivity;
+    }
+
+    void setConnected(boolean connected) {
+        connectivity.setValue(connected);
     }
 
     @Override

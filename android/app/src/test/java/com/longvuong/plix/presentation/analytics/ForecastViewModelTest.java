@@ -150,4 +150,37 @@ public class ForecastViewModelTest {
 
         assertTrue(fakeAiRepository.cancelForecastCalled);
     }
+
+    @Test
+    public void loadForecast_online_showsCard() {
+        viewModel.loadForecast();
+
+        assertEquals(Boolean.TRUE, viewModel.getForecastVisible().getValue());
+    }
+
+    @Test
+    public void loadForecast_offline_hidesCardAndDoesNotCallRepository() {
+        fakeAiRepository.setConnected(false);
+
+        viewModel.loadForecast();
+
+        assertEquals(Boolean.FALSE, viewModel.getForecastVisible().getValue());
+        assertEquals(0, fakeAiRepository.getForecastCallCount);
+        assertNull(viewModel.getForecastState().getValue()); //không Loading, không Error
+    }
+
+    @Test
+    public void connectivityChanges_hideCardWhenOfflineAndReloadWhenBackOnline() {
+        viewModel.getForecastVisible().observeForever(visible -> { }); //MediatorLiveData chỉ nhận thay đổi mạng khi có người quan sát
+        assertEquals(1, fakeAiRepository.getForecastCallCount); //bắt đầu quan sát -> tải lần đầu
+        fakeAiRepository.completeForecast(okResult(1_000_000L));
+
+        fakeAiRepository.setConnected(false);
+        assertEquals(Boolean.FALSE, viewModel.getForecastVisible().getValue());
+        assertEquals(1, fakeAiRepository.getForecastCallCount); //mất mạng không gọi thêm
+
+        fakeAiRepository.setConnected(true);
+        assertEquals(Boolean.TRUE, viewModel.getForecastVisible().getValue());
+        assertEquals(2, fakeAiRepository.getForecastCallCount); //có mạng lại -> tải lại
+    }
 }

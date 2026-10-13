@@ -1,6 +1,7 @@
 package com.longvuong.plix.presentation.analytics;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -32,6 +33,8 @@ public class ForecastViewModel extends ViewModel {
     //null = chưa gọi loadForecast(); Loading = đang gọi /forecast; Success = có số dự báo + NET tích luỹ thực tế để vẽ biểu đồ;
     //Empty = chưa đủ dữ liệu để dự báo (không phải lỗi); Error = lỗi mạng/máy chủ hoặc lỗi đọc dữ liệu cục bộ
     private final MutableLiveData<UiState<ForecastUiModel>> forecastState = new MutableLiveData<>();
+    //true = hiện thẻ dự báo; false = đang mất mạng nên ẩn hẳn thẻ. Mỗi lần trạng thái mạng đổi sẽ tự gọi lại loadForecast()
+    private final MediatorLiveData<Boolean> forecastVisible = new MediatorLiveData<>();
 
     @Inject
     public ForecastViewModel(AiRepository aiRepository,
@@ -40,13 +43,24 @@ public class ForecastViewModel extends ViewModel {
         this.aiRepository = aiRepository;
         this.transactionRepository = transactionRepository;
         this.calculateMonthToDateNetUseCase = calculateMonthToDateNetUseCase;
+        forecastVisible.setValue(true);
+        forecastVisible.addSource(aiRepository.observeConnectivity(), isConnected -> loadForecast());
     }
 
     public LiveData<UiState<ForecastUiModel>> getForecastState() {
         return forecastState;
     }
 
+    public LiveData<Boolean> getForecastVisible() {
+        return forecastVisible;
+    }
+
     public void loadForecast() {
+        if (Boolean.FALSE.equals(aiRepository.observeConnectivity().getValue())) {
+            forecastVisible.setValue(false); //AI-10: mất mạng -> ẩn thẻ dự báo, không gọi API, không báo lỗi
+            return;
+        }
+        forecastVisible.setValue(true);
         if (forecastState.getValue() instanceof UiState.Loading) {
             return; //đang gọi rồi, bỏ qua lần gọi thứ hai
         }
