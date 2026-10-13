@@ -28,4 +28,12 @@ public interface AiRepository {
 
     int getPendingCorrectionCount();
     LiveData<Boolean> observeConnectivity();
+
+    LiveData<Boolean> observeQuickAddEnabled();
+
+    void setQuickAddEnabled(boolean enabled);
+
+    LiveData<Boolean> observeGeminiFallbackEnabled();
+
+    void setGeminiFallbackEnabled(boolean enabled);
 }

@@ -114,4 +114,27 @@ class FakeAiRepository implements AiRepository {
     void setConnected(boolean connected) {
         connectivity.setValue(connected);
     }
+
+    private final MutableLiveData<Boolean> quickAddEnabled = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean> geminiFallbackEnabled = new MutableLiveData<>(false);
+
+    @Override
+    public LiveData<Boolean> observeQuickAddEnabled() {
+        return quickAddEnabled;
+    }
+
+    @Override
+    public void setQuickAddEnabled(boolean enabled) {
+        quickAddEnabled.setValue(enabled);
+    }
+
+    @Override
+    public LiveData<Boolean> observeGeminiFallbackEnabled() {
+        return geminiFallbackEnabled;
+    }
+
+    @Override
+    public void setGeminiFallbackEnabled(boolean enabled) {
+        geminiFallbackEnabled.setValue(enabled);
+    }
 }

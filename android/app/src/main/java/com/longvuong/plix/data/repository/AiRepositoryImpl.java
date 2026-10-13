@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import androidx.annotation.Nullable;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.longvuong.plix.core.error.ErrorMapper;
 import com.longvuong.plix.core.error.ErrorType;
@@ -39,6 +40,10 @@ public class AiRepositoryImpl implements AiRepository {
 
     private static final String PREF_NAME = "ai_prefs";
     private static final String KEY_PENDING_CORRECTION_COUNT = "pending_correction_count";
+    private static final String KEY_QUICK_ADD_ENABLED = "quick_add_enabled";
+    private static final String KEY_GEMINI_FALLBACK_ENABLED = "gemini_fallback_enabled";
+    private static final boolean DEFAULT_QUICK_ADD_ENABLED = true;
+    private static final boolean DEFAULT_GEMINI_FALLBACK_ENABLED = false; //Gemini mặc định tắt vì liên quan quyền riêng tư
     //Giá trị status do /anomaly trả về
     private static final String STATUS_HIGH = "flagged_high";
     private static final String STATUS_LOW = "flagged_low";
@@ -58,6 +63,9 @@ public class AiRepositoryImpl implements AiRepository {
     private volatile Call<AnomalyResponseDto> currentAnomalyCall;
     private volatile Call<ForecastResponseDto> currentForecastCall;
 
+    private final MutableLiveData<Boolean> quickAddEnabled;
+    private final MutableLiveData<Boolean> geminiFallbackEnabled;
+
     @Inject
     public AiRepositoryImpl(AiApiService aiApiService, CategoryDao categoryDao,
                             AppExecutors appExecutors, ErrorMapper errorMapper,
@@ -68,6 +76,8 @@ public class AiRepositoryImpl implements AiRepository {
         this.errorMapper = errorMapper;
         this.context = context;
         this.networkObserver = networkObserver;
+        this.quickAddEnabled = new MutableLiveData<>(prefs().getBoolean(KEY_QUICK_ADD_ENABLED, DEFAULT_QUICK_ADD_ENABLED));
+        this.geminiFallbackEnabled = new MutableLiveData<>(prefs().getBoolean(KEY_GEMINI_FALLBACK_ENABLED, DEFAULT_GEMINI_FALLBACK_ENABLED));
     }
 
     @Override
@@ -328,5 +338,34 @@ public class AiRepositoryImpl implements AiRepository {
     @Override
     public LiveData<Boolean> observeConnectivity() {
         return networkObserver.getIsConnected();
+    }
+
+    @Override
+    public LiveData<Boolean> observeQuickAddEnabled() {
+        return quickAddEnabled;
+    }
+
+    @Override
+    public void setQuickAddEnabled(boolean enabled) {
+        if (Boolean.valueOf(enabled).equals(quickAddEnabled.getValue())) {
+            return; //không đổi thì không ghi lại
+        }
+        prefs().edit().putBoolean(KEY_QUICK_ADD_ENABLED, enabled).apply();
+        quickAddEnabled.setValue(enabled);
+    }
+
+    @Override
+    public LiveData<Boolean> observeGeminiFallbackEnabled() {
+        return geminiFallbackEnabled;
+    }
+
+    //Hiện chỉ lưu lựa chọn của người dùng; sẽ dùng khi nối parseNl với /parse-nl thật
+    @Override
+    public void setGeminiFallbackEnabled(boolean enabled) {
+        if (Boolean.valueOf(enabled).equals(geminiFallbackEnabled.getValue())) {
+            return;
+        }
+        prefs().edit().putBoolean(KEY_GEMINI_FALLBACK_ENABLED, enabled).apply();
+        geminiFallbackEnabled.setValue(enabled);
     }
 }

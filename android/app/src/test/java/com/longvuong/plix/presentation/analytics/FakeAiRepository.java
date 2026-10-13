@@ -75,4 +75,22 @@ class FakeAiRepository implements AiRepository {
     public LiveData<Boolean> observeConnectivity() {
         return null;
     }
+
+    @Override
+    public LiveData<Boolean> observeQuickAddEnabled() {
+        return null;
+    }
+
+    @Override
+    public void setQuickAddEnabled(boolean enabled) {
+    }
+
+    @Override
+    public LiveData<Boolean> observeGeminiFallbackEnabled() {
+        return null;
+    }
+
+    @Override
+    public void setGeminiFallbackEnabled(boolean enabled) {
+    }
 }
