@@ -22,6 +22,8 @@ import com.longvuong.plix.data.remote.dto.CorrectionRequestDto;
 import com.longvuong.plix.data.remote.dto.RetrainResponseDto;
 import com.longvuong.plix.data.remote.dto.AnomalyResponseDto;
 import com.longvuong.plix.data.remote.dto.ForecastResponseDto;
+import com.longvuong.plix.data.remote.dto.ParseNlRequestDto;
+import com.longvuong.plix.data.remote.dto.ParseNlResponseDto;
 import com.longvuong.plix.core.network.NetworkObserver;
 
 import java.io.IOException;
@@ -49,8 +51,6 @@ public class AiRepositoryImpl implements AiRepository {
     private static final String STATUS_LOW = "flagged_low";
     private static final String STATUS_NORMAL = "normal";
     private static final String STATUS_INSUFFICIENT_DATA = "insufficient_data";
-    //Độ trễ giả lập của parseNl dữ liệu giả, để nhìn thấy trạng thái "Đang phân tích"
-    private static final long MOCK_PARSE_NL_DELAY_MS = 800L;
 
     private final AiApiService aiApiService;
     private final CategoryDao categoryDao;
@@ -198,31 +198,41 @@ public class AiRepositoryImpl implements AiRepository {
 
     @Override
     public void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback) {
-        //Dữ liệu giả: backend /parse-nl chưa xong nên chưa gọi mạng — Sau này thay bằng lời gọi Retrofit thật
+        Call<ParseNlResponseDto> call = aiApiService.parseNl(new ParseNlRequestDto(text));
+
         appExecutors.networkIO().execute(() -> {
             try {
-                Thread.sleep(MOCK_PARSE_NL_DELAY_MS); //giả lập độ trễ mạng để nhìn thấy trạng thái "Đang phân tích"
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
-            }
-            Result<List<ParseNlItem>> result;
-            try {
-                List<ParseNlItem> items = new ArrayList<>();
-                items.add(newParseNlItem(50_000L, "sys_an_uong", 0.9f)); //giống câu mẫu "phở 50k, grab 35k"
-                items.add(newParseNlItem(35_000L, "sys_di_chuyen", 0.9f));
-                result = new Result.Success<>(items);
+                Response<ParseNlResponseDto> response = call.execute();
+                Result<List<ParseNlItem>> result;
+                if (response.isSuccessful() && response.body() != null && response.body().items != null) {
+                    result = new Result.Success<>(mapParseNlItems(response.body().items));
+                } else if (response.isSuccessful()) {
+                    result = new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
+                } else {
+                    result = errorMapper.mapHttpCode(response.code(), readErrorBodySafely(response));
+                }
+                Result<List<ParseNlItem>> finalResult = result;
+                appExecutors.mainThread().execute(() -> callback.onResult(finalResult));
             } catch (Exception e) {
-                result = errorMapper.mapThrowable(e); //đọc Room lỗi -> trả Result.Error, không để crash
+                Result<List<ParseNlItem>> error = errorMapper.mapThrowable(e); //mất mạng/đọc Room lỗi -> trả Result.Error, không để crash
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
             }
-            Result<List<ParseNlItem>> finalResult = result;
-            appExecutors.mainThread().execute(() -> callback.onResult(finalResult));
         });
     }
 
-    //Tra category_id ra danh mục đầy đủ từ Room (Mục 12.1c); danh mục không có hoặc đã bị xoá -> category = null
-    private ParseNlItem newParseNlItem(long amount, String categoryId, float confidence) {
-        CategoryEntity category = categoryDao.getById(categoryId);
+    //Đổi từng item của /parse-nl sang ParseNlItem; amount null (câu không có số tiền) -> 0, người dùng tự nhập khi sửa dòng
+    private List<ParseNlItem> mapParseNlItems(List<ParseNlResponseDto.ParseNlItemDto> dtoItems) {
+        List<ParseNlItem> items = new ArrayList<>();
+        for (ParseNlResponseDto.ParseNlItemDto dto : dtoItems) {
+            long amount = dto.amount != null ? dto.amount : 0L;
+            items.add(newParseNlItem(amount, dto.categoryId, dto.confidence));
+        }
+        return items;
+    }
+
+    //Tra category_id ra danh mục đầy đủ từ Room (Mục 12.1c); category_id null, không có hoặc đã bị xoá -> category = null
+    private ParseNlItem newParseNlItem(long amount, @Nullable String categoryId, float confidence) {
+        CategoryEntity category = categoryId != null ? categoryDao.getById(categoryId) : null;
         if (category != null && category.isDeleted) {
             category = null;
         }

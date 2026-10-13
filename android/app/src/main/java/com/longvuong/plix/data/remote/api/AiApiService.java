@@ -6,6 +6,8 @@ import com.longvuong.plix.data.remote.dto.CategorizeResponseDto;
 import com.longvuong.plix.data.remote.dto.CorrectionRequestDto;
 import com.longvuong.plix.data.remote.dto.RetrainResponseDto;
 import com.longvuong.plix.data.remote.dto.ForecastResponseDto;
+import com.longvuong.plix.data.remote.dto.ParseNlRequestDto;
+import com.longvuong.plix.data.remote.dto.ParseNlResponseDto;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -26,4 +28,7 @@ public interface AiApiService {
     Call<AnomalyResponseDto> checkAnomaly(@Query("category_id") String categoryId, @Query("amount") long amount);
     @GET("api/v1/forecast")
     Call<ForecastResponseDto> getForecast();
+
+    @POST("api/v1/parse-nl")
+    Call<ParseNlResponseDto> parseNl(@Body ParseNlRequestDto body);
 }
