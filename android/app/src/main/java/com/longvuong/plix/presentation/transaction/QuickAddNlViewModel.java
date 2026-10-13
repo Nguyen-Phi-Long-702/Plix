@@ -31,6 +31,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class QuickAddNlViewModel extends ViewModel {
     private static final String EMPTY_TEXT_MESSAGE = "Vui lòng nhập nội dung cần phân tích";
     private static final String NO_SESSION_MESSAGE = "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại";
+    private static final String QUICK_ADD_DISABLED_MESSAGE = "Nhập nhanh đang tắt trong Cài đặt";
+    private static final String OFFLINE_MESSAGE = "Không có kết nối mạng";
     private static final String NO_CATEGORY_TITLE = "Chưa chọn danh mục";
     private static final String NO_CATEGORY_DETAIL = "Không xác định rõ danh mục — cần chọn tay";
     private static final String EDITED_DETAIL = "Đã chỉnh sửa";
@@ -92,6 +94,14 @@ public class QuickAddNlViewModel extends ViewModel {
             return; //đang phân tích hoặc đang lưu, bỏ qua lần bấm thứ hai
         }
         aiBusy.setValue(false); //bắt đầu lần phân tích mới -> gỡ thông báo "AI đang bận" của lần trước
+        if (!Boolean.TRUE.equals(aiRepository.observeQuickAddEnabled().getValue())) {
+            parseState.setValue(new UiState.Error<>(QUICK_ADD_DISABLED_MESSAGE)); //đã tắt trong Cài đặt -> không gọi NL/Gemini
+            return;
+        }
+        if (Boolean.FALSE.equals(aiRepository.observeConnectivity().getValue())) {
+            parseState.setValue(new UiState.Error<>(OFFLINE_MESSAGE)); //AI-10: mất mạng -> không gọi NL/Gemini
+            return;
+        }
         String trimmed = text.trim();
         if (trimmed.isEmpty()) {
             parseState.setValue(new UiState.Error<>(EMPTY_TEXT_MESSAGE));

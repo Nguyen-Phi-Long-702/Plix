@@ -450,4 +450,28 @@ public class QuickAddNlViewModelTest {
 
         assertNull(viewModel.getSaveState().getValue());
     }
+
+    @Test
+    public void submit_quickAddDisabled_doesNotCallParseNlAndShowsError() {
+        fakeAiRepository.setQuickAddEnabled(false);
+
+        viewModel.submit("phở 50k, grab 35k");
+
+        assertEquals(0, fakeAiRepository.parseNlCallCount);
+        UiState<SuggestionListUiModel> state = viewModel.getParseState().getValue();
+        assertTrue(state instanceof UiState.Error);
+        assertEquals("Nhập nhanh đang tắt trong Cài đặt", ((UiState.Error<SuggestionListUiModel>) state).message);
+    }
+
+    @Test
+    public void submit_offline_doesNotCallParseNlAndShowsError() {
+        fakeAiRepository.setConnected(false);
+
+        viewModel.submit("phở 50k, grab 35k");
+
+        assertEquals(0, fakeAiRepository.parseNlCallCount);
+        UiState<SuggestionListUiModel> state = viewModel.getParseState().getValue();
+        assertTrue(state instanceof UiState.Error);
+        assertEquals("Không có kết nối mạng", ((UiState.Error<SuggestionListUiModel>) state).message);
+    }
 }
