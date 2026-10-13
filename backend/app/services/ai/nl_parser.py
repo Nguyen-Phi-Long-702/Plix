@@ -1,6 +1,10 @@
 """Bộ phân tích câu nhập nhanh tiếng Việt (rule-based)"""
+import csv
 import re
-from typing import List, Optional
+from functools import lru_cache
+from typing import Dict, List, NamedTuple, Optional, Tuple
+
+from app.services.ai.tfidf import CSV_PATH, tokenize
 
 THOUSAND_MULTIPLIER = 1000
 
@@ -36,3 +40,64 @@ def extract_money(text: str) -> Optional[int]:
     if match.group("thousand_count") is not None:
         return int(match.group("thousand_count")) * THOUSAND_MULTIPLIER
     return int(match.group("vnd_number").replace(".", ""))
+
+
+def remove_money(text: str) -> str:
+    """Bỏ số tiền đầu tiên (đúng cái extract_money lấy) khỏi `text`, giữ phần còn lại."""
+    return " ".join(_MONEY_PATTERN.sub(" ", text, count=1).split())
+
+
+@lru_cache(maxsize=1)
+def _load_keyword_dictionary() -> Dict[str, Dict[str, int]]:
+    """Từ điển từ khoá xây từ seed_categorization.csv (dùng chung với seed của TF-IDF/Naive Bayes):
+    {từ: {tên category: số note của category đó có chứa từ này}}."""
+    dictionary: Dict[str, Dict[str, int]] = {}
+    with open(CSV_PATH, encoding="utf-8") as csv_file:
+        for row in csv.DictReader(csv_file):
+            for token in set(tokenize(row["note"])):
+                counts = dictionary.setdefault(token, {})
+                counts[row["category"]] = counts.get(row["category"], 0) + 1
+    return dictionary
+
+
+def match_category(text: str) -> Tuple[Optional[str], float]:
+    """Khớp từ khoá của `text` (đã bỏ số tiền) với từ điển; trả (tên category, confidence).
+    Mỗi từ khớp chia 1 điểm cho các category theo tỷ lệ số note của category đó chứa từ này.
+    Category có tổng điểm cao nhất thắng (bằng điểm: category xuất hiện trước trong từ điển).
+    confidence = điểm của category thắng / số từ khớp, nằm trong [0, 1]: từ khoá chỉ thuộc 1
+    category -> 1.0; từ khoá lẫn nhiều category -> thấp hơn. Không từ nào khớp: (None, 0.0)."""
+    dictionary = _load_keyword_dictionary()
+    scores: Dict[str, float] = {}
+    matched_tokens = 0
+    for token in dict.fromkeys(tokenize(text)):
+        counts = dictionary.get(token)
+        if counts is None:
+            continue
+        matched_tokens += 1
+        total = sum(counts.values())
+        for category_name, count in counts.items():
+            scores[category_name] = scores.get(category_name, 0.0) + count / total
+    if matched_tokens == 0:
+        return None, 0.0
+    best = max(scores, key=scores.get)
+    return best, scores[best] / matched_tokens
+
+
+class ParsedPart(NamedTuple):
+    amount: Optional[int]
+    category_name: Optional[str]
+    confidence: float
+
+
+def parse_text(text: str) -> List[ParsedPart]:
+    """Tách câu thành các phần; mỗi phần ra 1 ParsedPart. Phần không có số tiền hợp lệ:
+    (None, None, 0.0) = cần nhập tay, không đoán."""
+    parts = []
+    for part in split_sentences(text):
+        amount = extract_money(part)
+        if amount is None:
+            parts.append(ParsedPart(None, None, 0.0))
+            continue
+        category_name, confidence = match_category(remove_money(part))
+        parts.append(ParsedPart(amount, category_name, confidence))
+    return parts

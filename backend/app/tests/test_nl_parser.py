@@ -1,6 +1,12 @@
 import pytest
 
-from app.services.ai.nl_parser import extract_money, split_sentences
+from app.services.ai.nl_parser import (
+    extract_money,
+    match_category,
+    parse_text,
+    remove_money,
+    split_sentences,
+)
 
 
 def test_split_by_comma():
@@ -88,3 +94,73 @@ def test_split_then_extract_money_for_each_part():
     parts = split_sentences("phở 50k, grab 35k")
 
     assert [extract_money(part) for part in parts] == [50000, 35000]
+
+
+def test_remove_money_keeps_the_rest_of_the_part():
+    assert remove_money("phở 50k") == "phở"
+    assert remove_money("mua 2 kem") == "mua kem"
+    assert remove_money("ăn phở") == "ăn phở"
+
+
+def test_match_category_unambiguous_keyword_has_full_confidence():
+    category, confidence = match_category("phở")
+
+    assert category == "Ăn uống"
+    assert confidence == pytest.approx(1.0)
+
+
+def test_match_category_ambiguous_keyword_lowers_confidence():
+    # Trong seed, "grab" có ở 3 note Di chuyển và 1 note Lương -> confidence 3/4
+    category, confidence = match_category("grab")
+
+    assert category == "Di chuyển"
+    assert confidence == pytest.approx(0.75)
+
+
+def test_match_category_picks_category_with_highest_total_score():
+    # uống: 1 điểm Ăn uống; cà, phê: mỗi từ 3/4 điểm Ăn uống -> (1 + 0.75 + 0.75) / 3 từ khớp
+    category, confidence = match_category("uống cà phê")
+
+    assert category == "Ăn uống"
+    assert confidence == pytest.approx(2.5 / 3)
+
+
+def test_match_category_unknown_words_returns_none():
+    assert match_category("xyz abc") == (None, 0.0)
+    assert match_category("") == (None, 0.0)
+
+
+def test_parse_text_example_sentence_gives_two_items():
+    parts = parse_text("phở 50k, grab 35k")
+
+    assert len(parts) == 2
+    assert (parts[0].amount, parts[0].category_name) == (50000, "Ăn uống")
+    assert parts[0].confidence == pytest.approx(1.0)
+    assert (parts[1].amount, parts[1].category_name) == (35000, "Di chuyển")
+    assert parts[1].confidence == pytest.approx(0.75)
+
+
+def test_parse_text_splits_three_transactions_in_one_sentence():
+    parts = parse_text("ăn phở 50k và uống cà phê 30k rồi đổ xăng 100k")
+
+    assert [(part.amount, part.category_name) for part in parts] == [
+        (50000, "Ăn uống"),
+        (30000, "Ăn uống"),
+        (100000, "Di chuyển"),
+    ]
+
+
+def test_parse_text_part_without_money_needs_manual_entry():
+    parts = parse_text("xin chào, phở 50k")
+
+    assert parts[0] == (None, None, 0.0)
+    assert (parts[1].amount, parts[1].category_name) == (50000, "Ăn uống")
+
+
+def test_parse_text_unknown_words_keep_amount_but_no_category():
+    assert parse_text("abc 50k") == [(50000, None, 0.0)]
+
+
+def test_parse_text_empty_text_returns_empty_list():
+    assert parse_text("") == []
+    assert parse_text("   ") == []
