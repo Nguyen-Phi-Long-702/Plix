@@ -16,3 +16,6 @@ if not DATABASE_URL:
 RETRAIN_COOLDOWN_SECONDS = int(os.getenv("RETRAIN_COOLDOWN_SECONDS", "3600"))
 
 MAX_PULL_LIMIT = int(os.getenv("MAX_PULL_LIMIT", "500"))
+
+# Không bắt buộc: thiếu key thì /parse-nl vẫn chạy nhánh rule-based, chỉ nhánh dự phòng Gemini báo "AI đang bận".
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

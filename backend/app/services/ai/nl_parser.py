@@ -109,12 +109,9 @@ def parse_text(text: str) -> List[ParsedPart]:
 SOURCE_RULE = "rule"
 
 
-async def parse_quick_add(
-    pool: asyncpg.Pool, user_id: str, text: str
-) -> List[Tuple[Optional[int], Optional[str], float]]:
-    """Parse câu nhập nhanh, đổi tên category sang category_id theo whitelist của user
-    (category hệ thống + category của chính user, chưa xoá). Tên không có trong whitelist: None."""
-    parts = parse_text(text)
+async def load_category_id_by_name(pool: asyncpg.Pool, user_id: str) -> Dict[str, str]:
+    """Whitelist category của user (category hệ thống + category của chính user, chưa xoá):
+    {tên category: category_id}. Trùng tên: lấy category hệ thống (query xếp user_id NULL lên trước)."""
     rows = await pool.fetch(
         """
         SELECT id, name FROM categories
@@ -127,6 +124,16 @@ async def parse_quick_add(
     category_id_by_name: Dict[str, str] = {}
     for row in rows:
         category_id_by_name.setdefault(row["name"], row["id"])
+    return category_id_by_name
+
+
+async def parse_quick_add(
+    pool: asyncpg.Pool, user_id: str, text: str
+) -> List[Tuple[Optional[int], Optional[str], float]]:
+    """Parse câu nhập nhanh, đổi tên category sang category_id theo whitelist của user
+    (category hệ thống + category của chính user, chưa xoá). Tên không có trong whitelist: None."""
+    parts = parse_text(text)
+    category_id_by_name = await load_category_id_by_name(pool, user_id)
     return [
         (part.amount, category_id_by_name.get(part.category_name), part.confidence)
         for part in parts
