@@ -110,7 +110,8 @@ public class QuickAddNlViewModel extends ViewModel {
         saveState.setValue(null); //câu mới -> xoá kết quả lưu cũ (nếu lần lưu trước bị lỗi)
         drafts.clear();
         parseState.setValue(new UiState.Loading<>());
-        aiRepository.parseNl(trimmed, this::onParseResult);
+        boolean allowGemini = Boolean.TRUE.equals(aiRepository.observeGeminiFallbackEnabled().getValue());
+        aiRepository.parseNl(trimmed, allowGemini, this::onParseResult);
     }
 
     //Tick/bỏ tick một dòng. Dòng chưa có danh mục thì không cho tick (phải sửa và chọn danh mục trước)

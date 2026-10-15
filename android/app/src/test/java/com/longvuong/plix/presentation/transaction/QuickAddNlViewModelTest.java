@@ -474,4 +474,38 @@ public class QuickAddNlViewModelTest {
         assertTrue(state instanceof UiState.Error);
         assertEquals("Không có kết nối mạng", ((UiState.Error<SuggestionListUiModel>) state).message);
     }
+
+    @Test
+    public void submit_geminiFallbackOff_sendsAllowGeminiFalse() {
+        fakeAiRepository.setGeminiFallbackEnabled(false);
+
+        viewModel.submit("phở 50k, grab 35k");
+
+        assertEquals(1, fakeAiRepository.parseNlCallCount);
+        assertFalse(fakeAiRepository.lastParseNlAllowGemini);
+    }
+
+    @Test
+    public void submit_geminiFallbackOn_sendsAllowGeminiTrue() {
+        fakeAiRepository.setGeminiFallbackEnabled(true);
+
+        viewModel.submit("phở 50k, grab 35k");
+
+        assertEquals(1, fakeAiRepository.parseNlCallCount);
+        assertTrue(fakeAiRepository.lastParseNlAllowGemini);
+    }
+
+    @Test
+    public void submit_readsGeminiToggleAtSubmitTime_notAtScreenOpen() {
+        fakeAiRepository.setGeminiFallbackEnabled(true);
+        viewModel.submit("phở 50k");
+        fakeAiRepository.completeParseNl(twoItemsResult());
+        assertTrue(fakeAiRepository.lastParseNlAllowGemini);
+
+        fakeAiRepository.setGeminiFallbackEnabled(false); //người dùng tắt công tắc rồi gửi câu tiếp theo
+        viewModel.submit("grab 35k");
+
+        assertEquals(2, fakeAiRepository.parseNlCallCount);
+        assertFalse(fakeAiRepository.lastParseNlAllowGemini);
+    }
 }

@@ -197,8 +197,8 @@ public class AiRepositoryImpl implements AiRepository {
     }
 
     @Override
-    public void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback) {
-        Call<ParseNlResponseDto> call = aiApiService.parseNl(new ParseNlRequestDto(text));
+    public void parseNl(String text, boolean allowGemini, RepositoryCallback<List<ParseNlItem>> callback) {
+        Call<ParseNlResponseDto> call = aiApiService.parseNl(new ParseNlRequestDto(text, allowGemini));
 
         appExecutors.networkIO().execute(() -> {
             try {
@@ -369,7 +369,7 @@ public class AiRepositoryImpl implements AiRepository {
         return geminiFallbackEnabled;
     }
 
-    //Hiện chỉ lưu lựa chọn của người dùng; sẽ dùng khi nối parseNl với /parse-nl thật
+    //Lưu lựa chọn của người dùng; QuickAddNlViewModel đọc giá trị này mỗi lần gửi và truyền xuống parseNl() -> field allow_gemini
     @Override
     public void setGeminiFallbackEnabled(boolean enabled) {
         if (Boolean.valueOf(enabled).equals(geminiFallbackEnabled.getValue())) {

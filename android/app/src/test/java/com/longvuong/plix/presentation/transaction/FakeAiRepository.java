@@ -42,12 +42,14 @@ class FakeAiRepository implements AiRepository {
 
     int parseNlCallCount;
     String lastParseNlText;
+    boolean lastParseNlAllowGemini;
     private RepositoryCallback<List<ParseNlItem>> pendingParseNlCallback;
 
     @Override
-    public void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback) {
+    public void parseNl(String text, boolean allowGemini, RepositoryCallback<List<ParseNlItem>> callback) {
         parseNlCallCount++;
         lastParseNlText = text;
+        lastParseNlAllowGemini = allowGemini;
         pendingParseNlCallback = callback; //chưa gọi ngay - test tự quyết định lúc nào trả kết quả để bắt được UiState.Loading
     }
 

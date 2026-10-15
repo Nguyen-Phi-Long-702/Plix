@@ -40,7 +40,7 @@ class FakeAiRepository implements AiRepository {
     }
 
     @Override
-    public void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback) {
+    public void parseNl(String text, boolean allowGemini, RepositoryCallback<List<ParseNlItem>> callback) {
     }
 
     @Override

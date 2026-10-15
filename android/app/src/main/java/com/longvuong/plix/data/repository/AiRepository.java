@@ -20,7 +20,7 @@ public interface AiRepository {
 
     void cancelPendingForecast();
 
-    void parseNl(String text, RepositoryCallback<List<ParseNlItem>> callback);
+    void parseNl(String text, boolean allowGemini, RepositoryCallback<List<ParseNlItem>> callback);
 
     void submitCorrection(String transactionId, @Nullable String predictedCategoryId, String correctedCategoryId, RepositoryCallback<Void> callback);
 
