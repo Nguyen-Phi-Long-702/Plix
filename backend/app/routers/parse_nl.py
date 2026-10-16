@@ -27,7 +27,7 @@ async def parse_nl(
 ) -> Union[ParseNlResponse, JSONResponse]:
     pool = request.app.state.db_pool
     parsed = await parse_quick_add(pool, user_id, body.text)
-    if should_call_gemini(parsed):
+    if body.allow_gemini and should_call_gemini(parsed):
         try:
             gemini_items = await parse_with_gemini(pool, user_id, body.text)
         except GeminiUnavailableError:

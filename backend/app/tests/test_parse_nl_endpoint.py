@@ -100,8 +100,8 @@ def test_parse_nl_calls_gemini_when_whole_sentence_has_low_confidence(monkeypatc
     monkeypatch.setattr(parse_nl, "parse_with_gemini", fake_parse_with_gemini)
     client = TestClient(_build_test_app(FakeCategoryPool(WHITELIST)))
 
-    response = client.post("/api/v1/parse-nl", json={"text": COMPLEX_SENTENCE})
-
+    response = client.post("/api/v1/parse-nl", json={"text": COMPLEX_SENTENCE, "allow_gemini": True}
+    )
     assert response.status_code == 200
     assert response.json() == {
         "items": [
@@ -130,7 +130,7 @@ def test_parse_nl_returns_ai_busy_when_gemini_is_unavailable(monkeypatch):
     monkeypatch.setattr(parse_nl, "parse_with_gemini", fake_parse_with_gemini)
     client = TestClient(_build_test_app(FakeCategoryPool(WHITELIST)))
 
-    response = client.post("/api/v1/parse-nl", json={"text": COMPLEX_SENTENCE})
+    response = client.post("/api/v1/parse-nl", json={"text": COMPLEX_SENTENCE, "allow_gemini": True})
 
     assert response.status_code == 503
     assert response.json() == {"error_code": "AI_BUSY", "message": "AI đang bận, vui lòng nhập tay"}
@@ -143,7 +143,7 @@ def test_parse_nl_keeps_rule_result_when_gemini_returns_no_valid_item(monkeypatc
     monkeypatch.setattr(parse_nl, "parse_with_gemini", fake_parse_with_gemini)
     client = TestClient(_build_test_app(FakeCategoryPool(WHITELIST)))
 
-    response = client.post("/api/v1/parse-nl", json={"text": COMPLEX_SENTENCE})
+    response = client.post("/api/v1/parse-nl", json={"text": COMPLEX_SENTENCE, "allow_gemini": True})
 
     assert response.status_code == 200
     assert response.json() == {

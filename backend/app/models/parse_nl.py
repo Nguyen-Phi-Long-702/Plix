@@ -5,6 +5,9 @@ from pydantic import BaseModel
 
 class ParseNlRequest(BaseModel):
     text: str
+    # true = người dùng đang bật "Cho phép dùng Gemini dự phòng" trong Cài đặt Android.
+    # Thiếu trường này (app cũ) = false: không được gọi Gemini.
+    allow_gemini: bool = False
 
 
 class ParseNlItem(BaseModel):
