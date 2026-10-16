@@ -149,3 +149,37 @@ def test_parse_nl_keeps_rule_result_when_gemini_returns_no_valid_item(monkeypatc
     assert response.json() == {
         "items": [{"amount": None, "category_id": None, "confidence": 0.0, "source": "rule"}]
     }
+
+
+
+
+def test_parse_nl_does_not_call_gemini_when_allow_gemini_is_false(monkeypatch):
+    async def fail_if_called(pool, user_id, text):
+        raise AssertionError("không được gọi Gemini khi người dùng đã tắt allow_gemini")
+
+    monkeypatch.setattr(parse_nl, "parse_with_gemini", fail_if_called)
+    client = TestClient(_build_test_app(FakeCategoryPool(WHITELIST)))
+
+    response = client.post(
+        "/api/v1/parse-nl", json={"text": COMPLEX_SENTENCE, "allow_gemini": False}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [{"amount": None, "category_id": None, "confidence": 0.0, "source": "rule"}]
+    }
+
+
+def test_parse_nl_does_not_call_gemini_when_allow_gemini_is_omitted(monkeypatch):
+    async def fail_if_called(pool, user_id, text):
+        raise AssertionError("không được gọi Gemini khi app không gửi allow_gemini")
+
+    monkeypatch.setattr(parse_nl, "parse_with_gemini", fail_if_called)
+    client = TestClient(_build_test_app(FakeCategoryPool(WHITELIST)))
+
+    response = client.post("/api/v1/parse-nl", json={"text": COMPLEX_SENTENCE})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [{"amount": None, "category_id": None, "confidence": 0.0, "source": "rule"}]
+    }
