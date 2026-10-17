@@ -44,6 +44,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class AnalyticsFragment extends Fragment {
+    private static final String FORECAST_INSUFFICIENT_DATA_MESSAGE =
+            "Chưa đủ dữ liệu để dự báo. Cần tối thiểu 3–4 tuần có cả thu lẫn chi. Cứ tiếp tục ghi chép nhé!";
     private AnalyticsViewModel viewModel;
     private ChipGroup chipGroupRange;
     private ProgressBar progressLoading;
@@ -53,6 +55,13 @@ public class AnalyticsFragment extends Fragment {
     private LineChart lineChartTrend;
     private TextView textTotalIncome;
     private TextView textTotalExpense;
+    private ForecastViewModel forecastViewModel;
+    private View cardForecast;
+    private ProgressBar progressForecast;
+    private TextView textForecastMessage;
+    private View layoutForecastContent;
+    private TextView textForecastAmount;
+    private LineChart lineChartForecast;
     private TextView textSavingsRate;
 
     private Map<String, String> categoryNamesById = new HashMap<>();
@@ -68,6 +77,7 @@ public class AnalyticsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(AnalyticsViewModel.class);
+        forecastViewModel = new ViewModelProvider(this).get(ForecastViewModel.class);
 
         bindViews(view);
         setupCharts();
@@ -75,6 +85,9 @@ public class AnalyticsFragment extends Fragment {
 
         viewModel.getAnalyticsState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(), this::onCategoriesChanged);
+        forecastViewModel.getForecastVisible().observe(getViewLifecycleOwner(), visible -> cardForecast.setVisibility(visible ? View.VISIBLE : View.GONE));
+        forecastViewModel.getForecastState().observe(getViewLifecycleOwner(), this::renderForecastState);
+        forecastViewModel.loadForecast();
     }
 
     private void bindViews(View view) {
@@ -87,6 +100,12 @@ public class AnalyticsFragment extends Fragment {
         textTotalIncome = view.findViewById(R.id.textTotalIncome);
         textTotalExpense = view.findViewById(R.id.textTotalExpense);
         textSavingsRate = view.findViewById(R.id.textSavingsRate);
+        cardForecast = view.findViewById(R.id.cardForecast);
+        progressForecast = view.findViewById(R.id.progressForecast);
+        textForecastMessage = view.findViewById(R.id.textForecastMessage);
+        layoutForecastContent = view.findViewById(R.id.layoutForecastContent);
+        textForecastAmount = view.findViewById(R.id.textForecastAmount);
+        lineChartForecast = view.findViewById(R.id.lineChartForecast);
     }
 
     private void setupRangeChips() {
@@ -121,6 +140,12 @@ public class AnalyticsFragment extends Fragment {
         lineChartTrend.getAxisRight().setEnabled(false);
         lineChartTrend.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
         lineChartTrend.getXAxis().setGranularity(1f);
+        lineChartForecast.getDescription().setEnabled(false);
+        lineChartForecast.getAxisRight().setEnabled(false);
+        lineChartForecast.getAxisLeft().setDrawZeroLine(true);
+        lineChartForecast.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+        lineChartForecast.getXAxis().setGranularity(1f);
+        lineChartForecast.setTouchEnabled(false);
     }
 
     private void onCategoriesChanged(List<CategoryEntity> categories) {
@@ -207,6 +232,59 @@ public class AnalyticsFragment extends Fragment {
         lineChartTrend.setData(new LineData(incomeDataSet, expenseDataSet));
         lineChartTrend.getXAxis().setValueFormatter(new IndexAxisValueFormatter(labels));
         lineChartTrend.invalidate();
+    }
+
+    private void renderForecastState(UiState<ForecastUiModel> state) {
+        progressForecast.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
+        textForecastMessage.setVisibility((state instanceof UiState.Empty || state instanceof UiState.Error) ? View.VISIBLE : View.GONE);
+        layoutForecastContent.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
+
+        if (state instanceof UiState.Success) {
+            renderForecastChart(((UiState.Success<ForecastUiModel>) state).data);
+        } else if (state instanceof UiState.Error) {
+            textForecastMessage.setText(((UiState.Error<ForecastUiModel>) state).message);
+        } else if (state instanceof UiState.Empty) {
+            textForecastMessage.setText(FORECAST_INSUFFICIENT_DATA_MESSAGE);
+        }
+    }
+
+    private void renderForecastChart(ForecastUiModel forecast) {
+        textForecastAmount.setText(forecast.forecastNetAmountText);
+
+        int lastActualDay = forecast.actualNetByDay.size(); //ngày hôm nay trong tháng
+        List<Entry> actualEntries = new ArrayList<>();
+        for (int i = 0; i < lastActualDay; i++) {
+            actualEntries.add(new Entry(i + 1, forecast.actualNetByDay.get(i)));
+        }
+
+        //Nét đứt: từ điểm thực tế của hôm nay tới điểm dự báo cuối tháng
+        List<Entry> projectedEntries = new ArrayList<>();
+        if (forecast.daysInMonth > lastActualDay) {
+            projectedEntries.add(new Entry(lastActualDay, forecast.actualNetByDay.get(lastActualDay - 1)));
+        }
+        projectedEntries.add(new Entry(forecast.daysInMonth, forecast.forecastNetAmount));
+
+        int lineColor = ContextCompat.getColor(requireContext(), R.color.forecast_line);
+        LineDataSet actualDataSet = new LineDataSet(actualEntries, "Thực tế");
+        styleForecastDataSet(actualDataSet, lineColor, false);
+        LineDataSet projectedDataSet = new LineDataSet(projectedEntries, "Dự kiến");
+        styleForecastDataSet(projectedDataSet, lineColor, true);
+
+        lineChartForecast.getXAxis().setAxisMinimum(1f);
+        lineChartForecast.getXAxis().setAxisMaximum(forecast.daysInMonth);
+        lineChartForecast.setData(new LineData(actualDataSet, projectedDataSet));
+        lineChartForecast.invalidate();
+    }
+
+    private void styleForecastDataSet(LineDataSet dataSet, int color, boolean dashed) {
+        dataSet.setColor(color);
+        dataSet.setCircleColor(color);
+        dataSet.setLineWidth(2f);
+        dataSet.setDrawValues(false);
+        dataSet.setDrawCircles(dashed); //nét liền có nhiều điểm nên không vẽ chấm; nét đứt chỉ có 1–2 điểm nên vẽ chấm
+        if (dashed) {
+            dataSet.enableDashedLine(12f, 8f, 0f);
+        }
     }
 
     private String formatCurrency(long amount) {

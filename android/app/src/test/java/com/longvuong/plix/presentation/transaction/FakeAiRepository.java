@@ -9,6 +9,10 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.CategorySuggestion;
 import com.longvuong.plix.data.repository.AnomalyResult;
+import com.longvuong.plix.data.repository.ForecastResult;
+import com.longvuong.plix.data.repository.ParseNlItem;
+
+import java.util.List;
 
 class FakeAiRepository implements AiRepository {
 
@@ -34,6 +38,27 @@ class FakeAiRepository implements AiRepository {
     @Override
     public void cancelPendingCategorize() {
         pendingCategorizeCallback = null; //giả lập request thật đã bị huỷ -> callback cũ không còn được gọi nữa
+    }
+
+    int parseNlCallCount;
+    String lastParseNlText;
+    boolean lastParseNlAllowGemini;
+    private RepositoryCallback<List<ParseNlItem>> pendingParseNlCallback;
+
+    @Override
+    public void parseNl(String text, boolean allowGemini, RepositoryCallback<List<ParseNlItem>> callback) {
+        parseNlCallCount++;
+        lastParseNlText = text;
+        lastParseNlAllowGemini = allowGemini;
+        pendingParseNlCallback = callback; //chưa gọi ngay - test tự quyết định lúc nào trả kết quả để bắt được UiState.Loading
+    }
+
+    void completeParseNl(Result<List<ParseNlItem>> result) {
+        RepositoryCallback<List<ParseNlItem>> callback = pendingParseNlCallback;
+        pendingParseNlCallback = null;
+        if (callback != null) {
+            callback.onResult(result);
+        }
     }
 
     volatile boolean checkAnomalyCalled;
@@ -63,6 +88,14 @@ class FakeAiRepository implements AiRepository {
     }
 
     @Override
+    public void getForecast(RepositoryCallback<ForecastResult> callback) {
+    }
+
+    @Override
+    public void cancelPendingForecast() {
+    }
+
+    @Override
     public void submitCorrection(String transactionId, @Nullable String predictedCategoryId, String correctedCategoryId, RepositoryCallback<Void> callback) {
     }
 
@@ -82,5 +115,28 @@ class FakeAiRepository implements AiRepository {
 
     void setConnected(boolean connected) {
         connectivity.setValue(connected);
+    }
+
+    private final MutableLiveData<Boolean> quickAddEnabled = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean> geminiFallbackEnabled = new MutableLiveData<>(false);
+
+    @Override
+    public LiveData<Boolean> observeQuickAddEnabled() {
+        return quickAddEnabled;
+    }
+
+    @Override
+    public void setQuickAddEnabled(boolean enabled) {
+        quickAddEnabled.setValue(enabled);
+    }
+
+    @Override
+    public LiveData<Boolean> observeGeminiFallbackEnabled() {
+        return geminiFallbackEnabled;
+    }
+
+    @Override
+    public void setGeminiFallbackEnabled(boolean enabled) {
+        geminiFallbackEnabled.setValue(enabled);
     }
 }

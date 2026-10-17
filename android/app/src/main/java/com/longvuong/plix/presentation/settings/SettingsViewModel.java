@@ -42,6 +42,22 @@ public class SettingsViewModel extends ViewModel {
         return logoutState;
     }
 
+    public LiveData<Boolean> getQuickAddEnabled() {
+        return aiRepository.observeQuickAddEnabled();
+    }
+
+    public LiveData<Boolean> getGeminiFallbackEnabled() {
+        return aiRepository.observeGeminiFallbackEnabled();
+    }
+
+    public void setQuickAddEnabled(boolean enabled) {
+        aiRepository.setQuickAddEnabled(enabled);
+    }
+
+    public void setGeminiFallbackEnabled(boolean enabled) {
+        aiRepository.setGeminiFallbackEnabled(enabled);
+    }
+
     public void retrain() {
         retrainState.setValue(new UiState.Loading<>());
         aiRepository.retrain(result -> retrainState.setValue(toUiState(result)));

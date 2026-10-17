@@ -5,5 +5,6 @@ public enum ErrorType {
     SERVER,
     VALIDATION,
     AUTH,
+    AI_BUSY,
     UNKNOWN
 }

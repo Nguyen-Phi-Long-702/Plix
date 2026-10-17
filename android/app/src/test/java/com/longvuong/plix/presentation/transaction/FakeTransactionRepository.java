@@ -16,6 +16,7 @@ class FakeTransactionRepository implements TransactionRepository {
 
     boolean insertCalled;
     TransactionEntity lastInserted;
+    final List<TransactionEntity> insertedEntities = new ArrayList<>();
     Result<Integer> countPendingResult = new Result.Success<>(0);
 
     private final Map<String, TransactionEntity> storage = new HashMap<>();
@@ -38,6 +39,7 @@ class FakeTransactionRepository implements TransactionRepository {
     public void insert(TransactionEntity entity, RepositoryCallback<Void> callback) {
         insertCalled = true;
         lastInserted = entity;
+        insertedEntities.add(entity);
         storage.put(entity.id, entity);
         callback.onResult(new Result.Success<>(null));
     }

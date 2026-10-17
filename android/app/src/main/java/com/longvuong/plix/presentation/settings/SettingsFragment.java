@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.notification.NotificationHelper;
 import com.longvuong.plix.domain.usecase.auth.LogoutOutcome;
@@ -28,6 +29,8 @@ public class SettingsFragment extends Fragment {
     NotificationHelper notificationHelper;
 
     private SettingsViewModel viewModel;
+    private SwitchMaterial switchQuickAdd;
+    private SwitchMaterial switchGeminiFallback;
     private View bannerNotificationPermission;
     private View rowRetrainAi;
     private View badgeNewCorrections;
@@ -48,6 +51,15 @@ public class SettingsFragment extends Fragment {
 
         View rowCategoryManagement = view.findViewById(R.id.rowCategoryManagement);
         rowCategoryManagement.setOnClickListener(v -> Navigation.findNavController(view).navigate(R.id.action_settingsFragment_to_categoryManagementFragment));
+
+        switchQuickAdd = view.findViewById(R.id.switchQuickAdd);
+        switchGeminiFallback = view.findViewById(R.id.switchGeminiFallback);
+        view.findViewById(R.id.rowQuickAdd).setOnClickListener(v -> switchQuickAdd.toggle());
+        view.findViewById(R.id.rowGeminiFallback).setOnClickListener(v -> switchGeminiFallback.toggle());
+        switchQuickAdd.setOnCheckedChangeListener((button, isChecked) -> viewModel.setQuickAddEnabled(isChecked));
+        switchGeminiFallback.setOnCheckedChangeListener((button, isChecked) -> viewModel.setGeminiFallbackEnabled(isChecked));
+        viewModel.getQuickAddEnabled().observe(getViewLifecycleOwner(), enabled -> switchQuickAdd.setChecked(enabled));
+        viewModel.getGeminiFallbackEnabled().observe(getViewLifecycleOwner(), enabled -> switchGeminiFallback.setChecked(enabled));
 
         bannerNotificationPermission = view.findViewById(R.id.bannerNotificationPermission);
         bannerNotificationPermission.setOnClickListener(v -> startActivity(notificationHelper.buildNotificationSettingsIntent()));

@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 
 import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
+import com.longvuong.plix.core.error.ErrorType;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.repository.TransactionRepository;
 
@@ -12,6 +13,9 @@ import java.util.List;
 
 class FakeTransactionRepository implements TransactionRepository {
     boolean insertCalled;
+    int insertCount;
+    final List<String> insertedIds = new ArrayList<>();
+    int failInsertAtCall; //0 = không giả lập lỗi; n = lần gọi insert thứ n trả lỗi
     boolean updateCalled;
     TransactionEntity lastInserted;
     TransactionEntity lastUpdated;
@@ -32,7 +36,13 @@ class FakeTransactionRepository implements TransactionRepository {
     @Override
     public void insert(TransactionEntity entity, RepositoryCallback<Void> callback) {
         insertCalled = true;
+        insertCount++;
         lastInserted = entity;
+        insertedIds.add(entity.id);
+        if (failInsertAtCall == insertCount) {
+            callback.onResult(new Result.Error<>(ErrorType.UNKNOWN, "Lỗi lưu giả lập", null));
+            return;
+        }
         callback.onResult(new Result.Success<>(null));
     }
 

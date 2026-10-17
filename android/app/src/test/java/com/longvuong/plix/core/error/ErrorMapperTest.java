@@ -76,4 +76,42 @@ public class ErrorMapperTest {
         assertEquals(ErrorType.SERVER, error.type);
         assertEquals("Yêu cầu không hợp lệ, vui lòng thử lại", error.message);
     }
+
+    @Test
+    public void mapAiBusy_returnsAiBusyErrorWithFriendlyMessage() {
+        Result<Object> result = errorMapper.mapAiBusy();
+
+        assertTrue(result instanceof Result.Error);
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.AI_BUSY, error.type);
+        assertEquals("AI đang bận, vui lòng nhập tay", error.message);
+    }
+
+    @Test
+    public void mapHttpCode_503_withAiBusyBody_returnsAiBusyError() {
+        String body = "{\"error_code\":\"AI_BUSY\",\"message\":\"AI đang bận, vui lòng nhập tay\"}";
+
+        Result<Object> result = errorMapper.mapHttpCode(503, body);
+
+        assertTrue(result instanceof Result.Error);
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.AI_BUSY, error.type);
+        assertEquals("AI đang bận, vui lòng nhập tay", error.message);
+    }
+
+    @Test
+    public void mapHttpCode_503_withOtherBody_stillReturnsServerError() {
+        String body = "{\"error_code\":\"INTERNAL_ERROR\",\"message\":\"x\"}";
+
+        Result<Object> result = errorMapper.mapHttpCode(503, body);
+
+        assertEquals(ErrorType.SERVER, ((Result.Error<Object>) result).type);
+    }
+
+    @Test
+    public void mapHttpCode_503_withInvalidJsonBody_stillReturnsServerError() {
+        Result<Object> result = errorMapper.mapHttpCode(503, "<html>Bad gateway</html>");
+
+        assertEquals(ErrorType.SERVER, ((Result.Error<Object>) result).type);
+    }
 }

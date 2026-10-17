@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import androidx.annotation.Nullable;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.longvuong.plix.core.error.ErrorMapper;
 import com.longvuong.plix.core.error.ErrorType;
@@ -20,9 +21,14 @@ import com.longvuong.plix.data.remote.dto.CategorizeResponseDto;
 import com.longvuong.plix.data.remote.dto.CorrectionRequestDto;
 import com.longvuong.plix.data.remote.dto.RetrainResponseDto;
 import com.longvuong.plix.data.remote.dto.AnomalyResponseDto;
+import com.longvuong.plix.data.remote.dto.ForecastResponseDto;
+import com.longvuong.plix.data.remote.dto.ParseNlRequestDto;
+import com.longvuong.plix.data.remote.dto.ParseNlResponseDto;
 import com.longvuong.plix.core.network.NetworkObserver;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,9 +42,13 @@ public class AiRepositoryImpl implements AiRepository {
 
     private static final String PREF_NAME = "ai_prefs";
     private static final String KEY_PENDING_CORRECTION_COUNT = "pending_correction_count";
+    private static final String KEY_QUICK_ADD_ENABLED = "quick_add_enabled";
+    private static final String KEY_GEMINI_FALLBACK_ENABLED = "gemini_fallback_enabled";
+    private static final boolean DEFAULT_QUICK_ADD_ENABLED = true;
+    private static final boolean DEFAULT_GEMINI_FALLBACK_ENABLED = false; //Gemini mặc định tắt vì liên quan quyền riêng tư
     //Giá trị status do /anomaly trả về
-    private static final String STATUS_HIGH = "high";
-    private static final String STATUS_LOW = "low";
+    private static final String STATUS_HIGH = "flagged_high";
+    private static final String STATUS_LOW = "flagged_low";
     private static final String STATUS_NORMAL = "normal";
     private static final String STATUS_INSUFFICIENT_DATA = "insufficient_data";
 
@@ -51,6 +61,10 @@ public class AiRepositoryImpl implements AiRepository {
 
     private volatile Call<CategorizeResponseDto> currentCall;
     private volatile Call<AnomalyResponseDto> currentAnomalyCall;
+    private volatile Call<ForecastResponseDto> currentForecastCall;
+
+    private final MutableLiveData<Boolean> quickAddEnabled;
+    private final MutableLiveData<Boolean> geminiFallbackEnabled;
 
     @Inject
     public AiRepositoryImpl(AiApiService aiApiService, CategoryDao categoryDao,
@@ -62,6 +76,8 @@ public class AiRepositoryImpl implements AiRepository {
         this.errorMapper = errorMapper;
         this.context = context;
         this.networkObserver = networkObserver;
+        this.quickAddEnabled = new MutableLiveData<>(prefs().getBoolean(KEY_QUICK_ADD_ENABLED, DEFAULT_QUICK_ADD_ENABLED));
+        this.geminiFallbackEnabled = new MutableLiveData<>(prefs().getBoolean(KEY_GEMINI_FALLBACK_ENABLED, DEFAULT_GEMINI_FALLBACK_ENABLED));
     }
 
     @Override
@@ -142,6 +158,95 @@ public class AiRepositoryImpl implements AiRepository {
         if (call != null) {
             call.cancel();
         }
+    }
+
+    @Override
+    public void getForecast(RepositoryCallback<ForecastResult> callback) {
+        Call<ForecastResponseDto> call = aiApiService.getForecast();
+        currentForecastCall = call;
+
+        appExecutors.networkIO().execute(() -> {
+            try {
+                Response<ForecastResponseDto> response = call.execute();
+                Result<ForecastResult> result;
+                if (response.isSuccessful() && response.body() != null) {
+                    result = mapForecastResponse(response.body());
+                } else if (response.isSuccessful()) {
+                    result = new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
+                } else {
+                    result = errorMapper.mapHttpCode(response.code());
+                }
+                Result<ForecastResult> finalResult = result;
+                appExecutors.mainThread().execute(() -> callback.onResult(finalResult));
+            } catch (Exception e) {
+                if (call.isCanceled()) {
+                    return;
+                }
+                Result<ForecastResult> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
+
+    @Override
+    public void cancelPendingForecast() {
+        Call<ForecastResponseDto> call = currentForecastCall;
+        if (call != null) {
+            call.cancel();
+        }
+    }
+
+    @Override
+    public void parseNl(String text, boolean allowGemini, RepositoryCallback<List<ParseNlItem>> callback) {
+        Call<ParseNlResponseDto> call = aiApiService.parseNl(new ParseNlRequestDto(text, allowGemini));
+
+        appExecutors.networkIO().execute(() -> {
+            try {
+                Response<ParseNlResponseDto> response = call.execute();
+                Result<List<ParseNlItem>> result;
+                if (response.isSuccessful() && response.body() != null && response.body().items != null) {
+                    result = new Result.Success<>(mapParseNlItems(response.body().items));
+                } else if (response.isSuccessful()) {
+                    result = new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
+                } else {
+                    result = errorMapper.mapHttpCode(response.code(), readErrorBodySafely(response));
+                }
+                Result<List<ParseNlItem>> finalResult = result;
+                appExecutors.mainThread().execute(() -> callback.onResult(finalResult));
+            } catch (Exception e) {
+                Result<List<ParseNlItem>> error = errorMapper.mapThrowable(e); //mất mạng/đọc Room lỗi -> trả Result.Error, không để crash
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
+
+    //Đổi từng item của /parse-nl sang ParseNlItem; amount null (câu không có số tiền) -> 0, người dùng tự nhập khi sửa dòng
+    private List<ParseNlItem> mapParseNlItems(List<ParseNlResponseDto.ParseNlItemDto> dtoItems) {
+        List<ParseNlItem> items = new ArrayList<>();
+        for (ParseNlResponseDto.ParseNlItemDto dto : dtoItems) {
+            long amount = dto.amount != null ? dto.amount : 0L;
+            items.add(newParseNlItem(amount, dto.categoryId, dto.confidence));
+        }
+        return items;
+    }
+
+    //Tra category_id ra danh mục đầy đủ từ Room (Mục 12.1c); category_id null, không có hoặc đã bị xoá -> category = null
+    private ParseNlItem newParseNlItem(long amount, @Nullable String categoryId, float confidence) {
+        CategoryEntity category = categoryId != null ? categoryDao.getById(categoryId) : null;
+        if (category != null && category.isDeleted) {
+            category = null;
+        }
+        return new ParseNlItem(amount, category, confidence);
+    }
+
+    private Result<ForecastResult> mapForecastResponse(ForecastResponseDto dto) {
+        if (STATUS_INSUFFICIENT_DATA.equals(dto.status)) {
+            return new Result.Success<>(new ForecastResult(ForecastResult.Status.INSUFFICIENT_DATA, null));
+        }
+        if (dto.status != null && dto.forecastNetAmount != null) {
+            return new Result.Success<>(new ForecastResult(ForecastResult.Status.OK, Math.round(dto.forecastNetAmount)));
+        }
+        return new Result.Error<>(ErrorType.UNKNOWN, "Phản hồi không hợp lệ từ máy chủ", null);
     }
 
     @Nullable
@@ -243,5 +348,34 @@ public class AiRepositoryImpl implements AiRepository {
     @Override
     public LiveData<Boolean> observeConnectivity() {
         return networkObserver.getIsConnected();
+    }
+
+    @Override
+    public LiveData<Boolean> observeQuickAddEnabled() {
+        return quickAddEnabled;
+    }
+
+    @Override
+    public void setQuickAddEnabled(boolean enabled) {
+        if (Boolean.valueOf(enabled).equals(quickAddEnabled.getValue())) {
+            return; //không đổi thì không ghi lại
+        }
+        prefs().edit().putBoolean(KEY_QUICK_ADD_ENABLED, enabled).apply();
+        quickAddEnabled.setValue(enabled);
+    }
+
+    @Override
+    public LiveData<Boolean> observeGeminiFallbackEnabled() {
+        return geminiFallbackEnabled;
+    }
+
+    //Lưu lựa chọn của người dùng; QuickAddNlViewModel đọc giá trị này mỗi lần gửi và truyền xuống parseNl() -> field allow_gemini
+    @Override
+    public void setGeminiFallbackEnabled(boolean enabled) {
+        if (Boolean.valueOf(enabled).equals(geminiFallbackEnabled.getValue())) {
+            return;
+        }
+        prefs().edit().putBoolean(KEY_GEMINI_FALLBACK_ENABLED, enabled).apply();
+        geminiFallbackEnabled.setValue(enabled);
     }
 }

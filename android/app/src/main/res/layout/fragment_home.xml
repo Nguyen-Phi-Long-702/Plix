@@ -19,5 +19,14 @@
         android:layout_margin="16dp"
         android:contentDescription="Thêm giao dịch"
         app:srcCompat="@drawable/ic_add" />
-
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabQuickAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="88dp"
+        android:contentDescription="Nhập nhanh bằng AI"
+        app:fabSize="mini"
+        app:srcCompat="@drawable/ic_ai_quick_add" />
 </FrameLayout>

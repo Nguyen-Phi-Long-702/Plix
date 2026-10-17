@@ -12,7 +12,8 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ErrorMapper {
-
+    private static final String AI_BUSY_MESSAGE = "AI đang bận, vui lòng nhập tay";
+    private static final String AI_BUSY_ERROR_CODE = "AI_BUSY"; //error_code backend trả kèm HTTP 503 khi Gemini lỗi/hết hạn mức
     private final Gson gson = new Gson();
 
     @Inject
@@ -49,10 +50,31 @@ public class ErrorMapper {
             return new Result.Error<>(ErrorType.SERVER,
                     serverMessage != null ? serverMessage : "Yêu cầu không hợp lệ, vui lòng thử lại", null);
         }
+        if (code == 503 && AI_BUSY_ERROR_CODE.equals(extractServerErrorCode(errorBodyJson))) {
+            return mapAiBusy(); //503 do Gemini (không phải máy chủ sập) -> hiện "AI đang bận, nhập tay"
+        }
         if (code >= 500) {
             return new Result.Error<>(ErrorType.SERVER, "Máy chủ đang bận, thử lại sau", null);
         }
         return new Result.Error<>(ErrorType.UNKNOWN, "Đã xảy ra lỗi không xác định (mã " + code + ")", null);
+    }
+
+    //Dịch vụ dự phòng Gemini lỗi, quá thời gian chờ hoặc hết hạn mức: không phải lỗi kỹ thuật, chỉ cần báo người dùng nhập tay
+    public <T> Result<T> mapAiBusy() {
+        return new Result.Error<>(ErrorType.AI_BUSY, AI_BUSY_MESSAGE, null);
+    }
+
+    @Nullable
+    private String extractServerErrorCode(@Nullable String errorBodyJson) {
+        if (errorBodyJson == null || errorBodyJson.isEmpty()) {
+            return null;
+        }
+        try {
+            ErrorResponseDto errorResponse = gson.fromJson(errorBodyJson, ErrorResponseDto.class);
+            return errorResponse != null ? errorResponse.errorCode : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Nullable

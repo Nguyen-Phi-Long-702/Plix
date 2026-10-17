@@ -14,6 +14,8 @@ import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.content.res.ColorStateList;
 
 import com.google.android.material.chip.Chip;
@@ -80,6 +82,15 @@ public class AddEditTransactionFragment extends Fragment {
     private ColorStateList defaultChipTextColors;
     private TextView textCategorySuggestionError;
     private MaterialButton buttonRetryCategorize;
+    private ScrollView scrollRoot;
+    private LinearLayout layoutAnomalyChecking;
+    private LinearLayout layoutAnomalyBanner;
+    private ImageView imageAnomalyIcon;
+    private TextView textAnomalyTitle;
+    private TextView textAnomalyExplanation;
+    private TextView textAnomalyPendingNote;
+    private LinearLayout layoutAnomalyInsufficient;
+    private TextView textAnomalyInsufficient;
     private List<CategoryEntity> currentCategoryOptions = new ArrayList<>();
     private boolean formPopulated = false;
     private boolean suppressAmountWatcher = false;
@@ -115,6 +126,12 @@ public class AddEditTransactionFragment extends Fragment {
         viewModel.getFilteredCategories().observe(getViewLifecycleOwner(), this::populateCategoryDropdown);
         viewModel.getSaveState().observe(getViewLifecycleOwner(), this::renderSaveState);
         viewModel.getCategorySuggestionState().observe(getViewLifecycleOwner(), this::renderCategorySuggestionState);
+        viewModel.getAnomalyBannerState().observe(getViewLifecycleOwner(), this::renderAnomalyBannerState);
+        viewModel.getCloseScreen().observe(getViewLifecycleOwner(), close -> {
+            if (Boolean.TRUE.equals(close)) {
+                NavHostFragment.findNavController(this).popBackStack();
+            }
+        });
     }
 
     private void bindViews(View view) {
@@ -136,6 +153,15 @@ public class AddEditTransactionFragment extends Fragment {
         defaultChipTextColors = chipCategorySuggestion.getTextColors();
         textCategorySuggestionError = view.findViewById(R.id.textCategorySuggestionError);
         buttonRetryCategorize = view.findViewById(R.id.buttonRetryCategorize);
+        scrollRoot = view.findViewById(R.id.scrollRoot);
+        layoutAnomalyChecking = view.findViewById(R.id.layoutAnomalyChecking);
+        layoutAnomalyBanner = view.findViewById(R.id.layoutAnomalyBanner);
+        imageAnomalyIcon = view.findViewById(R.id.imageAnomalyIcon);
+        textAnomalyTitle = view.findViewById(R.id.textAnomalyTitle);
+        textAnomalyExplanation = view.findViewById(R.id.textAnomalyExplanation);
+        textAnomalyPendingNote = view.findViewById(R.id.textAnomalyPendingNote);
+        layoutAnomalyInsufficient = view.findViewById(R.id.layoutAnomalyInsufficient);
+        textAnomalyInsufficient = view.findViewById(R.id.textAnomalyInsufficient);
     }
 
     private void setupTypeToggle() {
@@ -357,15 +383,57 @@ public class AddEditTransactionFragment extends Fragment {
         if (state instanceof UiState.Loading) {
             buttonSave.setEnabled(false);
         } else if (state instanceof UiState.Success) {
-            buttonSave.setEnabled(true);
+            //Ngoại lệ: nếu đang hiện banner thì nút đã được đổi thành "Xong" (bấm để thoát) -> không khoá
+            if (!(viewModel.getAnomalyBannerState().getValue() instanceof UiState.Success)) {
+                buttonSave.setEnabled(false);
+            }
             Snackbar.make(requireActivity().findViewById(android.R.id.content), "Đã lưu giao dịch", Snackbar.LENGTH_SHORT).show();
-            NavHostFragment.findNavController(this).popBackStack();
         } else if (state instanceof UiState.Error) {
             buttonSave.setEnabled(true);
             String message = ((UiState.Error<Void>) state).message;
             Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
         }
     }
+
+
+    private void renderAnomalyBannerState(UiState<AnomalyBannerUiModel> state) {
+        if (state instanceof UiState.Loading) {
+            layoutAnomalyChecking.setVisibility(View.VISIBLE);
+            layoutAnomalyBanner.setVisibility(View.GONE);
+            layoutAnomalyInsufficient.setVisibility(View.GONE);
+            scrollRoot.post(() -> scrollRoot.smoothScrollTo(0, 0));
+        } else if (state instanceof UiState.Success) {
+            AnomalyBannerUiModel banner = ((UiState.Success<AnomalyBannerUiModel>) state).data;
+            layoutAnomalyChecking.setVisibility(View.GONE);
+            if (banner.kind == AnomalyBannerUiModel.Kind.INSUFFICIENT_DATA) {
+                layoutAnomalyBanner.setVisibility(View.GONE);
+                layoutAnomalyInsufficient.setVisibility(View.VISIBLE);
+                textAnomalyInsufficient.setText(banner.explanation);
+            } else {
+                layoutAnomalyInsufficient.setVisibility(View.GONE);
+                layoutAnomalyBanner.setVisibility(View.VISIBLE);
+                imageAnomalyIcon.setImageResource(banner.kind == AnomalyBannerUiModel.Kind.HIGH
+                        ? R.drawable.ic_anomaly_high : R.drawable.ic_anomaly_low);
+                textAnomalyTitle.setText(banner.title);
+                textAnomalyExplanation.setText(banner.explanation);
+                textAnomalyPendingNote.setVisibility(banner.showPendingNote ? View.VISIBLE : View.GONE);
+            }
+            showDoneButton();
+            scrollRoot.post(() -> scrollRoot.smoothScrollTo(0, 0));
+        } else {
+            layoutAnomalyChecking.setVisibility(View.GONE);
+            layoutAnomalyBanner.setVisibility(View.GONE);
+            layoutAnomalyInsufficient.setVisibility(View.GONE);
+        }
+    }
+
+    //Giao dịch đã lưu xong, banner đang hiện: đổi nút "Lưu" (đang bị khoá) thành nút "Xong" để đóng màn hình
+    private void showDoneButton() {
+        buttonSave.setText("Xong");
+        buttonSave.setEnabled(true);
+        buttonSave.setOnClickListener(v -> viewModel.finishAfterSave());
+    }
+
     private void setupCategorySuggestion() {
         buttonRetryCategorize.setOnClickListener(v -> viewModel.retryCategorize());
         chipCategorySuggestion.setOnClickListener(v -> {
