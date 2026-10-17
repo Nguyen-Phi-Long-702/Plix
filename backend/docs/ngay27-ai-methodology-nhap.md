@@ -39,7 +39,7 @@ biệt rõ 2 nhóm kỹ thuật đang dùng trong sprint 3.
 | Endpoint | Kỹ thuật | Loại |
 |---|---|---|
 | `/categorize`, `/retrain` | TF-IDF + Naive Bayes tự viết | Machine Learning cổ điển |
-| `/anomaly` | mean/std hoặc IQR theo ngưỡng | Thống kê thuần (không phải ML) |
+| `/anomaly` | mean/std hoặc IQR theo ngưỡng; chiều thấp thêm sàn tương đối 10% trung vị | Thống kê thuần (không phải ML) |
 | `/forecast` | Exponential smoothing / moving average | Thống kê thuần (không phải ML) |
 | `/parse-nl` (chính) | Rule-based: regex, từ điển từ khoá | Thuật toán tất định, không phải ML/LLM |
 | `/parse-nl` (fallback, Could Have) | Gemini API | LLM (mô hình ngôn ngữ lớn) |

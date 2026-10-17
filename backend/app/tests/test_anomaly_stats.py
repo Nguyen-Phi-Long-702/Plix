@@ -101,3 +101,48 @@ def test_no_samples_is_insufficient_data():
     assert result.status == STATUS_INSUFFICIENT_DATA
     assert result.method is None
     assert result.center is None
+
+
+# --- Sàn tương đối cho chiều "thấp" (LOW_RATIO_FLOOR = 10% trung vị) ---
+# Dữ liệu dao động rộng: Q1-1,5*IQR < 0 nên công thức gốc không bao giờ gắn cờ thấp được.
+WIDE_SPREAD_IQR = [500_000, 700_000, 900_000, 1_000_000, 1_200_000, 1_500_000, 2_000_000]  # trung vị 1.000.000
+
+
+def test_wide_spread_iqr_one_dong_is_flagged_low_by_relative_floor():
+    result = detect_anomaly(WIDE_SPREAD_IQR, 1)
+
+    assert result.status == STATUS_FLAGGED_LOW
+    assert result.method == "iqr"
+    assert result.center == 1_000_000
+
+
+def test_wide_spread_iqr_amount_just_below_floor_is_flagged_low():
+    assert detect_anomaly(WIDE_SPREAD_IQR, 99_999).status == STATUS_FLAGGED_LOW
+
+
+def test_wide_spread_iqr_amount_at_floor_or_above_is_normal():
+    assert detect_anomaly(WIDE_SPREAD_IQR, 100_000).status == STATUS_NORMAL
+    assert detect_anomaly(WIDE_SPREAD_IQR, 150_000).status == STATUS_NORMAL
+
+
+def test_iqr_with_earlier_huge_outlier_still_flags_one_dong_low():
+    # đã lỡ lưu thử một khoản 14 triệu: Q1-1,5*IQR càng âm sâu hơn
+    amounts = WIDE_SPREAD_IQR + [14_000_000]
+
+    assert detect_anomaly(amounts, 1).status == STATUS_FLAGGED_LOW
+
+
+def test_mean_std_with_outlier_in_history_one_dong_is_flagged_low():
+    # >= 10 mẫu có 1 khoản rất lớn: std phình ra làm mean - 2*std < 0
+    amounts = [800_000, 900_000, 1_000_000, 1_000_000, 1_100_000, 1_200_000,
+               900_000, 1_000_000, 1_050_000, 14_000_000]
+
+    result = detect_anomaly(amounts, 1)
+
+    assert result.method == "mean_std"
+    assert result.status == STATUS_FLAGGED_LOW
+
+
+def test_relative_floor_does_not_change_high_or_normal_results():
+    assert detect_anomaly(WIDE_SPREAD_IQR, 14_000_000).status == STATUS_FLAGGED_HIGH
+    assert detect_anomaly(WIDE_SPREAD_IQR, 1_000_000).status == STATUS_NORMAL
