@@ -7,6 +7,7 @@ MIN_SAMPLES_FOR_IQR = 5
 MIN_SAMPLES_FOR_MEAN_STD = 10
 STD_MULTIPLIER = 2
 IQR_MULTIPLIER = 1.5
+LOW_RATIO_FLOOR = 0.1
 
 STATUS_INSUFFICIENT_DATA = "insufficient_data"
 STATUS_NORMAL = "normal"
@@ -49,6 +50,8 @@ def detect_anomaly(amounts: List[int], amount: int) -> AnomalyResult:
         iqr = q3 - q1
         upper_bound = q3 + IQR_MULTIPLIER * iqr
         lower_bound = q1 - IQR_MULTIPLIER * iqr
+
+    lower_bound = max(lower_bound, statistics.median(amounts) * LOW_RATIO_FLOOR)   
 
     if amount > upper_bound:
         return AnomalyResult(STATUS_FLAGGED_HIGH, method, center)

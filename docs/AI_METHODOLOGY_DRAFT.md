@@ -1,21 +1,20 @@
 # AI Methodology — bản nháp (phân biệt ML cổ điển và LLM)
 
-> Bản nháp Ngày 25, cập nhật Ngày 27. Chỉ mô tả những gì đã có trong code hoặc đã ghi trong kế hoạch; phần nào chưa làm thì ghi rõ là chưa triển khai.
+> Bản nháp Ngày 25, cập nhật Ngày 27 và Ngày 46. Chỉ mô tả những gì đã có trong code hoặc đã ghi trong kế hoạch; phần nào chưa làm thì ghi rõ là chưa triển khai.
 
 ## 1. Hai loại kỹ thuật AI trong dự án
 
 | Tiêu chí | Machine Learning cổ điển (TF-IDF + Naive Bayes) | Mô hình ngôn ngữ lớn — LLM (Gemini) |
 |---|---|---|
 | Dùng để làm gì | Gợi ý danh mục giao dịch từ ghi chú (`POST /api/v1/categorize`, AI-01) và học lại từ các lần người dùng sửa gợi ý (`/correction` + `/retrain`, AI-02) | Chỉ là phương án dự phòng cho nhập nhanh bằng ngôn ngữ tự nhiên (`/parse-nl`, AI-07) khi parser tự viết có confidence thấp. Không tham gia phân loại danh mục |
-| Trạng thái | Đã triển khai | Chưa triển khai; theo kế hoạch làm ở Day 44 (Could Have) |
+| Trạng thái | Đã triển khai | Đã triển khai (Could Have). Chỉ được gọi khi parser tự viết không xử lý được cả câu (mọi phần đều có confidence dưới 0,4) và app gửi `allow_gemini = true` (công tắc "Cho phép dùng Gemini dự phòng" trong Cài đặt, mặc định tắt); thiếu trường này được hiểu là `false` |
 | Ai viết và huấn luyện | Nhóm tự viết thuật toán (không dùng thư viện ML) và tự huấn luyện trên seed dataset `data/seed_categorization.csv` | Mô hình do Google huấn luyện sẵn, nhóm chỉ gọi qua API (Google AI Studio); nhóm không huấn luyện hay tinh chỉnh |
 | Chạy ở đâu | Trên backend FastAPI của nhóm; tham số lưu ở bảng `ai_model_params` | Ở phía Google, được gọi từ backend; API key chỉ nằm ở backend |
-| Dữ liệu người dùng | Ghi chú chỉ đi qua backend của nhóm | Chỉ gửi câu text người dùng nhập, không gửi lịch sử giao dịch; free tier có thể dùng dữ liệu prompt để cải thiện sản phẩm nên có toggle tắt |
+| Dữ liệu người dùng | Ghi chú chỉ đi qua backend của nhóm | Chỉ gửi câu text người dùng nhập và tên các danh mục của họ (để Gemini chọn đúng danh mục), không gửi lịch sử giao dịch; free tier có thể dùng dữ liệu prompt để cải thiện sản phẩm nên có toggle tắt |
 | Cá nhân hoá | Mỗi người dùng có bộ tham số riêng; dùng model riêng khi `training_sample_count` ≥ 10, trước đó dùng model seed dùng chung (`user_id = '__seed__'`) | Không: mỗi lần gọi chỉ gửi câu người dùng vừa nhập |
 | Đầu ra | Danh mục kèm `confidence` (normalized score, xem mục 3) | Văn bản JSON theo schema cố định; `ValidationService` kiểm tra schema và whitelist danh mục, loại item sai |
 | Kiểm tra được bên trong | Có: công thức tường minh, tham số lưu trong database | Không: nhóm chỉ thấy đầu vào và đầu ra qua API |
-| Giới hạn vận hành | Cần backend đang chạy (Render free tier có cold start) | Có quota; timeout ngắn (kế hoạch: khoảng 8 giây); lỗi 429 thì báo "AI đang bận, nhập tay"; chỉ dùng Gemini Flash hoặc Flash-Lite, không dùng Pro |
-
+| Giới hạn vận hành | Cần backend đang chạy (Render free tier có cold start) | Có quota; timeout tổng 8 giây (`GEMINI_TIMEOUT_SECONDS`); mọi lỗi không dùng được Gemini (429, quá thời gian chờ, lỗi mạng/máy chủ, thiếu `GEMINI_API_KEY`) đều trả HTTP 503 với `error_code = AI_BUSY` để app báo "AI đang bận, vui lòng nhập tay"; chỉ dùng Gemini Flash hoặc Flash-Lite, không dùng Pro |
 ## 2. ML cổ điển trong dự án: phân loại danh mục
 
 Code: `backend/app/services/ai/tfidf.py`, `naive_bayes.py`, `categorize_service.py`.
@@ -63,3 +62,19 @@ Code: `backend/app/routers/retrain.py`, `backend/app/services/ai/retrain_service
 - Khoá chống chạy đồng thời: cột `is_training`. Khi đang huấn luyện, request thứ hai trả 409.
 - Người dùng chưa có giao dịch nào có danh mục trên máy chủ: trả 400 và không làm thay đổi `trained_at` nên không kích hoạt giới hạn tần suất.
 - Mọi lỗi trả body `{error_code, message}`.
+
+## 6. Các tính năng còn lại: thống kê thuần và parser rule-based (AI-04, AI-05, AI-06)
+
+| Tính năng | Loại kỹ thuật | Code |
+|---|---|---|
+| Gợi ý danh mục, học từ lần sửa (AI-01, AI-02) | Machine learning cổ điển | `tfidf.py`, `naive_bayes.py`, `categorize_service.py` |
+| Phát hiện giao dịch bất thường (AI-04) | Thống kê thuần, không phải machine learning | `anomaly_stats.py` |
+| Dự báo net thu − chi cuối tháng (AI-05) | Thống kê thuần (làm mượt theo cấp số mũ), không phải machine learning | `forecast.py` |
+| Nhập nhanh bằng ngôn ngữ tự nhiên (AI-06) | Rule-based: regex tiền và từ điển từ khoá, không phải machine learning hay LLM | `nl_parser.py` |
+| Gemini dự phòng cho nhập nhanh (AI-07) | LLM ngoài (Google) | `gemini_fallback.py` |
+
+**Phát hiện bất thường (`/anomaly`).** So số tiền gửi lên với các giao dịch chưa xoá của cùng người dùng trong cùng danh mục trên máy chủ. Dưới 5 giao dịch: trả `insufficient_data`. Từ 5 đến 9 giao dịch: dùng median và IQR, gắn cờ cao nếu lớn hơn `Q3 + 1,5 × IQR`, gắn cờ thấp nếu nhỏ hơn `Q1 − 1,5 × IQR`. Từ 10 giao dịch trở lên: dùng mean và độ lệch chuẩn tổng thể, gắn cờ cao nếu lớn hơn `mean + 2 × std`, gắn cờ thấp nếu nhỏ hơn `mean − 2 × std`. Giới hạn đã biết: do kiến trúc local-first, chỉ chính xác với dữ liệu danh mục đã đồng bộ lên máy chủ; đây là thống kê đơn giản nên chấp nhận tỷ lệ gắn cờ nhầm nhất định ở dữ liệu ít, nhóm không cam kết độ chính xác cụ thể.
+
+**Dự báo (`/forecast`).** Tính net (thu − chi) theo tuần (Thứ Hai đến Chủ Nhật, giờ Việt Nam, chỉ các tuần đã trọn vẹn), làm mượt theo cấp số mũ với hệ số 0,3 để ra net dự báo mỗi tuần. Net dự kiến của tháng = net thực tế từ đầu tháng đến hiện tại + net dự báo mỗi tuần × số tuần còn lại của tháng. Dưới 4 tuần trọn vẹn: trả `insufficient_data`. Đây là số liệu ước tính trong phạm vi dữ liệu ứng dụng theo dõi, không phải số dư ngân hàng thật.
+
+**Nhập nhanh (`/parse-nl`).** Tách câu theo dấu phẩy và liên từ "và", "rồi"; nhận diện số tiền (ví dụ "50k", "50 nghìn", "500.000đ", số trần); khớp từ khoá còn lại với từ điển xây từ `seed_categorization.csv` (dùng chung seed với mục 2) và đổi tên danh mục sang `category_id` theo danh mục của người dùng. Phần câu không có số tiền được trả với `amount = null` để người dùng nhập tay. Kết quả luôn là đề xuất, app hiển thị để người dùng xác nhận trước khi lưu.
