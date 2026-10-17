@@ -412,4 +412,32 @@ public class AddEditTransactionViewModelTest {
             Thread.sleep(20);
         }
     }
+
+    @Test
+    public void finishAfterSave_afterInsufficientDataBanner_closesScreen() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+        viewModel.save();
+        fakeAiRepository.completeAnomaly(new Result.Success<>(
+                new AnomalyResult(AnomalyResult.Level.INSUFFICIENT_DATA, null)));
+        assertEquals(Boolean.FALSE, viewModel.getCloseScreen().getValue()); //đang ở lại để người dùng đọc
+
+        viewModel.finishAfterSave();
+
+        assertEquals(Boolean.TRUE, viewModel.getCloseScreen().getValue());
+    }
+
+    @Test
+    public void finishAfterSave_afterHighAnomalyBanner_closesScreen() {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createReadyToSaveExpense(fakeAiRepository);
+        viewModel.save();
+        fakeAiRepository.completeAnomaly(new Result.Success<>(
+                new AnomalyResult(AnomalyResult.Level.HIGH, "Cao")));
+        assertEquals(Boolean.FALSE, viewModel.getCloseScreen().getValue());
+
+        viewModel.finishAfterSave();
+
+        assertEquals(Boolean.TRUE, viewModel.getCloseScreen().getValue());
+    }
 }

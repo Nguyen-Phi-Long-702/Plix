@@ -383,7 +383,10 @@ public class AddEditTransactionFragment extends Fragment {
         if (state instanceof UiState.Loading) {
             buttonSave.setEnabled(false);
         } else if (state instanceof UiState.Success) {
-            buttonSave.setEnabled(false); //giao dịch đã lưu xong: khoá nút (kể cả khi màn hình được dựng lại sau khi xoay) để không bấm lưu lần 2 tạo giao dịch trùng
+            //Ngoại lệ: nếu đang hiện banner thì nút đã được đổi thành "Xong" (bấm để thoát) -> không khoá
+            if (!(viewModel.getAnomalyBannerState().getValue() instanceof UiState.Success)) {
+                buttonSave.setEnabled(false);
+            }
             Snackbar.make(requireActivity().findViewById(android.R.id.content), "Đã lưu giao dịch", Snackbar.LENGTH_SHORT).show();
         } else if (state instanceof UiState.Error) {
             buttonSave.setEnabled(true);
@@ -415,12 +418,20 @@ public class AddEditTransactionFragment extends Fragment {
                 textAnomalyExplanation.setText(banner.explanation);
                 textAnomalyPendingNote.setVisibility(banner.showPendingNote ? View.VISIBLE : View.GONE);
             }
+            showDoneButton();
             scrollRoot.post(() -> scrollRoot.smoothScrollTo(0, 0));
         } else {
             layoutAnomalyChecking.setVisibility(View.GONE);
             layoutAnomalyBanner.setVisibility(View.GONE);
             layoutAnomalyInsufficient.setVisibility(View.GONE);
         }
+    }
+
+    //Giao dịch đã lưu xong, banner đang hiện: đổi nút "Lưu" (đang bị khoá) thành nút "Xong" để đóng màn hình
+    private void showDoneButton() {
+        buttonSave.setText("Xong");
+        buttonSave.setEnabled(true);
+        buttonSave.setOnClickListener(v -> viewModel.finishAfterSave());
     }
 
     private void setupCategorySuggestion() {

@@ -341,6 +341,11 @@ public class AddEditTransactionViewModel extends ViewModel {
         return closeScreen;
     }
 
+    //Người dùng đã đọc banner (bất thường / chưa đủ dữ liệu) và bấm "Xong" -> đóng màn hình, quay về màn hình trước
+    public void finishAfterSave() {
+        closeScreen.setValue(true);
+    }
+
     private void startAnomalyCheckOrClose(String transactionId, @Nullable String userId, String type,
                                           @Nullable String categoryId, long amount) {
         boolean applicable = "expense".equals(type) && categoryId != null && userId != null;
