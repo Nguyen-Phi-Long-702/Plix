@@ -5,10 +5,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -16,6 +18,8 @@ import java.util.Calendar;
 import java.util.List;
 
 public class RecurringTransactionWorkerTest {
+    @Rule
+    public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
     private FakeTransactionDao fakeTransactionDao;
     @Before
     public void setUp() {
@@ -251,5 +255,16 @@ public class RecurringTransactionWorkerTest {
         AuthManager loggedInAuthManager = new AuthManager(null);
         setFakeAccessToken(loggedInAuthManager, "fake-jwt-token");
         assertTrue(RecurringTransactionWorker.isEligibleToRun(loggedInAuthManager));
+    }
+
+    @Test
+    public void isEligibleToRun_afterRealLogout_returnsFalse() throws Exception {
+        AuthManager authManager = new AuthManager(null);
+        setFakeAccessToken(authManager, "fake-jwt-token");
+        assertTrue(RecurringTransactionWorker.isEligibleToRun(authManager));
+
+        authManager.logout();
+
+        assertFalse(RecurringTransactionWorker.isEligibleToRun(authManager)); 
     }
 }
