@@ -97,13 +97,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         }
 
         void bind(BudgetEntity budget, Map<String, String> categoryNamesById, Map<String, BudgetProgress> progressByBudgetId, OnBudgetActionListener actionListener) {
-            String name;
-            if (budget.categoryId == null) {
-                name = "Ngân sách tổng";
-            } else {
-                String categoryName = categoryNamesById.get(budget.categoryId);
-                name = categoryName != null ? categoryName : "Danh mục đã xoá";
-            }
+            String name = BudgetDisplayName.of(budget, categoryNamesById);
             textBudgetName.setText(name);
             textThreshold.setText("Ngưỡng cảnh báo " + budget.thresholdPercent + "%");
             BudgetProgress progress = progressByBudgetId.get(budget.id);
