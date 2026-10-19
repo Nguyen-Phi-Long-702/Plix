@@ -21,7 +21,7 @@
 #-renamesourcefileattribute SourceFile
 
 # ==========================================================================
-# Day 11 - Chuan bi som ProGuard cho Sprint 5/6 (chua bat, isMinifyEnabled=false)
+# Day 11 - Chuan bi som ProGuard cho Sprint 5/6; Day 51 - da bat R8 (isMinifyEnabled=true) cho ban release
 # Dagger/Hilt KHONG can keep rule rieng vi dung annotation processing
 # (sinh code o compile-time, khong dung reflection runtime).
 # ==========================================================================

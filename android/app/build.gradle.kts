@@ -33,7 +33,7 @@ android {
             buildConfigField("String", "BACKEND_BASE_URL", "\"https://plix-7jfp.onrender.com/\"")
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             buildConfigField("String", "BACKEND_BASE_URL", "\"https://plix-7jfp.onrender.com/\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
