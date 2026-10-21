@@ -68,6 +68,7 @@ public class AddEditGoalFragment extends Fragment {
         viewModel = new ViewModelProvider(this).get(AddEditGoalViewModel.class);
         String goalId = getArguments() != null ? getArguments().getString(AddEditGoalViewModel.ARG_GOAL_ID) : null;
         viewModel.init(goalId);
+        requireActivity().setTitle(viewModel.isEditMode() ? "Sửa mục tiêu" : "Thêm mục tiêu");
         bindViews(view);
         setupNameField();
         setupTargetAmountField();

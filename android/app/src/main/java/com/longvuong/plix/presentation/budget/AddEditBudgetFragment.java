@@ -68,6 +68,7 @@ public class AddEditBudgetFragment extends Fragment {
                 ? getArguments().getString(AddEditBudgetViewModel.ARG_BUDGET_ID)
                 : null;
         viewModel.init(budgetId);
+        requireActivity().setTitle(viewModel.isEditMode() ? "Sửa ngân sách" : "Thêm ngân sách");
         bindViews(view);
         setupScopeToggle();
         setupPeriodField();

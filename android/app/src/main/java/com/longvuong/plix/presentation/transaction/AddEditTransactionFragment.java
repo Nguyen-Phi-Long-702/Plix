@@ -107,6 +107,7 @@ public class AddEditTransactionFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         viewModel = new ViewModelProvider(this).get(AddEditTransactionViewModel.class);
+        requireActivity().setTitle(viewModel.isEditMode() ? "Sửa giao dịch" : "Thêm giao dịch");
 
         bindViews(view);
         setupTypeToggle();
