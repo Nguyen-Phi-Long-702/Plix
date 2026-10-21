@@ -35,6 +35,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+import com.longvuong.plix.presentation.common.SnackbarHelper;
 import com.longvuong.plix.presentation.common.UiState;
 
 import java.time.Instant;
@@ -388,7 +389,7 @@ public class AddEditTransactionFragment extends Fragment {
             if (!(viewModel.getAnomalyBannerState().getValue() instanceof UiState.Success)) {
                 buttonSave.setEnabled(false);
             }
-            Snackbar.make(requireActivity().findViewById(android.R.id.content), "Đã lưu giao dịch", Snackbar.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, "Đã lưu giao dịch");
         } else if (state instanceof UiState.Error) {
             buttonSave.setEnabled(true);
             String message = ((UiState.Error<Void>) state).message;

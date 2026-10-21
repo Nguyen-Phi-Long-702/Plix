@@ -27,6 +27,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+import com.longvuong.plix.presentation.common.SnackbarHelper;
 import com.longvuong.plix.presentation.common.UiState;
 
 import java.util.ArrayList;
@@ -157,8 +158,7 @@ public class QuickAddNlFragment extends Fragment {
         saving = state instanceof UiState.Loading;
         if (state instanceof UiState.Success) {
             int savedCount = ((UiState.Success<Integer>) state).data;
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    "Đã lưu " + savedCount + " giao dịch", Snackbar.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, "Đã lưu " + savedCount + " giao dịch");
             NavHostFragment.findNavController(this).popBackStack();
             return;
         }

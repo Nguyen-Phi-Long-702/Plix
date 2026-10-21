@@ -27,6 +27,7 @@ import com.longvuong.plix.R;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.domain.usecase.goal.GoalRequiredMonthly;
 import com.longvuong.plix.domain.usecase.goal.GoalStatus;
+import com.longvuong.plix.presentation.common.SnackbarHelper;
 import com.longvuong.plix.presentation.common.UiState;
 
 import java.text.NumberFormat;
@@ -344,7 +345,7 @@ public class AddEditGoalFragment extends Fragment {
             buttonSave.setEnabled(false);
         } else if (state instanceof UiState.Success) {
             buttonSave.setEnabled(true);
-            Snackbar.make(requireActivity().findViewById(android.R.id.content), "Đã lưu mục tiêu", Snackbar.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, "Đã lưu mục tiêu");
             NavHostFragment.findNavController(this).popBackStack();
         } else if (state instanceof UiState.Error) {
             buttonSave.setEnabled(true);

@@ -26,6 +26,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+import com.longvuong.plix.presentation.common.SnackbarHelper;
 import com.longvuong.plix.presentation.common.UiState;
 
 import java.util.List;
@@ -82,8 +83,7 @@ public class CategoryManagementFragment extends Fragment {
     }
     private void renderFormState(UiState<Void> state) {
         if (state instanceof UiState.Success) {
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    "Đã lưu danh mục", Snackbar.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, "Đã lưu danh mục");
         } else if (state instanceof UiState.Error) {
             Snackbar.make(requireActivity().findViewById(android.R.id.content),
                     ((UiState.Error<Void>) state).message, Snackbar.LENGTH_LONG).show();
