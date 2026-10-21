@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:parentTag="android.widget.FrameLayout">
+
+    <View
+        android:id="@+id/viewFabScrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.25"
+        android:background="@color/black"
+        android:clickable="true"
+        android:contentDescription="Đóng menu thêm giao dịch"
+        android:focusable="true"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/spacing_16"
+        android:gravity="end"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/layoutFabMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardFabQuickAdd"
+                style="@style/Widget.Plix.Card"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_8"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/spacing_12"
+                    android:paddingTop="@dimen/spacing_4"
+                    android:paddingEnd="@dimen/spacing_4"
+                    android:paddingBottom="@dimen/spacing_4">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nhập nhanh (AI)"
+                        android:textAppearance="@style/TextAppearance.Plix.Label"
+                        android:textColor="@color/text_primary" />
+
+                    <FrameLayout
+                        android:layout_width="@dimen/fab_mini_dot_size"
+                        android:layout_height="@dimen/fab_mini_dot_size"
+                        android:layout_marginStart="@dimen/spacing_8"
+                        android:background="@drawable/bg_fab_mini_dot">
+
+                        <ImageView
+                            android:layout_width="@dimen/fab_mini_icon_size"
+                            android:layout_height="@dimen/fab_mini_icon_size"
+                            android:layout_gravity="center"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_sparkle"
+                            android:tint="@color/primary_dark" />
+                    </FrameLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardFabAddTransaction"
+                style="@style/Widget.Plix.Card"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_8"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/spacing_12"
+                    android:paddingTop="@dimen/spacing_4"
+                    android:paddingEnd="@dimen/spacing_4"
+                    android:paddingBottom="@dimen/spacing_4">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Thêm giao dịch"
+                        android:textAppearance="@style/TextAppearance.Plix.Label"
+                        android:textColor="@color/text_primary" />
+
+                    <FrameLayout
+                        android:layout_width="@dimen/fab_mini_dot_size"
+                        android:layout_height="@dimen/fab_mini_dot_size"
+                        android:layout_marginStart="@dimen/spacing_8"
+                        android:background="@drawable/bg_fab_mini_dot">
+
+                        <ImageView
+                            android:layout_width="@dimen/fab_mini_icon_size"
+                            android:layout_height="@dimen/fab_mini_icon_size"
+                            android:layout_gravity="center"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_plus"
+                            android:tint="@color/primary_dark" />
+                    </FrameLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabMain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Thêm"
+            app:srcCompat="@drawable/ic_plus" />
+    </LinearLayout>
+</merge>
