@@ -22,7 +22,7 @@
         <fragment
             android:id="@+id/registerFragment"
             android:name="com.longvuong.plix.presentation.auth.RegisterFragment"
-            android:label="Đăng ký"
+            android:label="Tạo tài khoản"
             tools:layout="@layout/fragment_register">
             <action
                 android:id="@+id/action_register_to_login"
@@ -40,7 +40,7 @@
             <fragment
                 android:id="@+id/homeFragment"
                 android:name="com.longvuong.plix.presentation.transaction.HomeFragment"
-                android:label="Trang chủ"
+                android:label="Plix"
                 tools:layout="@layout/fragment_home">
                 <action
                     android:id="@+id/action_homeFragment_to_addEditTransactionFragment"
@@ -66,7 +66,7 @@
             <fragment
                 android:id="@+id/transactionListFragment"
                 android:name="com.longvuong.plix.presentation.transaction.TransactionListFragment"
-                android:label="Danh sách giao dịch"
+                android:label="Giao dịch"
                 tools:layout="@layout/fragment_transaction_list">
                 <action
                     android:id="@+id/action_transactionListFragment_to_addEditTransactionFragment"
@@ -114,7 +114,7 @@
             <fragment
                 android:id="@+id/addEditBudgetFragment"
                 android:name="com.longvuong.plix.presentation.budget.AddEditBudgetFragment"
-                android:label="Ngân sách"
+                android:label="Thêm ngân sách"
                 tools:layout="@layout/fragment_add_edit_budget">
                 <argument
                     android:name="budgetId"
@@ -125,7 +125,7 @@
             <fragment
                 android:id="@+id/addEditGoalFragment"
                 android:name="com.longvuong.plix.presentation.goal.AddEditGoalFragment"
-                android:label="Mục tiêu tiết kiệm"
+                android:label="Thêm mục tiêu"
                 tools:layout="@layout/fragment_add_edit_goal">
                 <argument
                     android:name="goalId"

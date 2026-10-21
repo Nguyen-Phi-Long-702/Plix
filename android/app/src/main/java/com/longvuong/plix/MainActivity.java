@@ -7,11 +7,13 @@ import android.os.Build;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -39,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<String> requestNotificationPermissionLauncher;
     private NavController navController;
+    private AppBarConfiguration appBarConfiguration;
     private BottomNavigationView bottomNavigationView;
 
     @Override
@@ -56,11 +59,24 @@ public class MainActivity extends AppCompatActivity {
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         navController = navHostFragment.getNavController();
 
+        //4 màn gốc (4 tab; tab Ngân sách & Mục tiêu có 2 màn con) và màn Đăng nhập: không hiện nút quay lại
+        appBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.loginFragment,
+                R.id.homeFragment,
+                R.id.budgetGoalFragment,
+                R.id.goalListFragment,
+                R.id.analyticsFragment,
+                R.id.settingsFragment).build();
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         NavigationUI.setupWithNavController(bottomNavigationView, navController);
 
-        //Chỉ hiện thanh điều hướng dưới khi đang ở trong mainGraph
-        navController.addOnDestinationChangedListener((controller, destination, arguments) -> updateBottomNavVisibility(destination));
+        //Chỉ hiện thanh điều hướng dưới khi đang ở trong mainGraph; màn Đăng nhập không có ActionBar (theo thiết kế)
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            updateBottomNavVisibility(destination);
+            updateActionBarVisibility(destination);
+        });
 
         SyncStatusViewModel syncStatusViewModel = new ViewModelProvider(this).get(SyncStatusViewModel.class);
         addMenuProvider(new SyncIndicatorMenuProvider(this, syncStatusViewModel, navController));
@@ -93,6 +109,23 @@ public class MainActivity extends AppCompatActivity {
                 requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         });
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp();
+    }
+
+    private void updateActionBarVisibility(NavDestination destination) {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null) {
+            return;
+        }
+        if (destination.getId() == R.id.loginFragment) {
+            actionBar.hide();
+        } else {
+            actionBar.show();
+        }
     }
 
     private void updateBottomNavVisibility(NavDestination destination) {
