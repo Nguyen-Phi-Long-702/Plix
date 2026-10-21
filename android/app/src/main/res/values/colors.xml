@@ -7,8 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="color_income">#2E7D32</color>
-    <color name="color_expense">#C62828</color>
+    <color name="color_income">#2C9463</color>
+    <color name="color_expense">#C0405A</color>
     <color name="budget_progress_normal">#2C9463</color>
     <color name="budget_progress_warning">#DE9C2E</color>
     <color name="budget_progress_danger">#D64545</color>
@@ -20,4 +20,22 @@
     <color name="info_tint">#ECF1EE</color>
     <color name="info_text">#5B6A62</color>
     <color name="forecast_line">#0C7968</color>
+
+    <!-- Bảng màu theo bản thiết kế -->
+    <color name="primary">#0C7968</color>
+    <color name="primary_dark">#054A3F</color>
+    <color name="primary_tint">#E5F8F5</color>
+    <color name="background">#F4F7F5</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_alt">#ECF1EE</color>
+    <color name="border">#DEE6E1</color>
+    <color name="border_strong">#C7D2CB</color>
+    <color name="text_primary">#16211C</color>
+    <color name="text_secondary">#5B6A62</color>
+    <color name="text_tertiary">#8B978F</color>
+    <color name="income_tint">#E1F3E9</color>
+    <color name="income_on_dark">#B7EBD4</color>
+    <color name="expense_tint">#FBE7EB</color>
+    <color name="expense_on_dark">#F6C3CE</color>
+    <color name="danger_tint">#FBE3E1</color>
 </resources>
