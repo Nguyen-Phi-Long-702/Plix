@@ -35,6 +35,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+import com.longvuong.plix.presentation.common.PaymentMethodUi;
 import com.longvuong.plix.presentation.common.SnackbarHelper;
 import com.longvuong.plix.presentation.common.UiState;
 
@@ -56,11 +57,9 @@ public class AddEditTransactionFragment extends Fragment {
     private static final Map<String, String> PAYMENT_METHOD_LABELS = new LinkedHashMap<>();
 
     static {
-        PAYMENT_METHOD_LABELS.put("cash", "Tiền mặt");
-        PAYMENT_METHOD_LABELS.put("bank_transfer", "Chuyển khoản");
-        PAYMENT_METHOD_LABELS.put("e_wallet", "Ví điện tử");
-        PAYMENT_METHOD_LABELS.put("credit_card", "Thẻ tín dụng");
-        PAYMENT_METHOD_LABELS.put("other", "Khác");
+        for (String code : PaymentMethodUi.codes()) {
+            PAYMENT_METHOD_LABELS.put(code, PaymentMethodUi.labelOf(code));
+        }
     }
 
     private AddEditTransactionViewModel viewModel;
