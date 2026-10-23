@@ -36,20 +36,13 @@
         android:layout_marginTop="16dp"
         android:minHeight="48dp" />
 
-    <Button
-        android:id="@+id/buttonTestJwtPoc"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Kiểm tra JWT"
-        android:layout_marginTop="8dp"
-        android:minHeight="48dp" />
-
     <TextView
-        android:id="@+id/textResult"
+        android:id="@+id/textError"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:textIsSelectable="true" />
+        android:textColor="?attr/colorError"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/textGoRegister"
@@ -58,6 +51,6 @@
         android:text="Chưa có tài khoản? Đăng ký"
         android:layout_marginTop="24dp"
         android:minHeight="48dp"
-        android:textColor="#2196F3" />
+        android:textColor="@color/primary" />
 
 </LinearLayout>

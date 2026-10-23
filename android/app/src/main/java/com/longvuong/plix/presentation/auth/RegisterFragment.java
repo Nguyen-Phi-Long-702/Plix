@@ -13,8 +13,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.navigation.NavOptions;
 
 import com.longvuong.plix.R;
+import com.longvuong.plix.presentation.common.UiState;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
@@ -37,24 +39,31 @@ public class RegisterFragment extends Fragment {
 
         EditText editEmail = view.findViewById(R.id.editEmail);
         EditText editPassword = view.findViewById(R.id.editPassword);
-        TextView textResult = view.findViewById(R.id.textResult);
+        TextView textError = view.findViewById(R.id.textError);
         Button buttonRegister = view.findViewById(R.id.buttonRegister);
         TextView textGoLogin = view.findViewById(R.id.textGoLogin);
 
         buttonRegister.setOnClickListener(v -> {
             String email = editEmail.getText().toString().trim();
             String password = editPassword.getText().toString().trim();
-            textResult.setText("Đang đăng ký...");
             viewModel.register(email, password);
         });
 
         textGoLogin.setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_register_to_login));
 
-        viewModel.getAuthSuccessToken().observe(getViewLifecycleOwner(), token ->
-                textResult.setText("Đăng ký thành công!\nJWT: " + token));
-
-        viewModel.getAuthError().observe(getViewLifecycleOwner(), error ->
-                textResult.setText("Lỗi: " + error));
+        viewModel.getAuthState().observe(getViewLifecycleOwner(), state -> {
+            boolean hasError = state instanceof UiState.Error;
+            textError.setVisibility(hasError ? View.VISIBLE : View.GONE);
+            if (hasError) {
+                textError.setText(((UiState.Error<Void>) state).message);
+            }
+            if (state instanceof UiState.Success) {
+                Navigation.findNavController(view).navigate(
+                        R.id.mainGraph,
+                        null,
+                        new NavOptions.Builder().setPopUpTo(R.id.authGraph, true).build());
+            }
+        });
     }
 }

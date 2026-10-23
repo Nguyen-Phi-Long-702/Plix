@@ -16,6 +16,7 @@ import androidx.navigation.Navigation;
 import androidx.navigation.NavOptions;
 
 import com.longvuong.plix.R;
+import com.longvuong.plix.presentation.common.UiState;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
@@ -38,37 +39,31 @@ public class LoginFragment extends Fragment {
 
         EditText editEmail = view.findViewById(R.id.editEmail);
         EditText editPassword = view.findViewById(R.id.editPassword);
-        TextView textResult = view.findViewById(R.id.textResult);
+        TextView textError = view.findViewById(R.id.textError);
         Button buttonLogin = view.findViewById(R.id.buttonLogin);
-        Button buttonTestJwtPoc = view.findViewById(R.id.buttonTestJwtPoc);
         TextView textGoRegister = view.findViewById(R.id.textGoRegister);
 
         buttonLogin.setOnClickListener(v -> {
             String email = editEmail.getText().toString().trim();
             String password = editPassword.getText().toString().trim();
-            textResult.setText("Đang đăng nhập...");
             viewModel.login(email, password);
-        });
-
-        buttonTestJwtPoc.setOnClickListener(v -> {
-            textResult.setText("Đang kiểm tra JWT...");
-            viewModel.testJwtPoc();
         });
 
         textGoRegister.setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_login_to_register));
 
-        viewModel.getAuthSuccessToken().observe(getViewLifecycleOwner(), token -> {
-            textResult.setText("Đăng nhập thành công!\nJWT: " + token);
-            Navigation.findNavController(view).navigate(
-                    R.id.mainGraph,
-                    null,
-                    new NavOptions.Builder().setPopUpTo(R.id.authGraph, true).build());
+        viewModel.getAuthState().observe(getViewLifecycleOwner(), state -> {
+            boolean hasError = state instanceof UiState.Error;
+            textError.setVisibility(hasError ? View.VISIBLE : View.GONE);
+            if (hasError) {
+                textError.setText(((UiState.Error<Void>) state).message);
+            }
+            if (state instanceof UiState.Success) {
+                Navigation.findNavController(view).navigate(
+                        R.id.mainGraph,
+                        null,
+                        new NavOptions.Builder().setPopUpTo(R.id.authGraph, true).build());
+            }
         });
-
-        viewModel.getAuthError().observe(getViewLifecycleOwner(), error ->
-                textResult.setText("Lỗi: " + error));
-
-        viewModel.getJwtPocResult().observe(getViewLifecycleOwner(), textResult::setText);
     }
 }

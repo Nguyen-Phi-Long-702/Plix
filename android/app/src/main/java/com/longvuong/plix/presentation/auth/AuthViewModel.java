@@ -7,13 +7,17 @@ import androidx.lifecycle.ViewModel;
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
 import com.longvuong.plix.data.repository.SyncRepository;
+import com.longvuong.plix.presentation.common.UiState;
+
 import javax.inject.Inject;
+
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class AuthViewModel extends ViewModel {
     private final AuthManager authManager;
     private final SyncRepository syncRepository;
+    private final MutableLiveData<UiState<Void>> authState = new MutableLiveData<>();
 
     @Inject
     public AuthViewModel(AuthManager authManager, SyncRepository syncRepository) {
@@ -21,53 +25,38 @@ public class AuthViewModel extends ViewModel {
         this.syncRepository = syncRepository;
     }
 
-    private final MutableLiveData<String> authSuccessToken = new MutableLiveData<>();
-    private final MutableLiveData<String> authError = new MutableLiveData<>();
-    private final MutableLiveData<String> jwtPocResult = new MutableLiveData<>();
-
-    public LiveData<String> getAuthSuccessToken() {
-        return authSuccessToken;
-    }
-
-    public LiveData<String> getAuthError() {
-        return authError;
-    }
-
-    public LiveData<String> getJwtPocResult() {
-        return jwtPocResult;
+    public LiveData<UiState<Void>> getAuthState() {
+        return authState;
     }
 
     public void login(String email, String password) {
+        authState.setValue(new UiState.Loading<>());
         authManager.login(email, password, new AuthManager.AuthCallback() {
             @Override
             public void onSuccess(AuthResponseDto response) {
                 syncRepository.requestSync(); //đăng nhập xong kéo dữ liệu của tài khoản về (máy mới/cài lại app)
-                authSuccessToken.postValue(response.accessToken);
+                authState.postValue(new UiState.Success<>(null));
             }
 
             @Override
             public void onError(String message) {
-                authError.postValue(message);
+                authState.postValue(new UiState.Error<>(message));
             }
         });
     }
 
     public void register(String email, String password) {
+        authState.setValue(new UiState.Loading<>());
         authManager.register(email, password, new AuthManager.AuthCallback() {
             @Override
             public void onSuccess(AuthResponseDto response) {
-                authSuccessToken.postValue(response.accessToken);
+                authState.postValue(new UiState.Success<>(null));
             }
 
             @Override
             public void onError(String message) {
-                authError.postValue(message);
+                authState.postValue(new UiState.Error<>(message));
             }
         });
-    }
-
-    public void testJwtPoc() {
-        jwtPocResult.postValue("Đang kiểm tra JWT...");
-        authManager.testBackendAuth(jwtPocResult::postValue);
     }
 }
