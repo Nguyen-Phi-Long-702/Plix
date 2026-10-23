@@ -1,19 +1,17 @@
 package com.longvuong.plix.presentation.transaction;
 
+import android.app.DatePickerDialog;
 import android.os.Bundle;
-import android.view.ContextThemeWrapper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.text.Editable;
-import android.text.TextWatcher;
 
-import com.google.android.material.textfield.TextInputEditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -23,11 +21,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
+import com.longvuong.plix.presentation.common.CategoryIconMapper;
+import com.longvuong.plix.presentation.common.ExpandableFabView;
 import com.longvuong.plix.presentation.common.UiState;
-import android.app.DatePickerDialog;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -45,8 +45,9 @@ public class TransactionListFragment extends Fragment {
     private TransactionListViewModel viewModel;
     private TransactionAdapter adapter;
     private RecyclerView recyclerTransactions;
-    private ProgressBar progressLoading;
-    private TextView textEmptyState;
+    private View layoutStateLoading;
+    private View viewEmptyState;
+    private ExpandableFabView fabExpandable;
     private ChipGroup chipGroupCategory;
     private Chip chipCategoryAll;
     private Chip chipDateRange;
@@ -72,6 +73,7 @@ public class TransactionListFragment extends Fragment {
         setupCategoryChips();
         setupDateRangeChip();
         setupSearchField();
+        setupFab();
 
         viewModel.getTransactionListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(), categories -> {
@@ -83,8 +85,9 @@ public class TransactionListFragment extends Fragment {
 
     private void bindViews(View view) {
         recyclerTransactions = view.findViewById(R.id.recyclerTransactions);
-        progressLoading = view.findViewById(R.id.progressLoading);
-        textEmptyState = view.findViewById(R.id.textEmptyState);
+        layoutStateLoading = view.findViewById(R.id.layoutStateLoading);
+        viewEmptyState = view.findViewById(R.id.viewEmptyState);
+        fabExpandable = view.findViewById(R.id.fabExpandable);
         chipGroupCategory = view.findViewById(R.id.chipGroupCategory);
         chipCategoryAll = view.findViewById(R.id.chipCategoryAll);
         chipDateRange = view.findViewById(R.id.chipDateRange);
@@ -105,6 +108,17 @@ public class TransactionListFragment extends Fragment {
         });
         recyclerTransactions.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerTransactions.setAdapter(adapter);
+    }
+
+    private void setupFab() {
+        fabExpandable.setOnAddTransactionClickListener(v ->
+                Navigation.findNavController(requireView())
+                        .navigate(R.id.action_transactionListFragment_to_addEditTransactionFragment));
+        //nav_graph.xml chưa có action từ danh sách sang Nhập nhanh (file này chỉ Long sửa) nên đi thẳng tới màn đích theo id
+        fabExpandable.setOnQuickAddClickListener(v ->
+                Navigation.findNavController(requireView()).navigate(R.id.quickAddNlFragment));
+        viewModel.getQuickAddVisible().observe(getViewLifecycleOwner(), visible ->
+                fabExpandable.setQuickAddVisible(Boolean.TRUE.equals(visible)));
     }
 
     private void navigateToEdit(TransactionEntity transaction) {
@@ -152,10 +166,10 @@ public class TransactionListFragment extends Fragment {
         categoryChipsBuilt = true;
 
         for (CategoryEntity category : categories) {
-            Chip chip = new Chip(new ContextThemeWrapper(requireContext(), com.google.android.material.R.style.Widget_MaterialComponents_Chip_Choice));
+            Chip chip = (Chip) getLayoutInflater().inflate(R.layout.chip_filter_category, chipGroupCategory, false);
             chip.setId(View.generateViewId());
             chip.setText(category.name);
-            chip.setCheckable(true);
+            chip.setChipIcon(ContextCompat.getDrawable(requireContext(), CategoryIconMapper.iconFor(category.id)));
             chipGroupCategory.addView(chip);
             chipIdToCategoryId.put(chip.getId(), category.id);
         }
@@ -221,18 +235,13 @@ public class TransactionListFragment extends Fragment {
         });
     }
 
-    private void renderState(UiState<List<TransactionEntity>> state) {
-        progressLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
-        textEmptyState.setVisibility(
-                (state instanceof UiState.Empty || state instanceof UiState.Error) ? View.VISIBLE : View.GONE);
+    private void renderState(UiState<List<TransactionListItem>> state) {
+        layoutStateLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
+        viewEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
         recyclerTransactions.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
 
         if (state instanceof UiState.Success) {
-            adapter.submitList(((UiState.Success<List<TransactionEntity>>) state).data);
-        } else if (state instanceof UiState.Error) {
-            textEmptyState.setText(((UiState.Error<List<TransactionEntity>>) state).message);
-        } else if (state instanceof UiState.Empty) {
-            textEmptyState.setText("Chưa có giao dịch nào phù hợp");
+            adapter.submitList(((UiState.Success<List<TransactionListItem>>) state).data);
         }
     }
 }
