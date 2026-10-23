@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.navigation.NavOptions;
 
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.longvuong.plix.R;
 import com.longvuong.plix.presentation.common.UiState;
 import dagger.hilt.android.AndroidEntryPoint;
@@ -41,7 +42,9 @@ public class LoginFragment extends Fragment {
         EditText editPassword = view.findViewById(R.id.editPassword);
         TextView textError = view.findViewById(R.id.textError);
         Button buttonLogin = view.findViewById(R.id.buttonLogin);
+        CircularProgressIndicator progressLogin = view.findViewById(R.id.progressLogin);
         TextView textGoRegister = view.findViewById(R.id.textGoRegister);
+        CharSequence loginLabel = buttonLogin.getText();
 
         buttonLogin.setOnClickListener(v -> {
             String email = editEmail.getText().toString().trim();
@@ -53,11 +56,17 @@ public class LoginFragment extends Fragment {
                 Navigation.findNavController(view).navigate(R.id.action_login_to_register));
 
         viewModel.getAuthState().observe(getViewLifecycleOwner(), state -> {
+            boolean loading = state instanceof UiState.Loading;
+            buttonLogin.setEnabled(!loading);
+            buttonLogin.setText(loading ? "" : loginLabel); //đang xử lý: nút bị vô hiệu, chữ nhường chỗ cho vòng xoay
+            progressLogin.setVisibility(loading ? View.VISIBLE : View.GONE);
+
             boolean hasError = state instanceof UiState.Error;
             textError.setVisibility(hasError ? View.VISIBLE : View.GONE);
             if (hasError) {
                 textError.setText(((UiState.Error<Void>) state).message);
             }
+
             if (state instanceof UiState.Success) {
                 Navigation.findNavController(view).navigate(
                         R.id.mainGraph,

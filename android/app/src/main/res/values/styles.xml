@@ -9,6 +9,26 @@
         <item name="android:letterSpacing">0</item>
     </style>
 
+    <!-- Chữ liên kết bấm được (Đăng ký ngay, Đăng nhập, Xem tất cả); vùng chạm tối thiểu theo token touch_target_min -->
+    <style name="Widget.Plix.TextLink" parent="">
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minHeight">@dimen/touch_target_min</item>
+        <item name="android:paddingHorizontal">@dimen/spacing_8</item>
+        <item name="android:textAppearance">@style/TextAppearance.Plix.Label</item>
+        <item name="android:textColor">@color/primary</item>
+    </style>
+
+    <!-- Tên thương hiệu trên màn Đăng nhập (CSS: 24 / 800) -->
+    <style name="TextAppearance.Plix.BrandName" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:fontFamily">@font/be_vietnam_pro_extrabold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/primary_dark</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
     <style name="TextAppearance.Plix.AppBarTitle" parent="TextAppearance.MaterialComponents.Headline6">
         <item name="android:fontFamily">@font/be_vietnam_pro_bold</item>
         <item name="android:textSize">20sp</item>
