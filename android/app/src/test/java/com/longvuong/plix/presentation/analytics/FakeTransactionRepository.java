@@ -50,4 +50,8 @@ class FakeTransactionRepository implements TransactionRepository {
     public void countPendingByCategory(String userId, String categoryId, String excludeTransactionId, RepositoryCallback<Integer> callback) {
         callback.onResult(new Result.Success<>(0)); //Không dùng trong test này
     }
+    @Override
+    public void findSimilar(long amount, String categoryId, long dayStart, long dayEnd, RepositoryCallback<TransactionEntity> callback) {
+        callback.onResult(new Result.Success<>(null)); //Không dùng trong test này
+    }
 }

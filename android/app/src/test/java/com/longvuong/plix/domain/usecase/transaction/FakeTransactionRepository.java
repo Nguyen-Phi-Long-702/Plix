@@ -22,6 +22,12 @@ class FakeTransactionRepository implements TransactionRepository {
     Result<Integer> countPendingResult = new Result.Success<>(0);
     boolean countPendingCalled;
     String lastExcludedTransactionId;
+    Result<TransactionEntity> findSimilarResult = new Result.Success<>(null);
+    boolean findSimilarCalled;
+    long lastSimilarAmount;
+    String lastSimilarCategoryId;
+    long lastSimilarDayStart;
+    long lastSimilarDayEnd;
 
     @Override
     public LiveData<List<TransactionEntity>> getAll() {
@@ -68,5 +74,14 @@ class FakeTransactionRepository implements TransactionRepository {
         countPendingCalled = true;
         lastExcludedTransactionId = excludeTransactionId;
         callback.onResult(countPendingResult);
+    }
+    @Override
+    public void findSimilar(long amount, String categoryId, long dayStart, long dayEnd, RepositoryCallback<TransactionEntity> callback) {
+        findSimilarCalled = true;
+        lastSimilarAmount = amount;
+        lastSimilarCategoryId = categoryId;
+        lastSimilarDayStart = dayStart;
+        lastSimilarDayEnd = dayEnd;
+        callback.onResult(findSimilarResult);
     }
 }
