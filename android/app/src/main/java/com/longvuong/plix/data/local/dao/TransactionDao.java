@@ -52,6 +52,9 @@ public interface TransactionDao {
             + "AND id != :excludeTransactionId AND sync_status = 'pending' AND is_deleted = 0")
     int countPendingByCategory(String userId, String categoryId, String excludeTransactionId);
 
+    @Query("SELECT * FROM transactions WHERE is_deleted = 0 AND amount = :amount AND category_id = :categoryId "
+            + "AND occurred_at >= :dayStart AND occurred_at < :dayEnd ORDER BY occurred_at DESC LIMIT 1")
+    TransactionEntity findSimilar(long amount, String categoryId, long dayStart, long dayEnd);
     @Query("DELETE FROM transactions WHERE user_id = :userId")
     void deleteAllByUserId(String userId);
 }

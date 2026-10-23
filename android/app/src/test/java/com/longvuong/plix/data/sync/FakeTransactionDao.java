@@ -135,7 +135,21 @@ class FakeTransactionDao implements TransactionDao {
         }
         return count;
     }
-
+    @Override
+    public TransactionEntity findSimilar(long amount, String categoryId, long dayStart, long dayEnd) {
+        TransactionEntity latest = null;
+        for (TransactionEntity entity : storage) {
+            if (!entity.isDeleted
+                    && entity.amount == amount
+                    && categoryId.equals(entity.categoryId)
+                    && entity.occurredAt >= dayStart
+                    && entity.occurredAt < dayEnd
+                    && (latest == null || entity.occurredAt > latest.occurredAt)) {
+                latest = entity;
+            }
+        }
+        return latest;
+    }
     @Override
     public void deleteAllByUserId(String userId) {
         storage.removeIf(entity -> userId.equals(entity.userId));
