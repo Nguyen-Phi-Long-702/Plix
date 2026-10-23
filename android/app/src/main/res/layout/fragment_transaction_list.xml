@@ -1,94 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/inputLayoutSearch"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:hint="Tìm theo ghi chú..."
-        app:startIconDrawable="@drawable/ic_search"
-        app:endIconMode="clear_text">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editSearch"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputLayoutSearch"
+            style="@style/Widget.Plix.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
-            android:maxLines="1" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginHorizontal="@dimen/spacing_16"
+            android:layout_marginTop="@dimen/spacing_16"
+            android:hint="Tìm theo ghi chú..."
+            app:boxBackgroundColor="@color/surface"
+            app:endIconMode="clear_text"
+            app:startIconDrawable="@drawable/ic_search"
+            app:startIconTint="@color/text_tertiary">
 
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="12dp">
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupCategory"
-            android:layout_width="wrap_content"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:singleLine="true"
-            app:singleSelection="true">
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipCategoryAll"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingTop="@dimen/spacing_12"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="Tất cả" />
-        </com.google.android.material.chip.ChipGroup>
-    </HorizontalScrollView>
+                app:singleLine="true"
+                app:singleSelection="true">
 
-    <com.google.android.material.chip.Chip
-        android:id="@+id/chipDateRange"
-        style="@style/Widget.MaterialComponents.Chip.Action"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:checkable="false"
-        app:chipIcon="@drawable/ic_calendar"
-        app:chipIconVisible="true"
-        app:closeIconVisible="false"
-        android:text="Khoảng thời gian" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCategoryAll"
+                    style="@style/Widget.Plix.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Tất cả" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipDateRange"
+            style="@style/Widget.Plix.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_16"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:checkable="false"
+            android:text="Khoảng thời gian"
+            app:chipIcon="@drawable/ic_calendar"
+            app:chipIconSize="@dimen/filter_chip_icon_size"
+            app:chipIconTint="@color/selector_chip_text"
+            app:chipIconVisible="true"
+            app:closeIconVisible="false" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerTransactions"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingBottom="16dp"
-            tools:listitem="@layout/item_transaction" />
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:layout_weight="1">
 
-        <ProgressBar
-            android:id="@+id/progressLoading"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerTransactions"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingBottom="@dimen/transaction_list_padding_bottom"
+                tools:listitem="@layout/item_transaction" />
 
-        <TextView
-            android:id="@+id/textEmptyState"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:padding="24dp"
-            android:text="Chưa có giao dịch nào phù hợp"
-            android:visibility="gone" />
+            <include
+                android:id="@+id/layoutStateLoading"
+                layout="@layout/layout_state_loading"
+                android:visibility="gone" />
 
-    </FrameLayout>
+            <com.longvuong.plix.presentation.common.EmptyStateView
+                android:id="@+id/viewEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                app:emptyIcon="@drawable/ic_list"
+                app:emptyMessage="Nhấn nút + để bắt đầu ghi chép thu chi."
+                app:emptyTitle="Chưa có giao dịch nào" />
+        </FrameLayout>
+    </LinearLayout>
 
-</LinearLayout>
+    <com.longvuong.plix.presentation.common.ExpandableFabView
+        android:id="@+id/fabExpandable"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</FrameLayout>

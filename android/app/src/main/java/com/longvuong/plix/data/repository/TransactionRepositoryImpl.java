@@ -112,4 +112,16 @@ public class TransactionRepositoryImpl implements TransactionRepository {
             }
         });
     }
+    @Override
+    public void findSimilar(long amount, String categoryId, long dayStart, long dayEnd, RepositoryCallback<TransactionEntity> callback) {
+        appExecutors.diskIO().execute(() -> {
+            try {
+                TransactionEntity similar = transactionDao.findSimilar(amount, categoryId, dayStart, dayEnd);
+                appExecutors.mainThread().execute(() -> callback.onResult(new Result.Success<>(similar)));
+            } catch (Exception e) {
+                Result<TransactionEntity> error = errorMapper.mapThrowable(e);
+                appExecutors.mainThread().execute(() -> callback.onResult(error));
+            }
+        });
+    }
 }
