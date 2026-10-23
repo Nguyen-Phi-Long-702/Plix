@@ -4,29 +4,263 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonViewTransactionList"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="wrap_content"
+    <include
+        android:id="@+id/layoutHomeLoading"
+        layout="@layout/layout_state_loading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <com.longvuong.plix.presentation.common.EmptyStateView
+        android:id="@+id/emptyHome"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="Xem danh sách giao dịch" />
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddTransaction"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="Thêm giao dịch"
-        app:srcCompat="@drawable/ic_add" />
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabQuickAdd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="88dp"
-        android:contentDescription="Nhập nhanh bằng AI"
-        app:fabSize="mini"
-        app:srcCompat="@drawable/ic_ai_quick_add" />
+        android:visibility="gone"
+        app:emptyActionText="Thêm giao dịch đầu tiên"
+        app:emptyIcon="@drawable/ic_wallet"
+        app:emptyMessage="Bạn chưa có giao dịch nào.\nNhấn nút + để ghi lại khoản thu/chi đầu tiên."
+        app:emptyTitle="Chào mừng đến với Plix" />
+
+    <ScrollView
+        android:id="@+id/scrollHome"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingTop="@dimen/spacing_16"
+            android:paddingBottom="@dimen/home_content_bottom_padding">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_home_month_card"
+                android:elevation="@dimen/spacing_4"
+                android:orientation="vertical"
+                android:padding="@dimen/spacing_20">
+
+                <TextView
+                    android:id="@+id/textMonthLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.8"
+                    android:textAppearance="@style/TextAppearance.Plix.Caption"
+                    android:textColor="@color/white" />
+
+                <TextView
+                    android:id="@+id/textNetBalance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_4"
+                    android:textAppearance="@style/TextAppearance.Plix.AmountLarge"
+                    android:textColor="@color/white" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_16"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="@dimen/home_month_icon_size"
+                                android:layout_height="@dimen/home_month_icon_size"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_arrow_up"
+                                android:tint="@color/income_on_dark" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_4"
+                                android:text="Thu nhập"
+                                android:textAppearance="@style/TextAppearance.Plix.Caption"
+                                android:textColor="@color/income_on_dark" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/textIncome"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_4"
+                            android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+                            android:textColor="@color/white" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="@dimen/home_month_icon_size"
+                                android:layout_height="@dimen/home_month_icon_size"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_arrow_down"
+                                android:tint="@color/expense_on_dark" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_4"
+                                android:text="Chi tiêu"
+                                android:textAppearance="@style/TextAppearance.Plix.Caption"
+                                android:textColor="@color/expense_on_dark" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/textExpense"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_4"
+                            android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+                            android:textColor="@color/white" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_8"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Giao dịch gần đây"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                <TextView
+                    android:id="@+id/textViewAllTransactions"
+                    style="@style/Widget.Plix.TextLink"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Xem tất cả" />
+            </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Plix.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerRecentTransactions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:id="@+id/layoutHomeBudget"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_20"
+                    android:layout_marginBottom="@dimen/spacing_12"
+                    android:text="Ngân sách tháng này"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Plix.Card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:contentPadding="@dimen/spacing_16">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/textBudgetName"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                            <TextView
+                                android:id="@+id/textBudgetPercent"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_12"
+                                android:textAppearance="@style/TextAppearance.Plix.Caption" />
+                        </LinearLayout>
+
+                        <com.google.android.material.progressindicator.LinearProgressIndicator
+                            android:id="@+id/progressBudget"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_8"
+                            app:trackColor="@color/surface_alt"
+                            app:trackCornerRadius="@dimen/home_progress_thickness"
+                            app:trackThickness="@dimen/home_progress_thickness" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_8"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/textBudgetSpent"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textAppearance="@style/TextAppearance.Plix.Caption" />
+
+                            <TextView
+                                android:id="@+id/textBudgetLimit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="@style/TextAppearance.Plix.Caption" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <com.longvuong.plix.presentation.common.ExpandableFabView
+        android:id="@+id/expandableFab"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </FrameLayout>

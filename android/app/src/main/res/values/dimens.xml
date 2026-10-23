@@ -19,4 +19,10 @@
 
     <!-- Màn Đăng nhập / Đăng ký -->
     <dimen name="auth_logo_size">72dp</dimen>
+
+    <!-- Màn Home -->
+    <dimen name="home_content_bottom_padding">88dp</dimen>
+    <dimen name="home_category_tile_size">42dp</dimen>
+    <dimen name="home_month_icon_size">14dp</dimen>
+    <dimen name="home_progress_thickness">9dp</dimen>
 </resources>
