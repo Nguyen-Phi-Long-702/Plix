@@ -1,6 +1,8 @@
 package com.longvuong.plix.core.auth;
 
 import com.longvuong.plix.BuildConfig;
+import com.longvuong.plix.core.error.ErrorMapper;
+import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.remote.api.AuthApiService;
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
 import com.longvuong.plix.data.remote.dto.LoginRequestDto;
@@ -37,6 +39,8 @@ public class AuthManager {
     }
     private final AuthApiService authApiService;
     private final EncryptedTokenStore encryptedTokenStore;
+    //ErrorMapper không có trạng thái nên tạo trực tiếp, giữ nguyên constructor mà các test đang dùng (new AuthManager(null))
+    private final ErrorMapper errorMapper = new ErrorMapper();
     private final Retrofit backendRetrofit;
     //Lưu tạm access, refresh token trong RAM
     private volatile String accessToken;
@@ -158,12 +162,25 @@ public class AuthManager {
                 saveSession(response.body());
                 callback.onSuccess(response.body());
             } else {
-                callback.onError("Thất bại(mã lỗi " + response.code() + ")");
+                Result<Void> result = errorMapper.mapAuthHttpCode(response.code(), readErrorBodySafely(response));
+                callback.onError(((Result.Error<Void>) result).message);
             }
         }
         @Override
         public void onFailure(Call<AuthResponseDto> call, Throwable t) {
-            callback.onError("không thể kết nối đến supabase: " + t.getMessage());
+            Result<Void> result = errorMapper.mapThrowable(t);
+            callback.onError(((Result.Error<Void>) result).message);
+        }
+        @Nullable
+        private String readErrorBodySafely(retrofit2.Response<?> response) {
+            if (response.errorBody() == null) {
+                return null;
+            }
+            try {
+                return response.errorBody().string();
+            } catch (IOException e) {
+                return null;
+            }
         }
     }
     private static class ApiKeyInterceptor implements Interceptor {
