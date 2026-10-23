@@ -15,6 +15,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class AuthViewModel extends ViewModel {
+    private static final String PASSWORD_MISMATCH_MESSAGE = "Mật khẩu nhập lại không khớp";
+
     private final AuthManager authManager;
     private final SyncRepository syncRepository;
     private final MutableLiveData<UiState<Void>> authState = new MutableLiveData<>();
@@ -45,7 +47,11 @@ public class AuthViewModel extends ViewModel {
         });
     }
 
-    public void register(String email, String password) {
+    public void register(String email, String password, String confirmPassword) {
+        if (!password.equals(confirmPassword)) {
+            authState.setValue(new UiState.Error<>(PASSWORD_MISMATCH_MESSAGE));
+            return;
+        }
         authState.setValue(new UiState.Loading<>());
         authManager.register(email, password, new AuthManager.AuthCallback() {
             @Override

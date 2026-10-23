@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.navigation.NavOptions;
 
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.longvuong.plix.R;
 import com.longvuong.plix.presentation.common.UiState;
 import dagger.hilt.android.AndroidEntryPoint;
@@ -39,25 +40,35 @@ public class RegisterFragment extends Fragment {
 
         EditText editEmail = view.findViewById(R.id.editEmail);
         EditText editPassword = view.findViewById(R.id.editPassword);
+        EditText editConfirmPassword = view.findViewById(R.id.editConfirmPassword);
         TextView textError = view.findViewById(R.id.textError);
         Button buttonRegister = view.findViewById(R.id.buttonRegister);
+        CircularProgressIndicator progressRegister = view.findViewById(R.id.progressRegister);
         TextView textGoLogin = view.findViewById(R.id.textGoLogin);
+        CharSequence registerLabel = buttonRegister.getText();
 
         buttonRegister.setOnClickListener(v -> {
             String email = editEmail.getText().toString().trim();
             String password = editPassword.getText().toString().trim();
-            viewModel.register(email, password);
+            String confirmPassword = editConfirmPassword.getText().toString().trim();
+            viewModel.register(email, password, confirmPassword);
         });
 
         textGoLogin.setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_register_to_login));
 
         viewModel.getAuthState().observe(getViewLifecycleOwner(), state -> {
+            boolean loading = state instanceof UiState.Loading;
+            buttonRegister.setEnabled(!loading);
+            buttonRegister.setText(loading ? "" : registerLabel); //đang xử lý: nút bị vô hiệu, chữ nhường chỗ cho vòng xoay
+            progressRegister.setVisibility(loading ? View.VISIBLE : View.GONE);
+
             boolean hasError = state instanceof UiState.Error;
             textError.setVisibility(hasError ? View.VISIBLE : View.GONE);
             if (hasError) {
                 textError.setText(((UiState.Error<Void>) state).message);
             }
+
             if (state instanceof UiState.Success) {
                 Navigation.findNavController(view).navigate(
                         R.id.mainGraph,
