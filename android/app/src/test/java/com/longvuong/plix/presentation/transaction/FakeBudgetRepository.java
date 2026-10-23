@@ -12,9 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 class FakeBudgetRepository implements BudgetRepository {
+    final MutableLiveData<List<BudgetEntity>> activeBudgets = new MutableLiveData<>(new ArrayList<>());
+
     @Override
     public LiveData<List<BudgetEntity>> getActiveByPeriod(String period) {
-        return new MutableLiveData<>(new ArrayList<>());
+        return activeBudgets;
     }
 
     @Override

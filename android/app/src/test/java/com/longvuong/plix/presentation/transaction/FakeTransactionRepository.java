@@ -1,6 +1,7 @@
 package com.longvuong.plix.presentation.transaction;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
@@ -21,13 +22,16 @@ class FakeTransactionRepository implements TransactionRepository {
 
     private final Map<String, TransactionEntity> storage = new HashMap<>();
 
+    //Chưa có giá trị = Room chưa trả dữ liệu lần đầu; test đặt danh sách (đã sắp theo ngày giảm dần) bằng setValue
+    final MutableLiveData<List<TransactionEntity>> allTransactions = new MutableLiveData<>();
+
     void seed(TransactionEntity entity) {
         storage.put(entity.id, entity);
     }
 
     @Override
     public LiveData<List<TransactionEntity>> getAll() {
-        return null;
+        return allTransactions;
     }
 
     @Override
