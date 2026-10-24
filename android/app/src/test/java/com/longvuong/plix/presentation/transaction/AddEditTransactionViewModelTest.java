@@ -16,6 +16,7 @@ import com.longvuong.plix.domain.usecase.transaction.CheckTransactionAnomalyUseC
 import com.longvuong.plix.domain.usecase.transaction.AddTransactionUseCase;
 import com.longvuong.plix.domain.usecase.transaction.UpdateTransactionUseCase;
 import com.longvuong.plix.domain.validation.FormValidator;
+import com.longvuong.plix.domain.usecase.transaction.FindSimilarTransactionUseCase;
 import com.longvuong.plix.presentation.common.UiState;
 import com.longvuong.plix.core.error.ErrorType;
 import com.longvuong.plix.core.error.Result;
@@ -91,7 +92,8 @@ public class AddEditTransactionViewModelTest {
                 fakeTransactionRepository, formValidator, fakeCheckBudgetThresholdUseCase());
         return new AddEditTransactionViewModel(savedStateHandle, fakeTransactionRepository,
                 fakeCategoryRepository, addUseCase, updateUseCase, formValidator, authManager,
-                aiRepository, new CheckTransactionAnomalyUseCase(aiRepository, fakeTransactionRepository));
+                aiRepository, new CheckTransactionAnomalyUseCase(aiRepository, fakeTransactionRepository),
+                new FindSimilarTransactionUseCase(fakeTransactionRepository));
     }
 
     private com.longvuong.plix.domain.usecase.budget.CheckBudgetThresholdUseCase fakeCheckBudgetThresholdUseCase() {
@@ -548,5 +550,116 @@ public class AddEditTransactionViewModelTest {
         assertTrue(!instance.isRecurring);
         assertNull(instance.recurrenceRule);
         assertEquals("tx-template", instance.recurrenceParentId);
+    }
+
+    private AddEditTransactionViewModel createAddViewModelWithCategoriesLoaded() {
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>());
+        viewModel.getFilteredCategories().observeForever(categories -> { }); //để ViewModel nạp danh sách danh mục (lấy tên danh mục cho cảnh báo)
+        return viewModel;
+    }
+
+    private TransactionEntity similarTransactionAt(long occurredAt) {
+        TransactionEntity similar = new TransactionEntity();
+        similar.id = "tx-similar";
+        similar.userId = "user-1";
+        similar.amount = 45000;
+        similar.type = "expense";
+        similar.categoryId = "sys_an_uong";
+        similar.occurredAt = occurredAt;
+        return similar;
+    }
+
+    @Test
+    public void similar_sameAmountAndCategory_showsWarningWithDetails() {
+        fakeTransactionRepository.findSimilarResult =
+                new Result.Success<>(similarTransactionAt(System.currentTimeMillis()));
+        AddEditTransactionViewModel viewModel = createAddViewModelWithCategoriesLoaded();
+
+        viewModel.setAmount(45000);
+        viewModel.setCategoryId("sys_an_uong");
+
+        UiState<SimilarWarningUiModel> state = viewModel.getSimilarWarningState().getValue();
+        assertTrue(state instanceof UiState.Success);
+        SimilarWarningUiModel model = ((UiState.Success<SimilarWarningUiModel>) state).data;
+        assertEquals("Giao dịch tương tự đã tồn tại", model.title);
+        assertTrue(model.detail.contains("45.000đ"));
+        assertTrue(model.detail.contains("Ăn uống"));
+        assertTrue(model.detail.contains("hôm nay"));
+    }
+
+    @Test
+    public void similar_onAnotherDay_mentionsTheDate() {
+        long threeDaysAgo = System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000;
+        fakeTransactionRepository.findSimilarResult = new Result.Success<>(similarTransactionAt(threeDaysAgo));
+        AddEditTransactionViewModel viewModel = createAddViewModelWithCategoriesLoaded();
+
+        viewModel.setAmount(45000);
+        viewModel.setCategoryId("sys_an_uong");
+
+        SimilarWarningUiModel model = ((UiState.Success<SimilarWarningUiModel>)
+                viewModel.getSimilarWarningState().getValue()).data;
+        assertTrue(model.detail.contains("ngày "));
+        assertTrue(!model.detail.contains("hôm nay"));
+    }
+
+    @Test
+    public void similar_noMatch_showsNothing() {
+        AddEditTransactionViewModel viewModel = createAddViewModelWithCategoriesLoaded();
+
+        viewModel.setAmount(45000);
+        viewModel.setCategoryId("sys_an_uong");
+
+        assertTrue(viewModel.getSimilarWarningState().getValue() instanceof UiState.Empty);
+        assertEquals(1, fakeTransactionRepository.findSimilarCallCount);
+    }
+
+    @Test
+    public void similar_withoutCategory_doesNotQuery() {
+        AddEditTransactionViewModel viewModel = createAddViewModelWithCategoriesLoaded();
+
+        viewModel.setAmount(45000);
+
+        assertEquals(0, fakeTransactionRepository.findSimilarCallCount);
+        assertTrue(viewModel.getSimilarWarningState().getValue() instanceof UiState.Empty);
+    }
+
+    @Test
+    public void similar_editMode_neverQueries() {
+        existingTransaction("tx-1");
+        AddEditTransactionViewModel viewModel = createEditViewModel("tx-1");
+
+        viewModel.setAmount(50000);
+        viewModel.setCategoryId("sys_an_uong");
+
+        assertEquals(0, fakeTransactionRepository.findSimilarCallCount);
+    }
+
+    @Test
+    public void similar_amountCleared_hidesWarning() {
+        fakeTransactionRepository.findSimilarResult =
+                new Result.Success<>(similarTransactionAt(System.currentTimeMillis()));
+        AddEditTransactionViewModel viewModel = createAddViewModelWithCategoriesLoaded();
+        viewModel.setAmount(45000);
+        viewModel.setCategoryId("sys_an_uong");
+        assertTrue(viewModel.getSimilarWarningState().getValue() instanceof UiState.Success);
+
+        viewModel.setAmount(0);
+
+        assertTrue(viewModel.getSimilarWarningState().getValue() instanceof UiState.Empty);
+    }
+
+    @Test
+    public void save_success_clearsSimilarWarning() {
+        fakeTransactionRepository.findSimilarResult =
+                new Result.Success<>(similarTransactionAt(System.currentTimeMillis()));
+        AddEditTransactionViewModel viewModel = createAddViewModelWithCategoriesLoaded();
+        viewModel.setAmount(45000);
+        viewModel.setCategoryId("sys_an_uong");
+        assertTrue(viewModel.getSimilarWarningState().getValue() instanceof UiState.Success);
+
+        viewModel.save();
+
+        assertTrue(fakeTransactionRepository.insertCalled);
+        assertTrue(viewModel.getSimilarWarningState().getValue() instanceof UiState.Empty);
     }
 }

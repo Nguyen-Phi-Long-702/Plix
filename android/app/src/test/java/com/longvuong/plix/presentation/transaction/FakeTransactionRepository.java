@@ -19,6 +19,8 @@ class FakeTransactionRepository implements TransactionRepository {
     TransactionEntity lastInserted;
     final List<TransactionEntity> insertedEntities = new ArrayList<>();
     Result<Integer> countPendingResult = new Result.Success<>(0);
+    Result<TransactionEntity> findSimilarResult = new Result.Success<>(null);
+    int findSimilarCallCount;
 
     private final Map<String, TransactionEntity> storage = new HashMap<>();
 
@@ -70,6 +72,7 @@ class FakeTransactionRepository implements TransactionRepository {
     }
     @Override
     public void findSimilar(long amount, String categoryId, long dayStart, long dayEnd, RepositoryCallback<TransactionEntity> callback) {
-        callback.onResult(new Result.Success<>(null)); //Không dùng trong test này
+        findSimilarCallCount++;
+        callback.onResult(findSimilarResult);
     }
 }
