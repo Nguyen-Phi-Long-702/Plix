@@ -662,4 +662,37 @@ public class AddEditTransactionViewModelTest {
         assertTrue(fakeTransactionRepository.insertCalled);
         assertTrue(viewModel.getSimilarWarningState().getValue() instanceof UiState.Empty);
     }
+
+    @Test
+    public void categorize_successResult_exposesCategoryNameAndPercentSeparately() throws InterruptedException {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.getCategorySuggestionState().observeForever(state -> { });
+
+        viewModel.setNote("cà phê");
+        waitUntil(() -> fakeAiRepository.categorizeCalled, 2000);
+        fakeAiRepository.completeCategorize(new Result.Success<>(
+                new CategorySuggestion("sys_an_uong", category("sys_an_uong", "Ăn uống", "expense"), 0.62f)));
+
+        CategorySuggestionUiModel model = ((UiState.Success<CategorySuggestionUiModel>)
+                viewModel.getCategorySuggestionState().getValue()).data;
+        assertEquals("Ăn uống", model.categoryName);
+        assertEquals(62, model.confidencePercent);
+    }
+
+    @Test
+    public void dismissCategorySuggestion_hidesTheCard() throws InterruptedException {
+        FakeAiRepository fakeAiRepository = new FakeAiRepository();
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>(), fakeAiRepository);
+        viewModel.getCategorySuggestionState().observeForever(state -> { });
+        viewModel.setNote("cà phê");
+        waitUntil(() -> fakeAiRepository.categorizeCalled, 2000);
+        fakeAiRepository.completeCategorize(new Result.Success<>(
+                new CategorySuggestion("sys_an_uong", category("sys_an_uong", "Ăn uống", "expense"), 0.62f)));
+        assertTrue(viewModel.getCategorySuggestionState().getValue() instanceof UiState.Success);
+
+        viewModel.dismissCategorySuggestion();
+
+        assertTrue(viewModel.getCategorySuggestionState().getValue() instanceof UiState.Empty);
+    }
 }

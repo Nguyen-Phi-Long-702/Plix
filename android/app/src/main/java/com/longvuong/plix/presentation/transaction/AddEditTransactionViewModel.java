@@ -556,6 +556,11 @@ public class AddEditTransactionViewModel extends ViewModel {
         }
     }
 
+    //Người dùng bấm "Bỏ qua": chỉ ẩn thẻ gợi ý; vẫn giữ suggestedCategoryId để báo correction nếu sau đó họ chọn danh mục khác
+    public void dismissCategorySuggestion() {
+        categorySuggestionState.setValue(new UiState.Empty<>());
+    }
+
     private void scheduleCategorize(String note) {
         if (pendingCategorizeTask != null) {
             pendingCategorizeTask.cancel(false);
@@ -605,21 +610,22 @@ public class AddEditTransactionViewModel extends ViewModel {
                 boolean lowConfidence = suggestion.confidence < LOW_CONFIDENCE_THRESHOLD;
                 suggestedCategoryId = suggestion.categoryId; //vẫn giữ id gốc để báo correction nếu user tự chọn khác, dù không auto-fill
                 suggestedCategoryLowConfidence = lowConfidence;
-                categorySuggestionState.postValue(new UiState.Success<>(
-                        new CategorySuggestionUiModel(formatSuggestionLabel(suggestion, lowConfidence), lowConfidence)));
+                int confidencePercent = Math.round(suggestion.confidence * 100);
+                String categoryName = suggestion.category != null ? suggestion.category.name : UNKNOWN_CATEGORY_NAME;
+                categorySuggestionState.postValue(new UiState.Success<>(new CategorySuggestionUiModel(
+                        formatSuggestionLabel(categoryName, confidencePercent, lowConfidence),
+                        lowConfidence, categoryName, confidencePercent)));
             } else {
                 categorySuggestionState.postValue(new UiState.Error<>("Không lấy được gợi ý, nhập tay"));
             }
         });
     }
 
-    private String formatSuggestionLabel(CategorySuggestion suggestion, boolean lowConfidence) {
-        int confidencePercent = Math.round(suggestion.confidence * 100);
+    private String formatSuggestionLabel(String categoryName, int confidencePercent, boolean lowConfidence) {
         if (lowConfidence) {
             return "Độ tin cậy thấp · " + confidencePercent + "%"; //confidence<0.4 -> đổi hẳn nhãn, không hiện tên category đoán được
         }
-        String categoryLabel = suggestion.category != null ? suggestion.category.name : "Danh mục không xác định";
-        return categoryLabel + " · " + confidencePercent + "%";
+        return categoryName + " · " + confidencePercent + "%";
     }
 
     @Override
