@@ -276,7 +276,68 @@ public class QuickAddNlViewModelTest {
         assertTrue(list.items.get(0).needsCategory);
         assertFalse(list.canSave);
     }
+    @Test
+    public void submit_itemWithoutAmount_needsAmountAndIsNotSelected() {
+        List<ParseNlItem> items = new ArrayList<>();
+        items.add(new ParseNlItem(50_000L, anUong, 0.9f));
+        items.add(new ParseNlItem(0L, anUong, 0.9f)); //câu không có số tiền: Repository đổi amount null thành 0
+        SuggestionListUiModel list = submitAndGetList(new Result.Success<>(items));
 
+        SuggestionItemUiModel noAmount = list.items.get(1);
+        assertTrue(noAmount.needsAmount);
+        assertFalse(noAmount.selected);
+        assertEquals("Chưa rõ số tiền", noAmount.title);
+        assertEquals("Không nhận diện được số tiền — nhập tay riêng phần này", noAmount.detail);
+        assertEquals("", noAmount.amountText);
+        assertEquals("sys_an_uong", noAmount.categoryId); //giữ danh mục để hộp thoại sửa chọn sẵn
+        assertFalse(list.items.get(0).needsAmount);
+        assertEquals("Lưu 1 giao dịch hợp lệ", list.saveButtonText); //chỉ tính dòng đã được tick
+    }
+
+    @Test
+    public void submit_itemWithoutAmountAndCategory_needsBoth() {
+        List<ParseNlItem> items = new ArrayList<>();
+        items.add(new ParseNlItem(0L, null, 0f)); //đúng như backend trả cho phần câu không có số tiền: amount null, category_id null, confidence 0
+        SuggestionListUiModel list = submitAndGetList(new Result.Success<>(items));
+
+        SuggestionItemUiModel item = list.items.get(0);
+        assertTrue(item.needsAmount);
+        assertTrue(item.needsCategory);
+        assertFalse(item.selected);
+        assertNull(item.categoryId);
+        assertEquals("Chưa rõ số tiền", item.title);
+        assertFalse(list.canSave);
+    }
+
+    @Test
+    public void setItemSelected_onItemNeedingAmount_isIgnored() {
+        List<ParseNlItem> items = new ArrayList<>();
+        items.add(new ParseNlItem(0L, anUong, 0.9f));
+        SuggestionListUiModel list = submitAndGetList(new Result.Success<>(items));
+
+        viewModel.setItemSelected(list.items.get(0).itemId, true);
+
+        assertFalse(currentList().items.get(0).selected);
+        assertFalse(currentList().canSave);
+    }
+
+    @Test
+    public void updateItem_onItemWithoutAmount_enteringAmountSelectsRow() {
+        List<ParseNlItem> items = new ArrayList<>();
+        items.add(new ParseNlItem(0L, null, 0f));
+        SuggestionListUiModel list = submitAndGetList(new Result.Success<>(items));
+
+        viewModel.updateItem(list.items.get(0).itemId, 40_000L, anUong);
+
+        SuggestionItemUiModel edited = currentList().items.get(0);
+        assertFalse(edited.needsAmount);
+        assertFalse(edited.needsCategory);
+        assertTrue(edited.selected);
+        assertEquals("Ăn uống", edited.title);
+        assertEquals("-40.000đ", edited.amountText);
+        assertEquals("Đã chỉnh sửa", edited.detail);
+        assertTrue(currentList().canSave);
+    }
     @Test
     public void setItemSelected_untick_updatesSelectionAndSaveButton() {
         SuggestionListUiModel list = submitAndGetList(twoItemsResult());
@@ -413,11 +474,26 @@ public class QuickAddNlViewModelTest {
     }
 
     @Test
+    public void saveSelected_skipsItemWithoutAmount() {
+        List<ParseNlItem> items = new ArrayList<>();
+        items.add(new ParseNlItem(50_000L, anUong, 0.9f));
+        items.add(new ParseNlItem(0L, diChuyen, 0.9f)); //không có số tiền: không được tick sẵn nên không bị lưu
+        submitAndGetList(new Result.Success<>(items));
+
+        viewModel.saveSelected();
+
+        assertEquals(1, fakeTransactionRepository.insertedEntities.size());
+        assertEquals(50_000L, fakeTransactionRepository.insertedEntities.get(0).amount);
+        assertEquals(1, (int) ((UiState.Success<Integer>) viewModel.getSaveState().getValue()).data);
+    }
+
+    @Test
     public void saveSelected_invalidAmountInRow_becomesErrorAndSavesNothing() {
         List<ParseNlItem> items = new ArrayList<>();
         items.add(new ParseNlItem(50_000L, anUong, 0.9f));
         items.add(new ParseNlItem(0L, diChuyen, 0.9f));
-        submitAndGetList(new Result.Success<>(items));
+        SuggestionListUiModel list = submitAndGetList(new Result.Success<>(items));
+        viewModel.updateItem(list.items.get(1).itemId, 0L, diChuyen); //ép dòng thứ hai thành số tiền 0 đã tick (hộp thoại sửa không cho nhập 0, đây là kiểm tra phòng hờ ở bước lưu)
 
         viewModel.saveSelected();
 

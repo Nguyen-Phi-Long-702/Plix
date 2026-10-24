@@ -14,9 +14,10 @@ public class SuggestionItemUiModel {
     public final boolean income; //true = thu nhập (màu xanh, dấu +), false = chi tiêu (màu đỏ, dấu -)
     public final boolean selected; //đã được tick để lưu
     public final boolean needsCategory; //true = chưa có danh mục: tô nền cảnh báo, khoá ô tick cho tới khi người dùng chọn danh mục
+    public final boolean needsAmount; //true = câu không có số tiền hợp lệ (amount = 0): hiện nút "Nhập tay", khoá ô tick cho tới khi người dùng nhập số tiền
 
     public SuggestionItemUiModel(String itemId, long amount, @Nullable String categoryId, String title, String detail,
-                                 String amountText, boolean income, boolean selected, boolean needsCategory) {
+                                 String amountText, boolean income, boolean selected, boolean needsCategory, boolean needsAmount) {
         this.itemId = itemId;
         this.amount = amount;
         this.categoryId = categoryId;
@@ -26,5 +27,6 @@ public class SuggestionItemUiModel {
         this.income = income;
         this.selected = selected;
         this.needsCategory = needsCategory;
+        this.needsAmount = needsAmount;
     }
 }

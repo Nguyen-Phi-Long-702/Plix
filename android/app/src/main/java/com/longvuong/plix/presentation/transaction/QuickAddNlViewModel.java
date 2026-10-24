@@ -35,6 +35,8 @@ public class QuickAddNlViewModel extends ViewModel {
     private static final String OFFLINE_MESSAGE = "Không có kết nối mạng";
     private static final String NO_CATEGORY_TITLE = "Chưa chọn danh mục";
     private static final String NO_CATEGORY_DETAIL = "Không xác định rõ danh mục — cần chọn tay";
+    private static final String NO_AMOUNT_TITLE = "Chưa rõ số tiền";
+    private static final String NO_AMOUNT_DETAIL = "Không nhận diện được số tiền — nhập tay riêng phần này";
     private static final String EDITED_DETAIL = "Đã chỉnh sửa";
     private static final float LOW_CONFIDENCE_THRESHOLD = 0.4f; //dưới ngưỡng này không tự điền danh mục, giống quy tắc gợi ý ở màn thêm giao dịch
     private static final String DEFAULT_PAYMENT_METHOD = "cash"; //giống mặc định của màn thêm giao dịch
@@ -117,7 +119,7 @@ public class QuickAddNlViewModel extends ViewModel {
     //Tick/bỏ tick một dòng. Dòng chưa có danh mục thì không cho tick (phải sửa và chọn danh mục trước)
     public void setItemSelected(String itemId, boolean selected) {
         SuggestionDraft draft = findDraft(itemId);
-        if (draft == null || draft.category == null) {
+        if (draft == null || draft.category == null || draft.amount <= 0) {
             return;
         }
         draft.selected = selected;
@@ -180,8 +182,9 @@ public class QuickAddNlViewModel extends ViewModel {
         drafts.clear();
         for (ParseNlItem item : items) {
             boolean confident = item.category != null && item.confidence >= LOW_CONFIDENCE_THRESHOLD;
+            boolean hasAmount = item.amount > 0; //Repository đổi amount null (câu không có số tiền) thành 0
             drafts.add(new SuggestionDraft(UUID.randomUUID().toString(), item.amount,
-                    confident ? item.category : null, item.confidence, confident));
+                    confident ? item.category : null, item.confidence, confident && hasAmount));
         }
         if (drafts.isEmpty()) {
             parseState.setValue(new UiState.Empty<>());
@@ -208,6 +211,7 @@ public class QuickAddNlViewModel extends ViewModel {
 
     private SuggestionItemUiModel toUiModel(SuggestionDraft draft) {
         boolean needsCategory = draft.category == null;
+        boolean needsAmount = draft.amount <= 0;
         boolean income = !needsCategory && "income".equals(draft.category.type);
         String title = needsCategory ? NO_CATEGORY_TITLE : draft.category.name;
         String detail;
@@ -218,16 +222,21 @@ public class QuickAddNlViewModel extends ViewModel {
         } else {
             detail = "Độ tin cậy: " + Math.round(draft.confidence * 100) + "%";
         }
+        if (needsAmount) {
+            title = NO_AMOUNT_TITLE; //thiếu số tiền được ưu tiên hơn thiếu danh mục: phải nhập số tiền trước
+            detail = NO_AMOUNT_DETAIL;
+        }
         return new SuggestionItemUiModel(
                 draft.itemId,
                 draft.amount,
                 needsCategory ? null : draft.category.id,
                 title,
                 detail,
-                (income ? "+" : "-") + formatCurrency(draft.amount),
+                needsAmount ? "" : (income ? "+" : "-") + formatCurrency(draft.amount),
                 income,
                 draft.selected,
-                needsCategory);
+                needsCategory,
+                needsAmount);
     }
 
     private TransactionEntity toTransactionEntity(String userId, SuggestionDraft draft, long now) {
