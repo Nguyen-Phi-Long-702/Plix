@@ -25,4 +25,17 @@
     <dimen name="home_category_tile_size">42dp</dimen>
     <dimen name="home_month_icon_size">14dp</dimen>
     <dimen name="home_progress_thickness">9dp</dimen>
+
+    <!-- Form Thêm/Sửa giao dịch -->
+    <dimen name="banner_icon_size">18dp</dimen>
+    <dimen name="segment_stroke_width">1.5dp</dimen>
+    <dimen name="ai_box_icon_box_size">30dp</dimen>
+    <dimen name="ai_box_icon_size">16dp</dimen>
+    <dimen name="ai_box_stroke_width">1.5dp</dimen>
+    <dimen name="ai_box_dash_width">6dp</dimen>
+    <dimen name="ai_box_dash_gap">4dp</dimen>
+    <dimen name="sheet_handle_width">36dp</dimen>
+    <dimen name="sheet_handle_height">4dp</dimen>
+    <dimen name="sheet_option_icon_box_size">36dp</dimen>
+    <dimen name="sheet_option_icon_size">18dp</dimen>
 </resources>

@@ -141,6 +141,7 @@
         <item name="boxStrokeColor">@color/selector_input_stroke</item>
         <item name="boxStrokeWidth">1.5dp</item>
         <item name="boxStrokeWidthFocused">1.5dp</item>
+        <item name="helperTextTextAppearance">@style/TextAppearance.Plix.Hint</item>
     </style>
 
     <!-- ===== Chip ===== -->
@@ -183,4 +184,106 @@
         <item name="colorSecondary">@color/primary</item>
     </style>
 
+    <!-- ===== Form Thêm/Sửa giao dịch ===== -->
+    <!-- Ô số tiền lớn và hậu tố "đ" -->
+    <style name="TextAppearance.Plix.AmountInput" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:fontFamily">@font/be_vietnam_pro_extrabold</item>
+        <item name="android:textSize">26sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="TextAppearance.Plix.AmountSuffix" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:fontFamily">@font/be_vietnam_pro_bold</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Chữ trong banner -->
+    <style name="TextAppearance.Plix.BodySmall" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:fontFamily">@font/be_vietnam_pro_regular</item>
+        <item name="android:textSize">12.5sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Dòng gợi ý dưới ô nhập -->
+    <style name="TextAppearance.Plix.Hint" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:fontFamily">@font/be_vietnam_pro_regular</item>
+        <item name="android:textSize">11.5sp</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Tiêu đề bottom sheet -->
+    <style name="TextAppearance.Plix.SheetTitle" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:fontFamily">@font/be_vietnam_pro_extrabold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <!-- Công tắc Chi tiêu / Thu nhập: viền chung, màu khi chọn do selector quyết định -->
+    <style name="Widget.Plix.Button.Segment" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:minHeight">@dimen/touch_target_min</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Plix.Button</item>
+        <item name="cornerRadius">@dimen/radius_small</item>
+        <item name="strokeColor">@color/border_strong</item>
+        <item name="strokeWidth">@dimen/segment_stroke_width</item>
+    </style>
+
+    <style name="Widget.Plix.Button.Segment.Expense" parent="Widget.Plix.Button.Segment">
+        <item name="backgroundTint">@color/selector_segment_expense_background</item>
+        <item name="android:textColor">@color/selector_segment_expense_text</item>
+    </style>
+
+    <style name="Widget.Plix.Button.Segment.Income" parent="Widget.Plix.Button.Segment">
+        <item name="backgroundTint">@color/selector_segment_income_background</item>
+        <item name="android:textColor">@color/selector_segment_income_text</item>
+    </style>
+
+    <!-- Chip hành động (Bỏ qua, Thử lại) và biến thể nền primary (Dùng gợi ý) -->
+    <style name="Widget.Plix.Chip.Action" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="android:textAppearance">@style/TextAppearance.Plix.Label</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="chipBackgroundColor">@color/surface</item>
+        <item name="chipStrokeColor">@color/border_strong</item>
+        <item name="chipStrokeWidth">1.5dp</item>
+        <item name="chipIconTint">@color/text_secondary</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Plix.Pill</item>
+    </style>
+
+    <style name="Widget.Plix.Chip.Action.Primary" parent="Widget.Plix.Chip.Action">
+        <item name="android:textColor">@color/white</item>
+        <item name="chipBackgroundColor">@color/primary</item>
+        <item name="chipStrokeColor">@color/primary</item>
+        <item name="chipIconTint">@color/white</item>
+    </style>
+
+    <!-- Công tắc: thumb trắng, track primary khi bật -->
+    <style name="Widget.Plix.Switch" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="thumbTint">@color/white</item>
+        <item name="trackTint">@color/selector_switch_track</item>
+    </style>
+
+    <!-- ===== Bottom sheet (BottomSheetDialog): bo góc trên theo radius_large ===== -->
+    <style name="ThemeOverlay.Plix.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.Plix.BottomSheet</item>
+    </style>
+
+    <style name="Widget.Plix.BottomSheet" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="backgroundTint">@color/surface</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Plix.BottomSheet</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.Plix.BottomSheet" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">@dimen/radius_large</item>
+        <item name="cornerSizeTopRight">@dimen/radius_large</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
 </resources>

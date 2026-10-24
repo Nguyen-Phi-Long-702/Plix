@@ -37,6 +37,6 @@
 
         <!-- ActionBar và hộp thoại -->
         <item name="actionBarStyle">@style/Widget.Plix.ActionBar</item>
-        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Plix.MaterialAlertDialog</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.Plix.BottomSheetDialog</item>
     </style>
 </resources>
