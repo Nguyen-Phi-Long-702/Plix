@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/spacing_16"
+        android:paddingBottom="@dimen/spacing_24">
+
+        <View
+            android:layout_width="@dimen/sheet_handle_width"
+            android:layout_height="@dimen/sheet_handle_height"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:layout_marginBottom="@dimen/spacing_16"
+            android:background="@drawable/bg_sheet_handle"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chọn ngày lặp lại hằng tháng"
+            android:textAppearance="@style/TextAppearance.Plix.SheetTitle" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_4"
+            android:layout_marginBottom="@dimen/spacing_12"
+            android:text="Nếu tháng đó không đủ ngày (vd chọn 31 nhưng tháng chỉ có 30), Plix sẽ tự tạo giao dịch vào ngày cuối cùng của tháng."
+            android:textAppearance="@style/TextAppearance.Plix.Hint" />
+
+        <GridLayout
+            android:id="@+id/gridRecurringDays"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="7" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

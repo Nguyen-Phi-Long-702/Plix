@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="@dimen/touch_target_min"
+    android:layout_columnWeight="1"
+    android:layout_margin="@dimen/spacing_4"
+    android:background="@drawable/bg_day_cell"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center"
+    android:textAppearance="@style/TextAppearance.Plix.Body"
+    android:textColor="@color/selector_day_text" />
