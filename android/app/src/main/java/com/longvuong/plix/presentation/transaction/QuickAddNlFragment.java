@@ -232,7 +232,9 @@ public class QuickAddNlFragment extends Fragment {
                 inputLayoutCategory.setError(null);
             }
         });
-        editAmount.setText(String.valueOf(item.amount));
+        if (!item.needsAmount) {
+            editAmount.setText(String.valueOf(item.amount)); //dòng thiếu số tiền để ô trống cho người dùng nhập, không điền sẵn "0"
+        }
 
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setTitle("Sửa giao dịch đề xuất")
