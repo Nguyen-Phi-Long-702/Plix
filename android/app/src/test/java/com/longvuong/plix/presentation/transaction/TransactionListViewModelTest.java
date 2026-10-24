@@ -35,7 +35,7 @@ public class TransactionListViewModelTest {
         FakeTransactionRepository fakeTransactionRepository = new FakeTransactionRepository() {
             @Override
             public LiveData<List<TransactionEntity>> getAll() {
-                return allTransactions;
+                return TransactionListViewModelTest.this.allTransactions;
             }
         };
         fakeAiRepository = new FakeAiRepository();
