@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
+import androidx.lifecycle.Observer;
 
 import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.core.error.ErrorType;
@@ -583,5 +584,21 @@ public class QuickAddNlViewModelTest {
 
         assertEquals(2, fakeAiRepository.parseNlCallCount);
         assertFalse(fakeAiRepository.lastParseNlAllowGemini);
+    }
+    @Test
+    public void getOffline_followsConnectivity() {
+        Observer<Boolean> observer = offline -> { };
+        viewModel.getOffline().observeForever(observer); //LiveData biến đổi chỉ cập nhật khi đang có người quan sát
+        try {
+            assertEquals(Boolean.FALSE, viewModel.getOffline().getValue()); //FakeAiRepository mặc định có mạng
+
+            fakeAiRepository.setConnected(false);
+            assertEquals(Boolean.TRUE, viewModel.getOffline().getValue());
+
+            fakeAiRepository.setConnected(true);
+            assertEquals(Boolean.FALSE, viewModel.getOffline().getValue());
+        } finally {
+            viewModel.getOffline().removeObserver(observer);
+        }
     }
 }

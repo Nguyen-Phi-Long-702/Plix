@@ -3,6 +3,7 @@ package com.longvuong.plix.presentation.transaction;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import com.longvuong.plix.core.auth.AuthManager;
@@ -57,6 +58,9 @@ public class QuickAddNlViewModel extends ViewModel {
     private final MutableLiveData<Boolean> aiBusy = new MutableLiveData<>(false);
     private final List<SuggestionDraft> drafts = new ArrayList<>();
 
+    //true = đang mất mạng -> màn hình hiện khối "Cần có kết nối mạng" thay cho nội dung. Chỉ true khi bộ theo dõi mạng báo đúng false (chưa có thông tin thì coi như còn mạng, giống kiểm tra trong submit)
+    private final LiveData<Boolean> offline;
+
     @Inject
     public QuickAddNlViewModel(AiRepository aiRepository,
                                CategoryRepository categoryRepository,
@@ -68,6 +72,8 @@ public class QuickAddNlViewModel extends ViewModel {
         this.authManager = authManager;
         this.addSuggestedTransactionsUseCase = addSuggestedTransactionsUseCase;
         this.formValidator = formValidator;
+        this.offline = Transformations.map(aiRepository.observeConnectivity(),
+                connected -> Boolean.FALSE.equals(connected));
     }
 
     public LiveData<UiState<SuggestionListUiModel>> getParseState() {
@@ -80,6 +86,9 @@ public class QuickAddNlViewModel extends ViewModel {
 
     public LiveData<Boolean> getAiBusy() {
         return aiBusy;
+    }
+    public LiveData<Boolean> getOffline() {
+        return offline;
     }
 
     //Danh sách danh mục đang dùng, để hộp thoại sửa hiển thị cho người dùng chọn
