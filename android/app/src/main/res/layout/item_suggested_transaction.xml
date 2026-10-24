@@ -1,62 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardSuggestion"
+    style="@style/Widget.Plix.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingHorizontal="8dp"
-    android:paddingVertical="8dp">
-
-    <com.google.android.material.checkbox.MaterialCheckBox
-        android:id="@+id/checkSelected"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="Chọn giao dịch này để lưu" />
+    android:layout_marginBottom="@dimen/spacing_12">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/spacing_12">
 
-        <TextView
-            android:id="@+id/textSuggestionTitle"
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/checkSelected"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            tools:text="Ăn uống" />
+            android:contentDescription="Chọn giao dịch này để lưu" />
+
+        <FrameLayout
+            android:id="@+id/layoutSuggestionIcon"
+            android:layout_width="@dimen/suggestion_icon_box_size"
+            android:layout_height="@dimen/suggestion_icon_box_size"
+            android:layout_marginStart="@dimen/spacing_4">
+
+            <ImageView
+                android:id="@+id/imageSuggestionIcon"
+                android:layout_width="@dimen/inline_icon_size"
+                android:layout_height="@dimen/inline_icon_size"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                tools:src="@drawable/ic_food" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_12"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textSuggestionTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+                tools:text="Ăn uống" />
+
+            <TextView
+                android:id="@+id/textSuggestionDetail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_4"
+                android:textAppearance="@style/TextAppearance.Plix.Caption"
+                tools:text="Độ tin cậy: 90%" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/textSuggestionDetail"
+            android:id="@+id/textSuggestionAmount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textSize="12sp"
-            tools:text="Độ tin cậy: 90%" />
+            android:layout_marginStart="@dimen/spacing_12"
+            android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+            tools:text="-50.000đ" />
 
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipEnterAmount"
+            style="@style/Widget.Plix.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_8"
+            android:checkable="false"
+            android:text="Nhập tay"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/buttonEditSuggestion"
+            android:layout_width="@dimen/touch_target_min"
+            android:layout_height="@dimen/touch_target_min"
+            android:layout_marginStart="@dimen/spacing_4"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Sửa giao dịch đề xuất"
+            android:padding="@dimen/spacing_12"
+            android:src="@drawable/ic_edit"
+            android:tint="@color/text_tertiary" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/textSuggestionAmount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        tools:text="-50.000đ" />
-
-    <ImageButton
-        android:id="@+id/buttonEditSuggestion"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="4dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Sửa giao dịch đề xuất"
-        android:padding="10dp"
-        android:src="@drawable/ic_edit"
-        android:tint="@android:color/darker_gray" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -15,4 +15,7 @@
     <dimen name="transaction_row_action_size">48dp</dimen>
     <dimen name="filter_chip_icon_size">14dp</dimen>
     <dimen name="transaction_list_padding_bottom">88dp</dimen>
+    <!-- Màn Nhập nhanh (AI): dòng giao dịch đề xuất, icon trong nút và khung thông báo -->
+    <dimen name="suggestion_icon_box_size">36dp</dimen>
+    <dimen name="inline_icon_size">18dp</dimen>
 </resources>
