@@ -27,6 +27,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+import com.longvuong.plix.presentation.common.EmptyStateView;
 import com.longvuong.plix.presentation.common.SnackbarHelper;
 import com.longvuong.plix.presentation.common.UiState;
 
@@ -42,17 +43,20 @@ public class QuickAddNlFragment extends Fragment {
 
     private QuickAddNlViewModel viewModel;
     private SuggestedTransactionAdapter adapter;
+    private View scrollContent;
+    private EmptyStateView viewOfflineState;
     private TextInputEditText editQuickText;
     private MaterialButton buttonAnalyze;
     private View layoutAiBusy;
     private MaterialButton buttonEnterManually;
     private TextView textError;
     private TextView textEmptyResult;
+    private View layoutParsing;
     private View layoutResult;
     private TextView textResultTitle;
     private RecyclerView recyclerSuggestions;
     private MaterialButton buttonSaveSuggestions;
-
+    private View layoutPrivacyInfo;
     private List<CategoryEntity> categoryOptions = new ArrayList<>();
     private boolean parsing = false;
     private boolean saving = false;
@@ -80,21 +84,26 @@ public class QuickAddNlFragment extends Fragment {
         viewModel.getParseState().observe(getViewLifecycleOwner(), this::renderParseState);
         viewModel.getSaveState().observe(getViewLifecycleOwner(), this::renderSaveState);
         viewModel.getAiBusy().observe(getViewLifecycleOwner(), this::renderAiBusy);
+        viewModel.getOffline().observe(getViewLifecycleOwner(), this::renderOffline);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(),
                 categories -> categoryOptions = categories != null ? categories : new ArrayList<>());
     }
 
     private void bindViews(View view) {
+        scrollContent = view.findViewById(R.id.scrollContent);
+        viewOfflineState = view.findViewById(R.id.viewOfflineState);
         editQuickText = view.findViewById(R.id.editQuickText);
         buttonAnalyze = view.findViewById(R.id.buttonAnalyze);
         layoutAiBusy = view.findViewById(R.id.layoutAiBusy);
         buttonEnterManually = view.findViewById(R.id.buttonEnterManually);
         textError = view.findViewById(R.id.textError);
         textEmptyResult = view.findViewById(R.id.textEmptyResult);
+        layoutParsing = view.findViewById(R.id.layoutParsing);
         layoutResult = view.findViewById(R.id.layoutResult);
         textResultTitle = view.findViewById(R.id.textResultTitle);
         recyclerSuggestions = view.findViewById(R.id.recyclerSuggestions);
         buttonSaveSuggestions = view.findViewById(R.id.buttonSaveSuggestions);
+        layoutPrivacyInfo = view.findViewById(R.id.layoutPrivacyInfo);
     }
 
     private void setupAnalyzeButton() {
@@ -126,13 +135,28 @@ public class QuickAddNlFragment extends Fragment {
     }
 
     private void setupEnterManuallyButton() {
-        buttonEnterManually.setOnClickListener(v ->
-                NavHostFragment.findNavController(this)
-                        .navigate(R.id.action_quickAddNlFragment_to_addEditTransactionFragment));
+        buttonEnterManually.setOnClickListener(v -> navigateToManualEntry());
+        viewOfflineState.setOnActionClickListener(v -> navigateToManualEntry());
+    }
+
+    private void navigateToManualEntry() {
+        NavHostFragment.findNavController(this)
+                .navigate(R.id.action_quickAddNlFragment_to_addEditTransactionFragment);
     }
 
     private void renderAiBusy(Boolean aiBusy) {
         layoutAiBusy.setVisibility(Boolean.TRUE.equals(aiBusy) ? View.VISIBLE : View.GONE);
+        refreshControls();
+    }
+
+    //Mất mạng: thay toàn bộ nội dung bằng khối "Cần có kết nối mạng"; có mạng lại thì hiện lại nội dung cũ (kết quả đang xem vẫn còn)
+    private void renderOffline(Boolean offline) {
+        boolean isOffline = Boolean.TRUE.equals(offline);
+        if (isOffline) {
+            hideKeyboard(); //đóng bàn phím trước khi ô nhập bị ẩn đi
+        }
+        scrollContent.setVisibility(isOffline ? View.GONE : View.VISIBLE);
+        viewOfflineState.setVisibility(isOffline ? View.VISIBLE : View.GONE);
     }
 
     private void renderParseState(UiState<SuggestionListUiModel> state) {
@@ -140,6 +164,7 @@ public class QuickAddNlFragment extends Fragment {
         boolean aiBusy = Boolean.TRUE.equals(viewModel.getAiBusy().getValue());
         textError.setVisibility(state instanceof UiState.Error && !aiBusy ? View.VISIBLE : View.GONE);
         textEmptyResult.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
+        layoutParsing.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
         layoutResult.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
 
         if (state instanceof UiState.Error) {
@@ -175,6 +200,9 @@ public class QuickAddNlFragment extends Fragment {
         buttonAnalyze.setEnabled(!busy);
         buttonAnalyze.setText(parsing ? ANALYZING_LABEL : ANALYZE_LABEL);
         buttonSaveSuggestions.setEnabled(canSave && !busy);
+        //Khung thông tin quyền riêng tư ẩn khi đang phân tích hoặc khi hiện khối "AI đang bận", theo thiết kế
+        boolean aiBusy = Boolean.TRUE.equals(viewModel.getAiBusy().getValue());
+        layoutPrivacyInfo.setVisibility(parsing || aiBusy ? View.GONE : View.VISIBLE);
     }
 
     private void showEditDialog(SuggestionItemUiModel item) {
