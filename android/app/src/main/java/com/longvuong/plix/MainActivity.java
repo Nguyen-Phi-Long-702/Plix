@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             updateBottomNavVisibility(destination);
             updateActionBarVisibility(destination);
+            updateBudgetGoalTabTitle(destination);
         });
 
         SyncStatusViewModel syncStatusViewModel = new ViewModelProvider(this).get(SyncStatusViewModel.class);
@@ -126,6 +127,17 @@ public class MainActivity extends AppCompatActivity {
         } else {
             actionBar.show();
         }
+    }
+
+    //Theo thiết kế: nhãn tab dưới là "Ngân sách" hoặc "Mục tiêu" tuỳ tab con đang mở; ở các màn khác giữ nguyên nhãn lần trước
+    private void updateBudgetGoalTabTitle(NavDestination destination) {
+        int id = destination.getId();
+        boolean inGoal = id == R.id.goalListFragment || id == R.id.addEditGoalFragment;
+        boolean inBudget = id == R.id.budgetGoalFragment || id == R.id.addEditBudgetFragment;
+        if (!inGoal && !inBudget) {
+            return;
+        }
+        bottomNavigationView.getMenu().findItem(R.id.budgetGoalGraph).setTitle(inGoal ? "Mục tiêu" : "Ngân sách");
     }
 
     private void updateBottomNavVisibility(NavDestination destination) {

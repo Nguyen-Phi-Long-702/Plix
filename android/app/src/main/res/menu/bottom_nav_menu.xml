@@ -9,7 +9,7 @@
     <item
         android:id="@+id/budgetGoalGraph"
         android:icon="@drawable/ic_wallet"
-        android:title="Ngân sách &amp; Mục tiêu" />
+        android:title="Ngân sách" />
 
     <item
         android:id="@+id/analyticsGraph"

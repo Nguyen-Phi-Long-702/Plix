@@ -286,4 +286,19 @@
         <item name="cornerSizeBottomLeft">0dp</item>
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
+
+    <!-- ===== Thanh chuyển Ngân sách / Mục tiêu: tab đang chọn (state_selected) nền trắng, chữ primary ===== -->
+    <style name="Widget.Plix.Button.SegmentTab" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:minHeight">@dimen/touch_target_min</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Plix.Label</item>
+        <item name="android:textColor">@color/selector_tab_text</item>
+        <item name="backgroundTint">@color/selector_tab_background</item>
+        <item name="cornerRadius">@dimen/segment_tab_radius</item>
+        <item name="iconGravity">textStart</item>
+        <item name="iconPadding">@dimen/spacing_4</item>
+        <item name="iconSize">@dimen/segment_tab_icon_size</item>
+        <item name="iconTint">@color/selector_tab_text</item>
+    </style>
 </resources>

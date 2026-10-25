@@ -17,7 +17,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.R;
@@ -39,7 +39,8 @@ public class BudgetListFragment extends Fragment {
     private ProgressBar progressLoading;
     private TextView textEmptyState;
     private FloatingActionButton fabAddBudget;
-    private MaterialButtonToggleGroup toggleBudgetGoal;
+    private MaterialButton btnTabBudget;
+    private MaterialButton btnTabGoal;
 
     @Nullable
     @Override
@@ -66,15 +67,13 @@ public class BudgetListFragment extends Fragment {
         progressLoading = view.findViewById(R.id.progressLoading);
         textEmptyState = view.findViewById(R.id.textEmptyState);
         fabAddBudget = view.findViewById(R.id.fabAddBudget);
-        toggleBudgetGoal = view.findViewById(R.id.toggleBudgetGoal);
+        btnTabBudget = view.findViewById(R.id.btnTabBudget);
+        btnTabGoal = view.findViewById(R.id.btnTabGoal);
     }
 
     private void setupTabToggle() {
-        toggleBudgetGoal.check(R.id.btnTabBudget);
-        toggleBudgetGoal.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked || checkedId != R.id.btnTabGoal) {
-                return;
-            }
+        btnTabBudget.setSelected(true);
+        btnTabGoal.setOnClickListener(v -> {
             NavOptions options = new NavOptions.Builder()
                     .setPopUpTo(R.id.budgetGoalFragment, true)
                     .build();
