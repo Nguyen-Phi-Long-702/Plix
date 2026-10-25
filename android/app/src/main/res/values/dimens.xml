@@ -47,4 +47,7 @@
     <dimen name="budget_goal_list_padding_bottom">88dp</dimen>
     <dimen name="budget_icon_box_size">34dp</dimen>
     <dimen name="budget_warning_icon_size">15dp</dimen>
+    <dimen name="goal_ring_size">56dp</dimen>
+    <dimen name="goal_ring_thickness">6dp</dimen>
+    <dimen name="radius_pill">100dp</dimen>
 </resources>
