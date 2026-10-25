@@ -46,4 +46,10 @@ public class BudgetDisplayNameTest {
     public void of_categoryDeleted_returnsUnknownCategoryName() {
         assertEquals("Danh mục không xác định", BudgetDisplayName.of(budget("custom-category-da-xoa"), activeCategoryNames()));
     }
+
+    @Test
+    public void periodLabel_formatsMonthAndYear() {
+        assertEquals("Tháng 10/2026", BudgetDisplayName.periodLabel("2026-10"));
+        assertEquals("Tháng 9/2026", BudgetDisplayName.periodLabel("2026-09"));
+    }
 }
