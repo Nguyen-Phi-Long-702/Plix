@@ -311,4 +311,10 @@
     <style name="Widget.Plix.FloatingActionButton" parent="Widget.MaterialComponents.FloatingActionButton">
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Plix.Fab</item>
     </style>
+
+    <!-- Công tắc 2 lựa chọn trung tính (Phạm vi ngân sách): chọn thì nền primary_tint, chữ primary_dark -->
+    <style name="Widget.Plix.Button.Segment.Primary" parent="Widget.Plix.Button.Segment">
+        <item name="backgroundTint">@color/selector_segment_primary_background</item>
+        <item name="android:textColor">@color/selector_segment_primary_text</item>
+    </style>
 </resources>
