@@ -14,7 +14,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
@@ -23,19 +22,17 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+
+import com.longvuong.plix.presentation.common.AmountTextWatcher;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.error.Result;
-import com.longvuong.plix.domain.usecase.goal.GoalRequiredMonthly;
-import com.longvuong.plix.domain.usecase.goal.GoalStatus;
 import com.longvuong.plix.presentation.common.SnackbarHelper;
 import com.longvuong.plix.presentation.common.UiState;
 
-import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -48,14 +45,14 @@ public class AddEditGoalFragment extends Fragment {
     private TextInputEditText editTargetAmount;
     private TextInputLayout inputLayoutDeadline;
     private TextInputEditText editDeadline;
+    private View layoutCurrentAmount;
     private TextInputLayout inputLayoutCurrentAmount;
     private TextInputEditText editCurrentAmount;
-    private TextView textGoalStatus;
-    private TextView textRequiredMonthly;
+    private TextView textGoalInfo;
     private MaterialButton buttonSave;
+    private AmountTextWatcher targetAmountWatcher;
+    private AmountTextWatcher currentAmountWatcher;
     private boolean formPopulated = false;
-    private boolean suppressTargetAmountWatcher = false;
-    private boolean suppressCurrentAmountWatcher = false;
 
     @Nullable
     @Override
@@ -91,10 +88,10 @@ public class AddEditGoalFragment extends Fragment {
         editTargetAmount = view.findViewById(R.id.editTargetAmount);
         inputLayoutDeadline = view.findViewById(R.id.inputLayoutDeadline);
         editDeadline = view.findViewById(R.id.editDeadline);
+        layoutCurrentAmount = view.findViewById(R.id.layoutCurrentAmount);
         inputLayoutCurrentAmount = view.findViewById(R.id.inputLayoutCurrentAmount);
         editCurrentAmount = view.findViewById(R.id.editCurrentAmount);
-        textGoalStatus = view.findViewById(R.id.textGoalStatus);
-        textRequiredMonthly = view.findViewById(R.id.textRequiredMonthly);
+        textGoalInfo = view.findViewById(R.id.textGoalInfo);
         buttonSave = view.findViewById(R.id.buttonSave);
     }
 
@@ -118,7 +115,6 @@ public class AddEditGoalFragment extends Fragment {
     }
 
     private void setupTargetAmountField() {
-        editTargetAmount.setImeOptions(EditorInfo.IME_ACTION_DONE);
         editTargetAmount.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 hideKeyboard();
@@ -126,25 +122,10 @@ public class AddEditGoalFragment extends Fragment {
             }
             return false;
         });
-        editTargetAmount.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (suppressTargetAmountWatcher) {
-                    return;
-                }
-                long amount = parseAmount(s.toString());
-                viewModel.setTargetAmount(amount);
-                Result<Void> validation = viewModel.validateTargetAmountField(amount);
-                inputLayoutTargetAmount.setError(validation instanceof Result.Error ? ((Result.Error<Void>) validation).message : null);
-            }
+        targetAmountWatcher = new AmountTextWatcher(editTargetAmount, amount -> {
+            viewModel.setTargetAmount(amount);
+            Result<Void> validation = viewModel.validateTargetAmountField(amount);
+            inputLayoutTargetAmount.setError(validation instanceof Result.Error ? ((Result.Error<Void>) validation).message : null);
         });
     }
 
@@ -178,7 +159,6 @@ public class AddEditGoalFragment extends Fragment {
     }
 
     private void setupCurrentAmountField() {
-        editCurrentAmount.setImeOptions(EditorInfo.IME_ACTION_DONE);
         editCurrentAmount.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 hideKeyboard();
@@ -186,39 +166,12 @@ public class AddEditGoalFragment extends Fragment {
             }
             return false;
         });
-        editCurrentAmount.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (suppressCurrentAmountWatcher) {
-                    return;
-                }
-                long amount = parseAmount(s.toString());
-                viewModel.setCurrentAmount(amount);
-                Result<Void> validation = viewModel.validateCurrentAmountField(amount);
-                inputLayoutCurrentAmount.setError(validation instanceof Result.Error ? ((Result.Error<Void>) validation).message : null);
-                updatePreview();
-            }
+        currentAmountWatcher = new AmountTextWatcher(editCurrentAmount, amount -> {
+            viewModel.setCurrentAmount(amount);
+            Result<Void> validation = viewModel.validateCurrentAmountField(amount);
+            inputLayoutCurrentAmount.setError(validation instanceof Result.Error ? ((Result.Error<Void>) validation).message : null);
+            updatePreview();
         });
-    }
-
-    private long parseAmount(String raw) {
-        String digitsOnly = raw.replaceAll("[^0-9]", "");
-        if (digitsOnly.isEmpty()) {
-            return 0L;
-        }
-        try {
-            return Long.parseLong(digitsOnly);
-        } catch (NumberFormatException e) {
-            return 0L;
-        }
     }
 
     private void setupSaveButton() {
@@ -263,9 +216,7 @@ public class AddEditGoalFragment extends Fragment {
         formPopulated = true;
 
         editName.setText(viewModel.getName());
-        suppressTargetAmountWatcher = true;
-        editTargetAmount.setText(viewModel.getTargetAmount() == 0 ? "" : String.valueOf(viewModel.getTargetAmount()));
-        suppressTargetAmountWatcher = false;
+        targetAmountWatcher.setAmount(viewModel.getTargetAmount());
         editDeadline.setText(formatDate(viewModel.getDeadline()));
 
         if (viewModel.isEditMode()) {
@@ -275,69 +226,14 @@ public class AddEditGoalFragment extends Fragment {
             editDeadline.setOnClickListener(null);
             inputLayoutDeadline.setEndIconOnClickListener(null);
 
-            inputLayoutCurrentAmount.setVisibility(View.VISIBLE);
-            textGoalStatus.setVisibility(View.VISIBLE);
-            textRequiredMonthly.setVisibility(View.VISIBLE);
-            suppressCurrentAmountWatcher = true;
-            editCurrentAmount.setText(viewModel.getCurrentAmount() == 0 ? "" : String.valueOf(viewModel.getCurrentAmount()));
-            suppressCurrentAmountWatcher = false;
+            layoutCurrentAmount.setVisibility(View.VISIBLE);
+            currentAmountWatcher.setAmount(viewModel.getCurrentAmount());
             updatePreview();
-        } else {
-            inputLayoutCurrentAmount.setVisibility(View.GONE);
-            textGoalStatus.setVisibility(View.GONE);
-            textRequiredMonthly.setVisibility(View.GONE);
         }
     }
 
     private void updatePreview() {
-        GoalStatus status = viewModel.previewStatus();
-        GoalRequiredMonthly requiredMonthly = viewModel.previewRequiredMonthly();
-        textGoalStatus.setText(statusLabel(status));
-        textGoalStatus.setTextColor(statusColor(status));
-        textRequiredMonthly.setText(requiredMonthlyLabel(requiredMonthly));
-    }
-
-    private String statusLabel(GoalStatus status) {
-        switch (status) {
-            case ACHIEVED:
-                return "Đã đạt mục tiêu";
-            case EXPIRED:
-                return "Đã hết hạn";
-            case ACTIVE:
-            default:
-                return "Đang thực hiện";
-        }
-    }
-
-    private int statusColor(GoalStatus status) {
-        switch (status) {
-            case ACHIEVED:
-                return ContextCompat.getColor(requireContext(), R.color.color_income);
-            case EXPIRED:
-                return ContextCompat.getColor(requireContext(), R.color.budget_progress_danger);
-            case ACTIVE:
-            default:
-                return ContextCompat.getColor(requireContext(), R.color.black);
-        }
-    }
-
-    private String requiredMonthlyLabel(GoalRequiredMonthly requiredMonthly) {
-        switch (requiredMonthly.caseType) {
-            case ACHIEVED:
-                return "Đã đạt mục tiêu, không cần tiết kiệm thêm";
-            case EXCEEDED:
-                return "Đã vượt mục tiêu";
-            case DUE_NOW:
-                return "Đến hạn, cần bổ sung ngay " + formatCurrency(requiredMonthly.monthlyAmount);
-            case NORMAL:
-            default:
-                return "Cần tiết kiệm " + formatCurrency(requiredMonthly.monthlyAmount) + "/tháng";
-        }
-    }
-
-    private String formatCurrency(long amount) {
-        NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
-        return formatter.format(amount) + "đ";
+        textGoalInfo.setText(viewModel.getRequiredMonthlyText() + " (tính lại tự động mỗi lần mở màn hình)");
     }
 
     private void renderSaveState(UiState<Void> state) {

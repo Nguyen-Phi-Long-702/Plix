@@ -4,95 +4,169 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/spacing_16">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tên mục tiêu"
+            android:textAppearance="@style/TextAppearance.Plix.Label" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/inputLayoutGoalName"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Plix.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:hint="Tên mục tiêu">
+            android:layout_marginTop="@dimen/spacing_8"
+            app:hintEnabled="false">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editGoalName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:hint="vd: Mua laptop mới"
+                android:imeOptions="actionNext"
+                android:inputType="textCapSentences"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_16"
+            android:text="Số tiền mục tiêu"
+            android:textAppearance="@style/TextAppearance.Plix.Label" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/inputLayoutTargetAmount"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Plix.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:hint="Số tiền mục tiêu (đ)">
+            android:layout_marginTop="@dimen/spacing_8"
+            app:helperText="Phải lớn hơn 0, tối đa 999.999.999.999đ (999 tỷ)."
+            app:hintEnabled="false"
+            app:suffixText="đ"
+            app:suffixTextAppearance="@style/TextAppearance.Plix.AmountSuffix">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTargetAmount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number" />
+                android:digits="0123456789."
+                android:hint="0"
+                android:imeOptions="actionDone"
+                android:inputType="number"
+                android:maxLength="17"
+                android:textAppearance="@style/TextAppearance.Plix.AmountInput" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_16"
+            android:text="Hạn hoàn thành"
+            android:textAppearance="@style/TextAppearance.Plix.Label" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/inputLayoutDeadline"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Plix.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:hint="Hạn hoàn thành"
+            android:layout_marginTop="@dimen/spacing_8"
+            app:endIconContentDescription="Chọn ngày"
+            app:endIconDrawable="@drawable/ic_chev_down"
             app:endIconMode="custom"
-            app:endIconDrawable="@drawable/ic_calendar"
-            app:endIconContentDescription="Chọn hạn hoàn thành">
+            app:endIconTint="@color/text_tertiary"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/ic_calendar"
+            app:startIconTint="@color/text_tertiary">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editDeadline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:focusable="false"
-                android:cursorVisible="false" />
+                android:cursorVisible="false"
+                android:focusable="false" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/inputLayoutCurrentAmount"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <LinearLayout
+            android:id="@+id/layoutCurrentAmount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Số tiền đã tiết kiệm được (đ)"
+            android:layout_marginTop="@dimen/spacing_16"
+            android:orientation="vertical"
             android:visibility="gone">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editCurrentAmount"
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Số tiền đã tiết kiệm hiện tại"
+                android:textAppearance="@style/TextAppearance.Plix.Label" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/inputLayoutCurrentAmount"
+                style="@style/Widget.Plix.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="@dimen/spacing_8"
+                app:helperText="Có thể để 0 nhưng không được âm. Cập nhật thủ công mỗi khi bạn tiết kiệm thêm — Plix không tự động cộng."
+                app:hintEnabled="false"
+                app:suffixText="đ"
+                app:suffixTextAppearance="@style/TextAppearance.Plix.AmountSuffix">
 
-        <TextView
-            android:id="@+id/textGoalStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:textStyle="bold"
-            android:text="Đang thực hiện"
-            android:visibility="gone" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editCurrentAmount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:digits="0123456789."
+                    android:hint="0"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:maxLength="17"
+                    android:textAppearance="@style/TextAppearance.Plix.AmountInput" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/textRequiredMonthly"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="Cần tiết kiệm 0đ/tháng"
-            android:visibility="gone" />
+            android:layout_marginTop="@dimen/spacing_16"
+            android:background="@drawable/bg_anomaly_info"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_12">
+
+            <ImageView
+                android:layout_width="@dimen/banner_icon_size"
+                android:layout_height="@dimen/banner_icon_size"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_info"
+                app:tint="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/textGoalInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_8"
+                android:layout_weight="1"
+                android:text="Plix sẽ tự tính số tiền cần tiết kiệm mỗi tháng từ số tiền mục tiêu và hạn hoàn thành."
+                android:textAppearance="@style/TextAppearance.Plix.BodySmall"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonSave"
+            style="@style/Widget.Plix.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="Lưu mục tiêu" />
+            android:layout_marginTop="@dimen/spacing_24"
+            android:text="Lưu mục tiêu"
+            app:icon="@drawable/ic_check"
+            app:iconGravity="textStart" />
     </LinearLayout>
 </ScrollView>

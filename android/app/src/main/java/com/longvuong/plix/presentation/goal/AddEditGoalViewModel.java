@@ -152,6 +152,10 @@ public class AddEditGoalViewModel extends ViewModel {
         return calculateGoalRequiredMonthlyUseCase.execute(buildPreviewEntity());
     }
 
+    public String getRequiredMonthlyText() {
+        return GoalDisplayText.requiredMonthlyText(previewStatus(), previewRequiredMonthly(), currentAmount, targetAmount);
+    }
+
     public GoalStatus previewStatus() {
         return goalStatusUseCase.execute(buildPreviewEntity());
     }
