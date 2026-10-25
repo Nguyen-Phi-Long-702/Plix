@@ -1,73 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.Plix.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="?attr/selectableItemBackground"
+    android:layout_marginHorizontal="@dimen/spacing_16"
+    android:layout_marginBottom="@dimen/spacing_12"
     android:clickable="true"
     android:focusable="true"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
+    app:contentPadding="@dimen/spacing_16">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/textBudgetName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                tools:text="Ăn uống" />
-            <TextView
-                android:id="@+id/textThreshold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textSize="13sp"
-                android:textColor="@android:color/darker_gray"
-                tools:text="Ngưỡng cảnh báo 80%" />
-        </LinearLayout>
-        <TextView
-            android:id="@+id/textPercent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            tools:text="45%" />
+        android:orientation="vertical">
 
-        <ImageButton
-            android:id="@+id/buttonDeleteBudget"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Xoá ngân sách"
-            android:padding="10dp"
-            android:src="@drawable/ic_delete"
-            android:tint="@android:color/darker_gray" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/imageBudgetIcon"
+                android:layout_width="@dimen/budget_icon_box_size"
+                android:layout_height="@dimen/budget_icon_box_size"
+                android:background="@drawable/bg_budget_icon"
+                android:importantForAccessibility="no"
+                android:padding="@dimen/spacing_8"
+                app:tint="@color/primary_dark"
+                tools:src="@drawable/ic_food" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textBudgetName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+                    tools:text="Ăn uống" />
+
+                <TextView
+                    android:id="@+id/textThreshold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_4"
+                    android:textAppearance="@style/TextAppearance.Plix.Caption"
+                    tools:text="Ngưỡng cảnh báo 80%" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textPercent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_8"
+                android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+                tools:text="45%" />
+
+            <ImageButton
+                android:id="@+id/buttonDeleteBudget"
+                android:layout_width="@dimen/touch_target_min"
+                android:layout_height="@dimen/touch_target_min"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Xoá ngân sách"
+                android:padding="@dimen/spacing_12"
+                android:src="@drawable/ic_trash"
+                app:tint="@color/text_tertiary" />
+        </LinearLayout>
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progressBudget"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_8"
+            app:trackColor="@color/surface_alt"
+            app:trackCornerRadius="@dimen/home_progress_thickness"
+            app:trackThickness="@dimen/home_progress_thickness"
+            tools:progress="45" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textSpent"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.Plix.Caption"
+                tools:text="Đã chi 450.000đ" />
+
+            <TextView
+                android:id="@+id/textLimit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Plix.Caption"
+                tools:text="Hạn mức 1.000.000đ" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutThresholdWarning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_12"
+            android:background="@drawable/bg_anomaly_banner"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_8"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="@dimen/budget_warning_icon_size"
+                android:layout_height="@dimen/budget_warning_icon_size"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_bell"
+                app:tint="@color/warn_strong" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_8"
+                android:layout_weight="1"
+                android:text="Đã vượt ngưỡng cảnh báo"
+                android:textAppearance="@style/TextAppearance.Plix.BodySmall"
+                android:textColor="@color/warn_strong" />
+        </LinearLayout>
     </LinearLayout>
-    <ProgressBar
-        android:id="@+id/progressBudget"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:max="100"
-        tools:progress="45" />
-    <TextView
-        android:id="@+id/textSpentOverLimit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textSize="13sp"
-        android:textColor="@android:color/darker_gray"
-        tools:text="Đã chi 450.000đ / 1.000.000đ" />
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

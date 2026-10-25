@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,6 +21,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.BudgetEntity;
+import com.longvuong.plix.presentation.common.EmptyStateView;
 import com.longvuong.plix.presentation.common.UiState;
 
 import java.text.NumberFormat;
@@ -36,8 +36,9 @@ public class BudgetListFragment extends Fragment {
     private BudgetListViewModel viewModel;
     private BudgetAdapter adapter;
     private RecyclerView recyclerBudgets;
-    private ProgressBar progressLoading;
-    private TextView textEmptyState;
+    private View layoutStateLoading;
+    private EmptyStateView viewEmptyState;
+    private TextView textBudgetPeriod;
     private FloatingActionButton fabAddBudget;
     private MaterialButton btnTabBudget;
     private MaterialButton btnTabGoal;
@@ -56,6 +57,8 @@ public class BudgetListFragment extends Fragment {
         setupTabToggle();
         setupRecyclerView();
         fabAddBudget.setOnClickListener(v -> navigateToAddBudget());
+        viewEmptyState.setOnActionClickListener(v -> navigateToAddBudget());
+        textBudgetPeriod.setText(viewModel.getPeriodLabel());
         viewModel.getBudgetListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getProgressByBudgetId().observe(getViewLifecycleOwner(), adapter::submitProgress);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(), adapter::submitCategories);
@@ -64,8 +67,9 @@ public class BudgetListFragment extends Fragment {
 
     private void bindViews(View view) {
         recyclerBudgets = view.findViewById(R.id.recyclerBudgets);
-        progressLoading = view.findViewById(R.id.progressLoading);
-        textEmptyState = view.findViewById(R.id.textEmptyState);
+        layoutStateLoading = view.findViewById(R.id.layoutStateLoading);
+        viewEmptyState = view.findViewById(R.id.viewEmptyState);
+        textBudgetPeriod = view.findViewById(R.id.textBudgetPeriod);
         fabAddBudget = view.findViewById(R.id.fabAddBudget);
         btnTabBudget = view.findViewById(R.id.btnTabBudget);
         btnTabGoal = view.findViewById(R.id.btnTabGoal);
@@ -137,15 +141,13 @@ public class BudgetListFragment extends Fragment {
     }
 
     private void renderState(UiState<List<BudgetEntity>> state) {
-        progressLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
-        textEmptyState.setVisibility((state instanceof UiState.Empty || state instanceof UiState.Error) ? View.VISIBLE : View.GONE);
-        recyclerBudgets.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
-        if (state instanceof UiState.Success) {
+        layoutStateLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
+        viewEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
+        boolean hasData = state instanceof UiState.Success;
+        recyclerBudgets.setVisibility(hasData ? View.VISIBLE : View.GONE);
+        textBudgetPeriod.setVisibility(hasData ? View.VISIBLE : View.GONE);
+        if (hasData) {
             adapter.submitList(((UiState.Success<List<BudgetEntity>>) state).data);
-        } else if (state instanceof UiState.Error) {
-            textEmptyState.setText(((UiState.Error<List<BudgetEntity>>) state).message);
-        } else if (state instanceof UiState.Empty) {
-            textEmptyState.setText("Chưa có ngân sách — tạo ngân sách đầu tiên");
         }
     }
 }

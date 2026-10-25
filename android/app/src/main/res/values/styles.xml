@@ -301,4 +301,14 @@
         <item name="iconSize">@dimen/segment_tab_icon_size</item>
         <item name="iconTint">@color/selector_tab_text</item>
     </style>
+
+    <!-- ===== FAB đơn (Ngân sách, Mục tiêu): bo góc theo radius_large như FAB mở rộng ===== -->
+    <style name="ShapeAppearanceOverlay.Plix.Fab" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/radius_large</item>
+    </style>
+
+    <style name="Widget.Plix.FloatingActionButton" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Plix.Fab</item>
+    </style>
 </resources>

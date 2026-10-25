@@ -44,4 +44,7 @@
     <dimen name="segment_tab_radius">9dp</dimen>
     <dimen name="segment_padding">3dp</dimen>
     <dimen name="segment_tab_icon_size">16dp</dimen>
+    <dimen name="budget_goal_list_padding_bottom">88dp</dimen>
+    <dimen name="budget_icon_box_size">34dp</dimen>
+    <dimen name="budget_warning_icon_size">15dp</dimen>
 </resources>

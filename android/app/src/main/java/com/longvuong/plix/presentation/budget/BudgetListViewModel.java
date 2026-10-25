@@ -80,6 +80,10 @@ public class BudgetListViewModel extends ViewModel {
                 ? new UiState.Empty<>() : new UiState.Success<>(latestBudgets));
     }
 
+    public String getPeriodLabel() {
+        return "Kỳ: " + BudgetDisplayName.periodLabel(currentPeriod);
+    }
+
     public LiveData<UiState<List<BudgetEntity>>> getBudgetListState() {
         return budgetListState;
     }
