@@ -1,6 +1,7 @@
 package com.longvuong.plix.presentation.analytics;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
@@ -15,9 +16,12 @@ class FakeTransactionRepository implements TransactionRepository {
     int getAllOnceCallCount;
     Result<List<TransactionEntity>> allOnceResult = new Result.Success<>(new ArrayList<>());
 
+    //Chưa có giá trị = Room chưa trả dữ liệu lần đầu; test của AnalyticsViewModel đặt danh sách bằng setValue
+    final MutableLiveData<List<TransactionEntity>> allTransactions = new MutableLiveData<>();
+
     @Override
     public LiveData<List<TransactionEntity>> getAll() {
-        return null; //Không dùng trong test này
+        return allTransactions;
     }
 
     @Override

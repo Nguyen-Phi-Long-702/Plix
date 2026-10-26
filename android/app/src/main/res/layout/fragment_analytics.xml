@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="@dimen/spacing_16">
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -23,14 +23,14 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipRangeWeek"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.Plix.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Tuần này" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipRangeMonth"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.Plix.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
@@ -38,19 +38,25 @@
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipRange3Months"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.Plix.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="3 tháng" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipRange6Months"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    style="@style/Widget.Plix.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="6 tháng" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
+        <TextView
+            android:id="@+id/textRangeLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:textAppearance="@style/TextAppearance.Plix.Caption" />
         <LinearLayout
             android:id="@+id/cardForecast"
             android:layout_width="match_parent"

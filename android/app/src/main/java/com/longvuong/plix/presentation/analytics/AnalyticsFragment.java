@@ -48,6 +48,7 @@ public class AnalyticsFragment extends Fragment {
             "Chưa đủ dữ liệu để dự báo. Cần tối thiểu 3–4 tuần có cả thu lẫn chi. Cứ tiếp tục ghi chép nhé!";
     private AnalyticsViewModel viewModel;
     private ChipGroup chipGroupRange;
+    private TextView textRangeLabel;
     private ProgressBar progressLoading;
     private TextView textEmptyState;
     private View contentContainer;
@@ -84,6 +85,7 @@ public class AnalyticsFragment extends Fragment {
         setupRangeChips();
 
         viewModel.getAnalyticsState().observe(getViewLifecycleOwner(), this::renderState);
+        viewModel.getRangeLabel().observe(getViewLifecycleOwner(), label -> textRangeLabel.setText(label));
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(), this::onCategoriesChanged);
         forecastViewModel.getForecastVisible().observe(getViewLifecycleOwner(), visible -> cardForecast.setVisibility(visible ? View.VISIBLE : View.GONE));
         forecastViewModel.getForecastState().observe(getViewLifecycleOwner(), this::renderForecastState);
@@ -92,6 +94,7 @@ public class AnalyticsFragment extends Fragment {
 
     private void bindViews(View view) {
         chipGroupRange = view.findViewById(R.id.chipGroupRange);
+        textRangeLabel = view.findViewById(R.id.textRangeLabel);
         progressLoading = view.findViewById(R.id.progressLoading);
         textEmptyState = view.findViewById(R.id.textEmptyState);
         contentContainer = view.findViewById(R.id.contentContainer);
