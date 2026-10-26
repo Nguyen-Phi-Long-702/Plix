@@ -1,20 +1,24 @@
 package com.longvuong.plix.presentation.analytics;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
@@ -22,23 +26,20 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.google.android.material.chip.ChipGroup;
 import com.longvuong.plix.R;
-import com.longvuong.plix.data.local.entity.CategoryEntity;
-import com.longvuong.plix.domain.usecase.analytics.AnalyticsSummary;
-import com.longvuong.plix.domain.usecase.analytics.CategoryExpense;
-import com.longvuong.plix.domain.usecase.analytics.MonthlyTrend;
+import com.longvuong.plix.presentation.common.EmptyStateView;
 import com.longvuong.plix.presentation.common.UiState;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -47,17 +48,23 @@ public class AnalyticsFragment extends Fragment {
     private static final String FORECAST_INSUFFICIENT_TITLE = "Chưa đủ dữ liệu để dự báo.";
     private static final String FORECAST_INSUFFICIENT_HINT = "Cần tối thiểu 3–4 tuần có cả thu lẫn chi. Cứ tiếp tục ghi chép nhé!";
     private static final float SPARKLINE_PADDING_DP = 4f;
+    private static final float PIE_HOLE_RADIUS_PERCENT = 67f;
+    private static final int MIN_BAR_SLOTS = 5; //ít tháng thì vẫn chia đủ 5 ô để cột không bị phình to
+    private static final float BAR_WIDTH = 0.4f;
+    private static final int[] CATEGORY_COLOR_RES = {
+            R.color.chart_category_1,
+            R.color.chart_category_2,
+            R.color.chart_category_3,
+            R.color.chart_category_4,
+            R.color.chart_category_5
+    };
+
     private AnalyticsViewModel viewModel;
+    private ForecastViewModel forecastViewModel;
+
     private ChipGroup chipGroupRange;
     private TextView textRangeLabel;
-    private ProgressBar progressLoading;
-    private TextView textEmptyState;
-    private View contentContainer;
-    private BarChart barChartCategory;
-    private LineChart lineChartTrend;
-    private TextView textTotalIncome;
-    private TextView textTotalExpense;
-    private ForecastViewModel forecastViewModel;
+
     private View cardForecast;
     private ProgressBar progressForecast;
     private TextView textForecastMessage;
@@ -65,10 +72,17 @@ public class AnalyticsFragment extends Fragment {
     private View layoutForecastContent;
     private TextView textForecastAmount;
     private LineChart lineChartForecast;
-    private TextView textSavingsRate;
 
-    private Map<String, String> categoryNamesById = new HashMap<>();
-    private AnalyticsSummary latestSummary;
+    private View layoutAnalyticsLoading;
+    private EmptyStateView emptyAnalytics;
+    private View contentContainer;
+    private View cardCategory;
+    private PieChart pieChartCategory;
+    private LinearLayout layoutCategoryLegend;
+    private BarChart barChartTrend;
+    private TextView textTotalIncome;
+    private TextView textTotalExpense;
+    private TextView textSavingsRate;
 
     @Nullable
     @Override
@@ -88,7 +102,6 @@ public class AnalyticsFragment extends Fragment {
 
         viewModel.getAnalyticsState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getRangeLabel().observe(getViewLifecycleOwner(), label -> textRangeLabel.setText(label));
-        viewModel.getActiveCategories().observe(getViewLifecycleOwner(), this::onCategoriesChanged);
         forecastViewModel.getForecastVisible().observe(getViewLifecycleOwner(), visible -> cardForecast.setVisibility(visible ? View.VISIBLE : View.GONE));
         forecastViewModel.getForecastState().observe(getViewLifecycleOwner(), this::renderForecastState);
         forecastViewModel.loadForecast();
@@ -97,14 +110,6 @@ public class AnalyticsFragment extends Fragment {
     private void bindViews(View view) {
         chipGroupRange = view.findViewById(R.id.chipGroupRange);
         textRangeLabel = view.findViewById(R.id.textRangeLabel);
-        progressLoading = view.findViewById(R.id.progressLoading);
-        textEmptyState = view.findViewById(R.id.textEmptyState);
-        contentContainer = view.findViewById(R.id.contentContainer);
-        barChartCategory = view.findViewById(R.id.barChartCategory);
-        lineChartTrend = view.findViewById(R.id.lineChartTrend);
-        textTotalIncome = view.findViewById(R.id.textTotalIncome);
-        textTotalExpense = view.findViewById(R.id.textTotalExpense);
-        textSavingsRate = view.findViewById(R.id.textSavingsRate);
         cardForecast = view.findViewById(R.id.cardForecast);
         progressForecast = view.findViewById(R.id.progressForecast);
         textForecastMessage = view.findViewById(R.id.textForecastMessage);
@@ -112,6 +117,16 @@ public class AnalyticsFragment extends Fragment {
         layoutForecastContent = view.findViewById(R.id.layoutForecastContent);
         textForecastAmount = view.findViewById(R.id.textForecastAmount);
         lineChartForecast = view.findViewById(R.id.lineChartForecast);
+        layoutAnalyticsLoading = view.findViewById(R.id.layoutAnalyticsLoading);
+        emptyAnalytics = view.findViewById(R.id.emptyAnalytics);
+        contentContainer = view.findViewById(R.id.contentContainer);
+        cardCategory = view.findViewById(R.id.cardCategory);
+        pieChartCategory = view.findViewById(R.id.pieChartCategory);
+        layoutCategoryLegend = view.findViewById(R.id.layoutCategoryLegend);
+        barChartTrend = view.findViewById(R.id.barChartTrend);
+        textTotalIncome = view.findViewById(R.id.textTotalIncome);
+        textTotalExpense = view.findViewById(R.id.textTotalExpense);
+        textSavingsRate = view.findViewById(R.id.textSavingsRate);
     }
 
     private void setupRangeChips() {
@@ -149,17 +164,32 @@ public class AnalyticsFragment extends Fragment {
     }
 
     private void setupCharts() {
-        barChartCategory.getDescription().setEnabled(false);
-        barChartCategory.getAxisRight().setEnabled(false);
-        barChartCategory.getLegend().setEnabled(false);
-        barChartCategory.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-        barChartCategory.getXAxis().setGranularity(1f);
-        barChartCategory.setFitBars(true);
+        pieChartCategory.getDescription().setEnabled(false);
+        pieChartCategory.getLegend().setEnabled(false);
+        pieChartCategory.setTouchEnabled(false);
+        pieChartCategory.setDrawEntryLabels(false);
+        pieChartCategory.setHoleRadius(PIE_HOLE_RADIUS_PERCENT);
+        pieChartCategory.setHoleColor(ContextCompat.getColor(requireContext(), R.color.surface));
+        pieChartCategory.setCenterTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
+        pieChartCategory.setCenterTextSize(11f);
+        pieChartCategory.setCenterTextTypeface(ResourcesCompat.getFont(requireContext(), R.font.be_vietnam_pro_bold));
 
-        lineChartTrend.getDescription().setEnabled(false);
-        lineChartTrend.getAxisRight().setEnabled(false);
-        lineChartTrend.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-        lineChartTrend.getXAxis().setGranularity(1f);
+        barChartTrend.getDescription().setEnabled(false);
+        barChartTrend.getLegend().setEnabled(false);
+        barChartTrend.setTouchEnabled(false);
+        barChartTrend.setFitBars(true);
+        barChartTrend.getAxisLeft().setEnabled(false);
+        barChartTrend.getAxisLeft().setAxisMinimum(0f);
+        barChartTrend.getAxisRight().setEnabled(false);
+        XAxis barXAxis = barChartTrend.getXAxis();
+        barXAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        barXAxis.setGranularity(1f);
+        barXAxis.setDrawGridLines(false);
+        barXAxis.setDrawAxisLine(false);
+        barXAxis.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_tertiary));
+        barXAxis.setTextSize(10f);
+        barXAxis.setTypeface(ResourcesCompat.getFont(requireContext(), R.font.be_vietnam_pro_semibold));
+
         lineChartForecast.getDescription().setEnabled(false);
         lineChartForecast.getLegend().setEnabled(false);
         lineChartForecast.getAxisLeft().setEnabled(false);
@@ -170,90 +200,91 @@ public class AnalyticsFragment extends Fragment {
         lineChartForecast.setExtraOffsets(SPARKLINE_PADDING_DP, SPARKLINE_PADDING_DP, SPARKLINE_PADDING_DP, SPARKLINE_PADDING_DP);
     }
 
-    private void onCategoriesChanged(List<CategoryEntity> categories) {
-        Map<String, String> map = new HashMap<>();
-        if (categories != null) {
-            for (CategoryEntity category : categories) {
-                map.put(category.id, category.name);
-            }
-        }
-        categoryNamesById = map;
-        if (latestSummary != null) {
-            renderCharts(latestSummary);
-        }
-    }
-
-    private void renderState(UiState<AnalyticsSummary> state) {
-        progressLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
-        textEmptyState.setVisibility((state instanceof UiState.Empty || state instanceof UiState.Error) ? View.VISIBLE : View.GONE);
+    private void renderState(UiState<AnalyticsUiModel> state) {
+        layoutAnalyticsLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
+        emptyAnalytics.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
         contentContainer.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
 
         if (state instanceof UiState.Success) {
-            latestSummary = ((UiState.Success<AnalyticsSummary>) state).data;
-            renderCharts(latestSummary);
-        } else if (state instanceof UiState.Error) {
-            textEmptyState.setText(((UiState.Error<AnalyticsSummary>) state).message);
-        } else if (state instanceof UiState.Empty) {
-            textEmptyState.setText("Chưa đủ dữ liệu để hiển thị thống kê");
+            renderContent(((UiState.Success<AnalyticsUiModel>) state).data);
         }
     }
 
-    private void renderCharts(AnalyticsSummary summary) {
-        renderCategoryBarChart(summary.categoryExpenses);
-        renderMonthlyLineChart(summary.monthlyTrend);
-        textTotalIncome.setText("Thu: " + formatCurrency(summary.totalIncome));
-        textTotalExpense.setText("Chi: " + formatCurrency(summary.totalExpense));
-        textSavingsRate.setText("Tỷ lệ tiết kiệm: " + summary.savingsRatePercent + "%");
+    private void renderContent(AnalyticsUiModel model) {
+        boolean hasExpense = !model.categorySlices.isEmpty();
+        cardCategory.setVisibility(hasExpense ? View.VISIBLE : View.GONE);
+        if (hasExpense) {
+            renderCategoryPie(model);
+            renderCategoryLegend(model.categorySlices);
+        }
+        renderTrendBars(model.monthBars);
+        textTotalIncome.setText(formatCurrency(model.totalIncome));
+        textTotalExpense.setText(formatCurrency(model.totalExpense));
+        textSavingsRate.setText(model.savingsRatePercent + "%");
     }
 
-    private void renderCategoryBarChart(List<CategoryExpense> categoryExpenses) {
-        Map<String, Long> totalByLabel = new LinkedHashMap<>();
-        for (CategoryExpense item : categoryExpenses) {
-            String name = item.categoryId != null ? categoryNamesById.get(item.categoryId) : null;
-            String label = name != null ? name : "Chưa phân loại";
-            totalByLabel.merge(label, item.totalAmount, Long::sum);
+    private void renderCategoryPie(AnalyticsUiModel model) {
+        List<PieEntry> entries = new ArrayList<>();
+        int[] colors = new int[model.categorySlices.size()];
+        for (int i = 0; i < colors.length; i++) {
+            AnalyticsUiModel.CategorySlice slice = model.categorySlices.get(i);
+            entries.add(new PieEntry(slice.amount));
+            colors[i] = categoryColor(slice.colorIndex);
         }
 
-        List<Map.Entry<String, Long>> sorted = new ArrayList<>(totalByLabel.entrySet());
-        Collections.sort(sorted, (a, b) -> Long.compare(b.getValue(), a.getValue()));
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        dataSet.setColors(colors);
+        dataSet.setDrawValues(false);
+
+        pieChartCategory.setData(new PieData(dataSet));
+        pieChartCategory.setCenterText(model.centerLabel);
+        pieChartCategory.invalidate();
+    }
+
+    private void renderCategoryLegend(List<AnalyticsUiModel.CategorySlice> slices) {
+        layoutCategoryLegend.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        for (AnalyticsUiModel.CategorySlice slice : slices) {
+            View row = inflater.inflate(R.layout.item_analytics_legend, layoutCategoryLegend, false);
+            row.findViewById(R.id.viewLegendDot).setBackgroundTintList(ColorStateList.valueOf(categoryColor(slice.colorIndex)));
+            ((TextView) row.findViewById(R.id.textLegendName)).setText(slice.label);
+            ((TextView) row.findViewById(R.id.textLegendPercent)).setText(slice.percent + "%");
+            layoutCategoryLegend.addView(row);
+        }
+    }
+
+    private int categoryColor(int colorIndex) {
+        return ContextCompat.getColor(requireContext(), CATEGORY_COLOR_RES[colorIndex]);
+    }
+
+    private void renderTrendBars(List<AnalyticsUiModel.MonthBar> bars) {
+        int slots = Math.max(bars.size(), MIN_BAR_SLOTS);
+        int firstSlot = (slots - bars.size()) / 2; //đặt các cột vào giữa; ô trống không có nhãn
+        String[] labels = new String[slots];
+        Arrays.fill(labels, "");
 
         List<BarEntry> entries = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        for (int i = 0; i < sorted.size(); i++) {
-            entries.add(new BarEntry(i, sorted.get(i).getValue()));
-            labels.add(sorted.get(i).getKey());
+        for (int i = 0; i < bars.size(); i++) {
+            AnalyticsUiModel.MonthBar bar = bars.get(i);
+            entries.add(new BarEntry(firstSlot + i, new float[]{bar.expenseAmount, bar.remainingAmount}));
+            labels[firstSlot + i] = bar.label;
         }
 
-        BarDataSet dataSet = new BarDataSet(entries, "Chi tiêu theo danh mục");
-        dataSet.setColor(ContextCompat.getColor(requireContext(), R.color.color_expense));
+        BarDataSet dataSet = new BarDataSet(entries, "");
+        dataSet.setColors(
+                ContextCompat.getColor(requireContext(), R.color.color_expense),
+                ContextCompat.getColor(requireContext(), R.color.color_income));
+        dataSet.setDrawValues(false);
 
-        barChartCategory.setData(new BarData(dataSet));
-        barChartCategory.getXAxis().setValueFormatter(new IndexAxisValueFormatter(labels));
-        barChartCategory.invalidate();
-    }
+        BarData barData = new BarData(dataSet);
+        barData.setBarWidth(BAR_WIDTH);
 
-    private void renderMonthlyLineChart(List<MonthlyTrend> monthlyTrend) {
-        List<Entry> incomeEntries = new ArrayList<>();
-        List<Entry> expenseEntries = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        for (int i = 0; i < monthlyTrend.size(); i++) {
-            MonthlyTrend item = monthlyTrend.get(i);
-            incomeEntries.add(new Entry(i, item.incomeAmount));
-            expenseEntries.add(new Entry(i, item.expenseAmount));
-            labels.add(item.yearMonth);
-        }
-
-        LineDataSet incomeDataSet = new LineDataSet(incomeEntries, "Thu nhập");
-        incomeDataSet.setColor(ContextCompat.getColor(requireContext(), R.color.color_income));
-        incomeDataSet.setCircleColor(ContextCompat.getColor(requireContext(), R.color.color_income));
-
-        LineDataSet expenseDataSet = new LineDataSet(expenseEntries, "Chi tiêu");
-        expenseDataSet.setColor(ContextCompat.getColor(requireContext(), R.color.color_expense));
-        expenseDataSet.setCircleColor(ContextCompat.getColor(requireContext(), R.color.color_expense));
-
-        lineChartTrend.setData(new LineData(incomeDataSet, expenseDataSet));
-        lineChartTrend.getXAxis().setValueFormatter(new IndexAxisValueFormatter(labels));
-        lineChartTrend.invalidate();
+        XAxis xAxis = barChartTrend.getXAxis();
+        xAxis.setAxisMinimum(-0.5f);
+        xAxis.setAxisMaximum(slots - 0.5f);
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        barChartTrend.setData(barData);
+        barChartTrend.invalidate();
     }
 
     private void renderForecastState(UiState<ForecastUiModel> state) {

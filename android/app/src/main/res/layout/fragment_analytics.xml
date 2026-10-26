@@ -51,12 +51,14 @@
                     android:text="6 tháng" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
+
         <TextView
             android:id="@+id/textRangeLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_8"
             android:textAppearance="@style/TextAppearance.Plix.Caption" />
+
         <LinearLayout
             android:id="@+id/cardForecast"
             android:layout_width="match_parent"
@@ -157,23 +159,36 @@
                     android:textColor="@color/white" />
             </LinearLayout>
         </LinearLayout>
-        <ProgressBar
-            android:id="@+id/progressLoading"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="32dp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/textEmptyState"
+        <LinearLayout
+            android:id="@+id/layoutAnalyticsLoading"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:gravity="center"
-            android:padding="24dp"
-            android:text="Chưa đủ dữ liệu để hiển thị thống kê"
-            android:visibility="gone" />
+            android:importantForAccessibility="no"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/analytics_skeleton_chart_height"
+                android:layout_marginTop="@dimen/spacing_16"
+                android:background="@drawable/bg_skeleton_block" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/analytics_skeleton_summary_height"
+                android:layout_marginTop="@dimen/spacing_16"
+                android:background="@drawable/bg_skeleton_block" />
+        </LinearLayout>
+
+        <com.longvuong.plix.presentation.common.EmptyStateView
+            android:id="@+id/emptyAnalytics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_32"
+            android:visibility="gone"
+            app:emptyIcon="@drawable/ic_chart"
+            app:emptyMessage="Hãy ghi nhận thêm giao dịch để Plix có thể phân tích xu hướng chi tiêu của bạn."
+            app:emptyTitle="Chưa đủ dữ liệu để hiển thị thống kê" />
 
         <LinearLayout
             android:id="@+id/contentContainer"
@@ -181,60 +196,232 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="gone">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Chi tiêu theo danh mục"
-                android:textStyle="bold" />
 
-            <com.github.mikephil.charting.charts.BarChart
-                android:id="@+id/barChartCategory"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardCategory"
+                style="@style/Widget.Plix.Card"
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Xu hướng thu chi theo tháng"
-                android:textStyle="bold" />
+                android:layout_marginTop="@dimen/spacing_16"
+                app:contentPadding="@dimen/spacing_16">
 
-            <com.github.mikephil.charting.charts.LineChart
-                android:id="@+id/lineChartTrend"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chi tiêu theo danh mục"
+                        android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_12"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.github.mikephil.charting.charts.PieChart
+                            android:id="@+id/pieChartCategory"
+                            android:layout_width="@dimen/analytics_pie_size"
+                            android:layout_height="@dimen/analytics_pie_size" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutCategoryLegend"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_20"
+                            android:layout_weight="1"
+                            android:orientation="vertical" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Plix.Card"
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
-                android:layout_marginTop="8dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_16"
+                app:contentPadding="@dimen/spacing_16">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Xu hướng thu chi theo tháng"
+                        android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                    <com.github.mikephil.charting.charts.BarChart
+                        android:id="@+id/barChartTrend"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/analytics_bar_chart_height"
+                        android:layout_marginTop="@dimen/spacing_8" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_8"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="@dimen/analytics_legend_dot_size"
+                            android:layout_height="@dimen/analytics_legend_dot_size"
+                            android:background="@drawable/bg_legend_dot"
+                            android:backgroundTint="@color/color_income" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_4"
+                            android:text="Thu nhập"
+                            android:textAppearance="@style/TextAppearance.Plix.Caption" />
+
+                        <View
+                            android:layout_width="@dimen/analytics_legend_dot_size"
+                            android:layout_height="@dimen/analytics_legend_dot_size"
+                            android:layout_marginStart="@dimen/spacing_16"
+                            android:background="@drawable/bg_legend_dot"
+                            android:backgroundTint="@color/color_expense" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/spacing_4"
+                            android:text="Chi tiêu"
+                            android:textAppearance="@style/TextAppearance.Plix.Caption" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:orientation="vertical">
+                android:layout_marginTop="@dimen/spacing_16"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/textTotalIncome"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/color_income"
-                    android:textSize="16sp" />
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Plix.Card"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="@dimen/spacing_12"
+                    android:layout_weight="1"
+                    app:contentPadding="@dimen/spacing_16">
 
-                <TextView
-                    android:id="@+id/textTotalExpense"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/color_expense"
-                    android:textSize="16sp" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/textSavingsRate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Thu vs Chi"
+                            android:textAppearance="@style/TextAppearance.Plix.Label" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_8"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="@dimen/analytics_total_icon_size"
+                                android:layout_height="@dimen/analytics_total_icon_size"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_arrow_up"
+                                app:tint="@color/color_income" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_4"
+                                android:layout_weight="1"
+                                android:text="Thu"
+                                android:textAppearance="@style/TextAppearance.Plix.Caption"
+                                android:textColor="@color/color_income" />
+
+                            <TextView
+                                android:id="@+id/textTotalIncome"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="@style/TextAppearance.Plix.Label"
+                                android:textColor="@color/color_income" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_4"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="@dimen/analytics_total_icon_size"
+                                android:layout_height="@dimen/analytics_total_icon_size"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_arrow_down"
+                                app:tint="@color/color_expense" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/spacing_4"
+                                android:layout_weight="1"
+                                android:text="Chi"
+                                android:textAppearance="@style/TextAppearance.Plix.Caption"
+                                android:textColor="@color/color_expense" />
+
+                            <TextView
+                                android:id="@+id/textTotalExpense"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="@style/TextAppearance.Plix.Label"
+                                android:textColor="@color/color_expense" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Plix.Card"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    app:contentPadding="@dimen/spacing_16">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tỷ lệ tiết kiệm"
+                            android:textAppearance="@style/TextAppearance.Plix.Label" />
+
+                        <TextView
+                            android:id="@+id/textSavingsRate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_4"
+                            android:textAppearance="@style/TextAppearance.Plix.AmountMedium"
+                            android:textColor="@color/primary_dark" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="thu nhập được giữ lại"
+                            android:textAppearance="@style/TextAppearance.Plix.Caption" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
