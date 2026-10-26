@@ -44,8 +44,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class AnalyticsFragment extends Fragment {
-    private static final String FORECAST_INSUFFICIENT_DATA_MESSAGE =
-            "Chưa đủ dữ liệu để dự báo. Cần tối thiểu 3–4 tuần có cả thu lẫn chi. Cứ tiếp tục ghi chép nhé!";
+    private static final String FORECAST_INSUFFICIENT_TITLE = "Chưa đủ dữ liệu để dự báo.";
+    private static final String FORECAST_INSUFFICIENT_HINT = "Cần tối thiểu 3–4 tuần có cả thu lẫn chi. Cứ tiếp tục ghi chép nhé!";
+    private static final float SPARKLINE_PADDING_DP = 4f;
     private AnalyticsViewModel viewModel;
     private ChipGroup chipGroupRange;
     private TextView textRangeLabel;
@@ -60,6 +61,7 @@ public class AnalyticsFragment extends Fragment {
     private View cardForecast;
     private ProgressBar progressForecast;
     private TextView textForecastMessage;
+    private TextView textForecastHint;
     private View layoutForecastContent;
     private TextView textForecastAmount;
     private LineChart lineChartForecast;
@@ -106,6 +108,7 @@ public class AnalyticsFragment extends Fragment {
         cardForecast = view.findViewById(R.id.cardForecast);
         progressForecast = view.findViewById(R.id.progressForecast);
         textForecastMessage = view.findViewById(R.id.textForecastMessage);
+        textForecastHint = view.findViewById(R.id.textForecastHint);
         layoutForecastContent = view.findViewById(R.id.layoutForecastContent);
         textForecastAmount = view.findViewById(R.id.textForecastAmount);
         lineChartForecast = view.findViewById(R.id.lineChartForecast);
@@ -158,11 +161,13 @@ public class AnalyticsFragment extends Fragment {
         lineChartTrend.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
         lineChartTrend.getXAxis().setGranularity(1f);
         lineChartForecast.getDescription().setEnabled(false);
+        lineChartForecast.getLegend().setEnabled(false);
+        lineChartForecast.getAxisLeft().setEnabled(false);
         lineChartForecast.getAxisRight().setEnabled(false);
-        lineChartForecast.getAxisLeft().setDrawZeroLine(true);
-        lineChartForecast.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-        lineChartForecast.getXAxis().setGranularity(1f);
+        lineChartForecast.getXAxis().setEnabled(false);
         lineChartForecast.setTouchEnabled(false);
+        lineChartForecast.setMinOffset(0f);
+        lineChartForecast.setExtraOffsets(SPARKLINE_PADDING_DP, SPARKLINE_PADDING_DP, SPARKLINE_PADDING_DP, SPARKLINE_PADDING_DP);
     }
 
     private void onCategoriesChanged(List<CategoryEntity> categories) {
@@ -254,6 +259,7 @@ public class AnalyticsFragment extends Fragment {
     private void renderForecastState(UiState<ForecastUiModel> state) {
         progressForecast.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
         textForecastMessage.setVisibility((state instanceof UiState.Empty || state instanceof UiState.Error) ? View.VISIBLE : View.GONE);
+        textForecastHint.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
         layoutForecastContent.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
 
         if (state instanceof UiState.Success) {
@@ -261,7 +267,8 @@ public class AnalyticsFragment extends Fragment {
         } else if (state instanceof UiState.Error) {
             textForecastMessage.setText(((UiState.Error<ForecastUiModel>) state).message);
         } else if (state instanceof UiState.Empty) {
-            textForecastMessage.setText(FORECAST_INSUFFICIENT_DATA_MESSAGE);
+            textForecastMessage.setText(FORECAST_INSUFFICIENT_TITLE);
+            textForecastHint.setText(FORECAST_INSUFFICIENT_HINT);
         }
     }
 
@@ -281,7 +288,7 @@ public class AnalyticsFragment extends Fragment {
         }
         projectedEntries.add(new Entry(forecast.daysInMonth, forecast.forecastNetAmount));
 
-        int lineColor = ContextCompat.getColor(requireContext(), R.color.forecast_line);
+        int lineColor = ContextCompat.getColor(requireContext(), R.color.white);
         LineDataSet actualDataSet = new LineDataSet(actualEntries, "Thực tế");
         styleForecastDataSet(actualDataSet, lineColor, false);
         LineDataSet projectedDataSet = new LineDataSet(projectedEntries, "Dự kiến");
@@ -297,6 +304,8 @@ public class AnalyticsFragment extends Fragment {
         dataSet.setColor(color);
         dataSet.setCircleColor(color);
         dataSet.setLineWidth(2f);
+        dataSet.setCircleRadius(2.5f);
+        dataSet.setDrawCircleHole(false);
         dataSet.setDrawValues(false);
         dataSet.setDrawCircles(dashed); //nét liền có nhiều điểm nên không vẽ chấm; nét đứt chỉ có 1–2 điểm nên vẽ chấm
         if (dashed) {

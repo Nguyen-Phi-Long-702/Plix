@@ -61,32 +61,32 @@
             android:id="@+id/cardForecast"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="@dimen/spacing_16"
             android:background="@drawable/bg_forecast_card"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="@dimen/spacing_16">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:alpha="0.85"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_width="@dimen/analytics_forecast_icon_size"
+                    android:layout_height="@dimen/analytics_forecast_icon_size"
+                    android:layout_marginEnd="@dimen/spacing_4"
                     android:importantForAccessibility="no"
-                    android:src="@drawable/ic_ai_forecast"
-                    app:tint="@color/forecast_line" />
+                    android:src="@drawable/ic_sparkle"
+                    app:tint="@color/white" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Dự báo NET cuối tháng"
-                    android:textColor="@color/info_text"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textAppearance="@style/TextAppearance.Plix.Caption"
+                    android:textColor="@color/white" />
             </LinearLayout>
 
             <ProgressBar
@@ -95,16 +95,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="@dimen/spacing_12"
+                android:indeterminateTint="@color/white"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/textForecastMessage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/info_text"
-                android:textSize="13sp"
+                android:layout_marginTop="@dimen/spacing_12"
+                android:textAppearance="@style/TextAppearance.Plix.Label"
+                android:textColor="@color/white"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/textForecastHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_4"
+                android:alpha="0.8"
+                android:textAppearance="@style/TextAppearance.Plix.Hint"
+                android:textColor="@color/white"
                 android:visibility="gone" />
 
             <LinearLayout
@@ -114,28 +125,36 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <TextView
-                    android:id="@+id/textForecastAmount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/black"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/lineChartForecast"
-                    android:layout_width="match_parent"
-                    android:layout_height="180dp"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="@dimen/spacing_8"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textForecastAmount"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textAppearance="@style/TextAppearance.Plix.AmountMedium"
+                        android:textColor="@color/white" />
+
+                    <com.github.mikephil.charting.charts.LineChart
+                        android:id="@+id/lineChartForecast"
+                        android:layout_width="@dimen/analytics_sparkline_width"
+                        android:layout_height="@dimen/analytics_sparkline_height"
+                        android:layout_marginStart="@dimen/spacing_12" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_8"
+                    android:alpha="0.75"
                     android:text="Đây là số liệu ước tính dựa trên xu hướng gần nhất, tính NET thu − chi trong phạm vi ứng dụng theo dõi — không phải số dư ngân hàng thật và không phải cam kết chính xác."
-                    android:textColor="@color/info_text"
-                    android:textSize="12sp" />
+                    android:textAppearance="@style/TextAppearance.Plix.Hint"
+                    android:textColor="@color/white" />
             </LinearLayout>
         </LinearLayout>
         <ProgressBar
