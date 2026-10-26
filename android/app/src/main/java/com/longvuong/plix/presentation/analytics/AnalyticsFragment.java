@@ -109,12 +109,26 @@ public class AnalyticsFragment extends Fragment {
     }
 
     private void setupRangeChips() {
+        chipGroupRange.check(chipIdForPreset(viewModel.getSelectedRangePreset()));
         chipGroupRange.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) {
                 return;
             }
             viewModel.setRangePreset(presetForChipId(checkedIds.get(0)));
         });
+    }
+
+    private int chipIdForPreset(String preset) {
+        switch (preset) {
+            case AnalyticsViewModel.RANGE_WEEK:
+                return R.id.chipRangeWeek;
+            case AnalyticsViewModel.RANGE_3_MONTHS:
+                return R.id.chipRange3Months;
+            case AnalyticsViewModel.RANGE_6_MONTHS:
+                return R.id.chipRange6Months;
+            default:
+                return R.id.chipRangeMonth;
+        }
     }
 
     private String presetForChipId(int chipId) {
