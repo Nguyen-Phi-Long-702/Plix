@@ -4,16 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="@dimen/spacing_24">
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/inputLayoutCategoryName"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="@style/Widget.Plix.TextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="@dimen/spacing_16"
         android:hint="Tên danh mục"
-        app:counterEnabled="true"
-        app:counterMaxLength="50">
+        app:helperText="Tối đa 50 ký tự. Trùng tên với danh mục hệ thống cùng loại sẽ bị từ chối khi lưu."
+        app:helperTextEnabled="true"
+        app:placeholderText="vd: Nuôi thú cưng">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editCategoryName"
             android:layout_width="match_parent"
@@ -22,25 +23,40 @@
             android:maxLength="50" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_8"
+        android:text="Loại"
+        android:textAppearance="@style/TextAppearance.Plix.Label" />
+
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/toggleCategoryType"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:singleSelection="true"
-        app:selectionRequired="true">
+        app:selectionRequired="true"
+        app:singleSelection="true">
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCategoryExpense"
+            style="@style/Widget.Plix.Button.Outlined"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:minHeight="48dp"
-            android:text="Chi tiêu" />
+            android:text="Chi tiêu"
+            android:textColor="@color/selector_category_type_expense_text"
+            app:backgroundTint="@color/selector_category_type_expense_background"
+            app:cornerRadius="@dimen/radius_small"
+            app:strokeColor="@color/border_strong" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCategoryIncome"
+            style="@style/Widget.Plix.Button.Outlined"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:minHeight="48dp"
-            android:text="Thu nhập" />
+            android:text="Thu nhập"
+            android:textColor="@color/selector_category_type_income_text"
+            app:backgroundTint="@color/selector_category_type_income_background"
+            app:cornerRadius="@dimen/radius_small"
+            app:strokeColor="@color/border_strong" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
 </LinearLayout>
