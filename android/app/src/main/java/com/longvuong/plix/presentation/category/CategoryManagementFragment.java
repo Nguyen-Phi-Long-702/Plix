@@ -7,8 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,8 +36,8 @@ public class CategoryManagementFragment extends Fragment {
     private CategoryManagementViewModel viewModel;
     private CategoryAdapter adapter;
     private RecyclerView recyclerCategories;
-    private ProgressBar progressLoading;
-    private TextView textEmptyState;
+    private View layoutStateLoading;
+    private View viewEmptyState;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -50,8 +48,8 @@ public class CategoryManagementFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(CategoryManagementViewModel.class);
         recyclerCategories = view.findViewById(R.id.recyclerCategories);
-        progressLoading = view.findViewById(R.id.progressLoading);
-        textEmptyState = view.findViewById(R.id.textEmptyState);
+        layoutStateLoading = view.findViewById(R.id.layoutStateLoading);
+        viewEmptyState = view.findViewById(R.id.viewEmptyState);
         FloatingActionButton fabAddCategory = view.findViewById(R.id.fabAddCategory);
         adapter = new CategoryAdapter(new CategoryAdapter.OnCategoryActionListener() {
             @Override
@@ -71,13 +69,13 @@ public class CategoryManagementFragment extends Fragment {
         viewModel.getCategoryListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getFormState().observe(getViewLifecycleOwner(), this::renderFormState);
     }
-    private void renderState(UiState<List<CategoryEntity>> state) {
-        progressLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
-        textEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
+    private void renderState(UiState<List<CategoryListItem>> state) {
+        layoutStateLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
+        viewEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
         recyclerCategories.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
 
         if (state instanceof UiState.Success) {
-            adapter.submitList(((UiState.Success<List<CategoryEntity>>) state).data,
+            adapter.submitList(((UiState.Success<List<CategoryListItem>>) state).data,
                     viewModel.getCurrentUserId());
         }
     }

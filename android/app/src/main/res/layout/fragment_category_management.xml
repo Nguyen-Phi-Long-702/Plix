@@ -12,22 +12,20 @@
         android:paddingBottom="80dp"
         tools:listitem="@layout/item_category" />
 
-    <ProgressBar
-        android:id="@+id/progressLoading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
+    <include
+        android:id="@+id/layoutStateLoading"
+        layout="@layout/layout_state_loading"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/textEmptyState"
-        android:layout_width="wrap_content"
+    <com.longvuong.plix.presentation.common.EmptyStateView
+        android:id="@+id/viewEmptyState"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:gravity="center"
-        android:padding="24dp"
-        android:text="Chưa có danh mục nào"
-        android:visibility="gone" />
+        android:visibility="gone"
+        app:emptyIcon="@drawable/ic_tag"
+        app:emptyMessage="Nhấn dấu + ở góc trên để thêm danh mục."
+        app:emptyTitle="Chưa có danh mục nào" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddCategory"

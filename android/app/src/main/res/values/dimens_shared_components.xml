@@ -18,4 +18,6 @@
     <!-- Màn Nhập nhanh (AI): dòng giao dịch đề xuất, icon trong nút và khung thông báo -->
     <dimen name="suggestion_icon_box_size">36dp</dimen>
     <dimen name="inline_icon_size">18dp</dimen>
+    <!-- Màn Quản lý danh mục: chữ nhãn "Hệ thống"/"Của bạn" (nhỏ hơn mọi mức chữ trong thang chữ) -->
+    <dimen name="category_badge_text_size">10.5sp</dimen>
 </resources>

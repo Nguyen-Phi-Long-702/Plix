@@ -3,66 +3,82 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
-
-    <ImageView
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginEnd="12dp"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_tag" />
+    android:background="@color/surface"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/spacing_16"
+        android:paddingVertical="@dimen/spacing_12">
+
+        <FrameLayout
+            android:id="@+id/layoutCategoryIcon"
+            android:layout_width="@dimen/category_icon_box_size"
+            android:layout_height="@dimen/category_icon_box_size">
+
+            <ImageView
+                android:id="@+id/imageCategoryIcon"
+                android:layout_width="@dimen/category_icon_size"
+                android:layout_height="@dimen/category_icon_size"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                tools:src="@drawable/ic_food" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/textCategoryName"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            tools:text="Tiền điện · Chi tiêu" />
+            android:layout_marginStart="@dimen/spacing_12"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+            tools:text="Tiền điện" />
 
         <TextView
             android:id="@+id/textCategoryBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textSize="11sp"
-            android:textColor="@android:color/darker_gray"
+            android:layout_marginStart="@dimen/spacing_8"
+            android:paddingHorizontal="@dimen/spacing_8"
+            android:paddingVertical="@dimen/spacing_4"
+            android:textAppearance="@style/TextAppearance.Plix.Label"
+            android:textSize="@dimen/category_badge_text_size"
+            tools:background="@drawable/bg_badge_category_custom"
             tools:text="Của bạn" />
 
+        <ImageButton
+            android:id="@+id/buttonEditCategory"
+            android:layout_width="@dimen/touch_target_min"
+            android:layout_height="@dimen/touch_target_min"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Sửa danh mục"
+            android:padding="@dimen/spacing_12"
+            android:src="@drawable/ic_edit"
+            android:tint="@color/text_secondary"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <ImageButton
+            android:id="@+id/buttonDeleteCategory"
+            android:layout_width="@dimen/touch_target_min"
+            android:layout_height="@dimen/touch_target_min"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Xoá danh mục"
+            android:padding="@dimen/spacing_12"
+            android:src="@drawable/ic_trash"
+            android:tint="@color/text_tertiary"
+            android:visibility="gone"
+            tools:visibility="visible" />
     </LinearLayout>
 
-    <ImageButton
-        android:id="@+id/buttonEditCategory"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Sửa danh mục"
-        android:padding="10dp"
-        android:src="@drawable/ic_edit"
-        android:tint="@android:color/darker_gray"
-        android:visibility="gone"
-        tools:visibility="visible" />
-
-    <ImageButton
-        android:id="@+id/buttonDeleteCategory"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="4dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Xoá danh mục"
-        android:padding="10dp"
-        android:src="@drawable/ic_delete"
-        android:tint="@android:color/darker_gray"
-        android:visibility="gone"
-        tools:visibility="visible" />
-
+    <View
+        android:id="@+id/viewDivider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/transaction_row_divider_height"
+        android:background="@color/border" />
 </LinearLayout>
