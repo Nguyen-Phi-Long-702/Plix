@@ -190,6 +190,14 @@
     <style name="Theme.Plix.DatePicker" parent="Theme.MaterialComponents.Light.Dialog.Alert">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorSecondary">@color/primary</item>
+        <item name="android:colorAccent">@color/primary</item>
+        <item name="android:buttonBarButtonStyle">@style/Widget.Plix.DatePicker.Button</item>
+    </style>
+
+    <!-- Nút OK/Huỷ của DatePickerDialog là Button hệ thống, không phải MaterialButton -->
+    <style name="Widget.Plix.DatePicker.Button" parent="android:Widget.Material.Button.Borderless.Colored">
+        <item name="android:textAppearance">@style/TextAppearance.Plix.Button</item>
+        <item name="android:textColor">@color/primary</item>
     </style>
 
     <!-- ===== Form Thêm/Sửa giao dịch ===== -->
