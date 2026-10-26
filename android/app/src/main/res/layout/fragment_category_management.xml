@@ -8,8 +8,6 @@
         android:id="@+id/recyclerCategories"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="80dp"
         tools:listitem="@layout/item_category" />
 
     <include
@@ -27,12 +25,4 @@
         app:emptyMessage="Nhấn dấu + ở góc trên để thêm danh mục."
         app:emptyTitle="Chưa có danh mục nào" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddCategory"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="Thêm danh mục"
-        app:srcCompat="@drawable/ic_add" />
 </FrameLayout>

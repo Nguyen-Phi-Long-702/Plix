@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -11,13 +14,14 @@ import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -50,7 +54,6 @@ public class CategoryManagementFragment extends Fragment {
         recyclerCategories = view.findViewById(R.id.recyclerCategories);
         layoutStateLoading = view.findViewById(R.id.layoutStateLoading);
         viewEmptyState = view.findViewById(R.id.viewEmptyState);
-        FloatingActionButton fabAddCategory = view.findViewById(R.id.fabAddCategory);
         adapter = new CategoryAdapter(new CategoryAdapter.OnCategoryActionListener() {
             @Override
             public void onEditCategory(CategoryEntity category) {
@@ -64,11 +67,29 @@ public class CategoryManagementFragment extends Fragment {
         recyclerCategories.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerCategories.setAdapter(adapter);
 
-        fabAddCategory.setOnClickListener(v -> showCategoryDialog(null));
+        setupAddMenu();
 
         viewModel.getCategoryListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getFormState().observe(getViewLifecycleOwner(), this::renderFormState);
     }
+    private void setupAddMenu() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_category_management, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                if (menuItem.getItemId() == R.id.action_add_category) {
+                    showCategoryDialog(null);
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
     private void renderState(UiState<List<CategoryListItem>> state) {
         layoutStateLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
         viewEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
