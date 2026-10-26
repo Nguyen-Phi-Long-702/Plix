@@ -127,7 +127,7 @@ public class AddEditBudgetFragment extends Fragment {
 
     private void openPeriodPicker() {
         YearMonth current = YearMonth.parse(viewModel.getPeriod());
-        DatePickerDialog dialog = new DatePickerDialog(requireContext(),
+        DatePickerDialog dialog = new DatePickerDialog(requireContext(), R.style.Theme_Plix_DatePicker,
                 (picker, year, month, dayOfMonth) -> {
                     YearMonth selected = YearMonth.of(year, month + 1);
                     viewModel.setPeriod(selected.toString());

@@ -322,7 +322,7 @@ public class AddEditTransactionFragment extends Fragment {
         ZonedDateTime current = Instant.ofEpochMilli(viewModel.getOccurredAt())
                 .atZone(ZoneId.systemDefault());
 
-        DatePickerDialog dialog = new DatePickerDialog(requireContext(), (picker, year, month, dayOfMonth) -> {
+        DatePickerDialog dialog = new DatePickerDialog(requireContext(), R.style.Theme_Plix_DatePicker, (picker, year, month, dayOfMonth) -> {
             LocalDate newDate = LocalDate.of(year, month + 1, dayOfMonth);
             LocalTime existingTime = current.toLocalTime();
             long newOccurredAt = ZonedDateTime.of(newDate, existingTime, ZoneId.systemDefault())

@@ -183,14 +183,14 @@ public class TransactionListFragment extends Fragment {
     private void openStartDatePicker() {
         LocalDate initial = selectedStartDate != null ? toLocalDate(selectedStartDate) : LocalDate.now();
 
-        new DatePickerDialog(requireContext(), (picker, year, month, dayOfMonth) -> {
+        new DatePickerDialog(requireContext(), R.style.Theme_Plix_DatePicker, (picker, year, month, dayOfMonth) -> {
             LocalDate startDate = LocalDate.of(year, month + 1, dayOfMonth);
             openEndDatePicker(startDate);
         }, initial.getYear(), initial.getMonthValue() - 1, initial.getDayOfMonth()).show();
     }
 
     private void openEndDatePicker(LocalDate startDate) {
-        new DatePickerDialog(requireContext(), (picker, year, month, dayOfMonth) -> {
+        new DatePickerDialog(requireContext(), R.style.Theme_Plix_DatePicker, (picker, year, month, dayOfMonth) -> {
             LocalDate endDate = LocalDate.of(year, month + 1, dayOfMonth);
             applyDateRange(startDate, endDate);
         }, startDate.getYear(), startDate.getMonthValue() - 1, startDate.getDayOfMonth()).show();

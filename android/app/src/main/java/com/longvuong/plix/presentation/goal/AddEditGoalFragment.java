@@ -136,7 +136,7 @@ public class AddEditGoalFragment extends Fragment {
 
     private void openDeadlinePicker() {
         LocalDate current = Instant.ofEpochMilli(viewModel.getDeadline()).atZone(ZoneId.systemDefault()).toLocalDate();
-        DatePickerDialog dialog = new DatePickerDialog(requireContext(),
+        DatePickerDialog dialog = new DatePickerDialog(requireContext(), R.style.Theme_Plix_DatePicker,
                 (picker, year, month, dayOfMonth) -> {
                     LocalDate selected = LocalDate.of(year, month + 1, dayOfMonth);
                     long newDeadline = selected.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
