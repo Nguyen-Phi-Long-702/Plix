@@ -50,4 +50,16 @@
     <dimen name="goal_ring_size">56dp</dimen>
     <dimen name="goal_ring_thickness">6dp</dimen>
     <dimen name="radius_pill">100dp</dimen>
+
+    <!-- Màn Thống kê -->
+    <dimen name="analytics_pie_size">110dp</dimen>
+    <dimen name="analytics_bar_chart_height">140dp</dimen>
+    <dimen name="analytics_sparkline_width">118dp</dimen>
+    <dimen name="analytics_sparkline_height">38dp</dimen>
+    <dimen name="analytics_legend_dot_size">10dp</dimen>
+    <dimen name="analytics_legend_dot_radius">3dp</dimen>
+    <dimen name="analytics_skeleton_chart_height">180dp</dimen>
+    <dimen name="analytics_skeleton_summary_height">140dp</dimen>
+    <dimen name="analytics_forecast_icon_size">14dp</dimen>
+    <dimen name="analytics_total_icon_size">12dp</dimen>
 </resources>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/spacing_4">
+
+    <View
+        android:id="@+id/viewLegendDot"
+        android:layout_width="@dimen/analytics_legend_dot_size"
+        android:layout_height="@dimen/analytics_legend_dot_size"
+        android:background="@drawable/bg_legend_dot" />
+
+    <TextView
+        android:id="@+id/textLegendName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_8"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAppearance="@style/TextAppearance.Plix.BodySmall"
+        android:textColor="@color/text_primary"
+        tools:text="Nhà ở/Thuê nhà" />
+
+    <TextView
+        android:id="@+id/textLegendPercent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_8"
+        android:textAppearance="@style/TextAppearance.Plix.Label"
+        tools:text="38%" />
+</LinearLayout>

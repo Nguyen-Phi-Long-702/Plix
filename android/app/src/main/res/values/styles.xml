@@ -9,6 +9,14 @@
         <item name="android:letterSpacing">0</item>
     </style>
 
+    <!-- Số liệu nổi bật trong thẻ (dự báo, tỷ lệ tiết kiệm) -->
+    <style name="TextAppearance.Plix.AmountMedium" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:fontFamily">@font/be_vietnam_pro_extrabold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
     <!-- Chữ liên kết bấm được (Đăng ký ngay, Đăng nhập, Xem tất cả); vùng chạm tối thiểu theo token touch_target_min -->
     <style name="Widget.Plix.TextLink" parent="">
         <item name="android:background">?attr/selectableItemBackground</item>

@@ -33,4 +33,11 @@
     <color name="expense_tint">#FBE7EB</color>
     <color name="expense_on_dark">#F6C3CE</color>
     <color name="danger_tint">#FBE3E1</color>
+
+    <!-- Màu các lát biểu đồ tròn ở màn Thống kê (theo thứ tự lát; lát thứ 5 là màu trung tính) -->
+    <color name="chart_category_1">@color/primary</color>
+    <color name="chart_category_2">@color/color_income</color>
+    <color name="chart_category_3">@color/budget_progress_warning</color>
+    <color name="chart_category_4">@color/color_expense</color>
+    <color name="chart_category_5">@color/text_tertiary</color>
 </resources>
