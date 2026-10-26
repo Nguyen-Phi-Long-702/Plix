@@ -18,8 +18,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
@@ -236,7 +236,7 @@ public class QuickAddNlFragment extends Fragment {
             editAmount.setText(String.valueOf(item.amount)); //dòng thiếu số tiền để ô trống cho người dùng nhập, không điền sẵn "0"
         }
 
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Sửa giao dịch đề xuất")
                 .setView(dialogView)
                 .setNegativeButton("Huỷ", null)

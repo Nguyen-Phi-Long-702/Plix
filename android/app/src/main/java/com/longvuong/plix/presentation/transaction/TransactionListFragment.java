@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -20,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.longvuong.plix.R;
@@ -131,7 +131,7 @@ public class TransactionListFragment extends Fragment {
     private void showDeleteConfirmationDialog(TransactionEntity transaction) {
         String label = transaction.note != null && !transaction.note.isEmpty()
                 ? transaction.note : "giao dịch này";
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Xoá giao dịch?")
                 .setMessage("Giao dịch \"" + label + "\" sẽ bị xoá. Hành động này không thể hoàn tác.")
                 .setNegativeButton("Huỷ", null)

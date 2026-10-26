@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -139,7 +140,7 @@ public class CategoryManagementFragment extends Fragment {
                         ? ((Result.Error<Void>) validation).message : null);
             }
         });
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(isEdit ? "Sửa danh mục" : "Danh mục mới")
                 .setView(dialogView)
                 .setNegativeButton("Huỷ", null)
@@ -167,7 +168,7 @@ public class CategoryManagementFragment extends Fragment {
         dialog.show();
     }
     private void showDeleteConfirmationDialog(CategoryEntity category) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Xoá danh mục \"" + category.name + "\"?")
                 .setMessage("Các giao dịch đang dùng danh mục này sẽ hiển thị \"Danh mục không xác định\". " + "Hành động này không thể hoàn tác.")
                 .setNegativeButton("Huỷ", null)

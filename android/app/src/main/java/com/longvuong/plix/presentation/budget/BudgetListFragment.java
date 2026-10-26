@@ -8,7 +8,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavOptions;
@@ -19,6 +18,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.BudgetEntity;
 import com.longvuong.plix.presentation.common.EmptyStateView;
@@ -117,7 +118,7 @@ public class BudgetListFragment extends Fragment {
         String message = "Ngân sách kỳ Tháng " + period.getMonthValue() + " / " + period.getYear()
                 + " với hạn mức " + formatCurrency(budget.limitAmount)
                 + " sẽ bị xoá. Các giao dịch liên quan không bị ảnh hưởng. Hành động này không thể hoàn tác.";
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Xoá ngân sách \"" + displayName + "\"?")
                 .setMessage(message)
                 .setNegativeButton("Huỷ", null)

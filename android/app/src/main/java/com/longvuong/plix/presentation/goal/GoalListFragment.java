@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavOptions;
@@ -17,6 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.longvuong.plix.presentation.common.EmptyStateView;
 import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.R;
@@ -102,7 +103,7 @@ public class GoalListFragment extends Fragment {
     }
 
     private void showDeleteConfirmationDialog(GoalEntity goal) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Xoá mục tiêu \"" + goal.name + "\"?")
                 .setMessage("Hành động này không thể hoàn tác.")
                 .setNegativeButton("Huỷ", null)
