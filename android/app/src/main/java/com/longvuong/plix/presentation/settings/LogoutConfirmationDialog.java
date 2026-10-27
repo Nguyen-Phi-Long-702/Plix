@@ -15,7 +15,7 @@ public final class LogoutConfirmationDialog {
     }
 
     public static void show(Context context, int pendingCount, Runnable onCancel, Runnable onConfirm) {
-        AlertDialog dialog = new MaterialAlertDialogBuilder(context)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_Plix_MaterialAlertDialog)
                 .setTitle("Còn dữ liệu chưa đồng bộ")
                 .setMessage("Bạn có " + pendingCount + " thay đổi chưa đồng bộ lên cloud. "
                         + "Nếu đăng xuất bây giờ, các thay đổi này sẽ MẤT trên thiết bị này "
