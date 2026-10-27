@@ -1,226 +1,461 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:fillViewport="true">
+
     <LinearLayout
-        android:id="@+id/rowCategoryManagement"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
+        android:orientation="vertical">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_tag" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Quản lý danh mục"
-            android:textSize="15sp" />
-    </LinearLayout>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="6dp"
-        android:text="AI &amp; Quyền riêng tư"
-        android:textColor="@color/info_text"
-        android:textSize="12sp"
-        android:textStyle="bold" />
-    <LinearLayout
-        android:id="@+id/rowQuickAdd"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_ai_quick_add" />
-
+        <!-- Dòng tài khoản -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:background="@color/surface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingVertical="@dimen/spacing_16">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Nhập nhanh bằng ngôn ngữ tự nhiên"
-                android:textSize="15sp" />
+            <FrameLayout
+                android:layout_width="@dimen/settings_avatar_box_size"
+                android:layout_height="@dimen/settings_avatar_box_size"
+                android:background="@drawable/bg_settings_avatar">
 
-            <TextView
-                android:layout_width="match_parent"
+                <ImageView
+                    android:layout_width="@dimen/settings_avatar_icon_size"
+                    android:layout_height="@dimen/settings_avatar_icon_size"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_user"
+                    app:tint="@color/primary_dark" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Bật gợi ý phân tích câu chữ khi Quick Add"
-                android:textColor="@color/info_text"
-                android:textSize="12sp" />
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textAccountEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Đã đăng nhập"
+                    android:textAppearance="@style/TextAppearance.Plix.Caption" />
+            </LinearLayout>
         </LinearLayout>
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchQuickAdd"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/rowGeminiFallback"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_info" />
+        <!-- Nhóm Danh mục -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingTop="@dimen/spacing_16"
+            android:paddingBottom="@dimen/spacing_4"
+            android:text="Danh mục"
+            android:textAllCaps="true"
+            android:textAppearance="@style/TextAppearance.Plix.Label"
+            android:textColor="@color/text_tertiary" />
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:id="@+id/rowCategoryManagement"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:background="@color/surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/touch_target_min"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingVertical="@dimen/spacing_12">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Cho phép dùng Gemini dự phòng"
-                android:textSize="15sp" />
+            <FrameLayout
+                android:layout_width="@dimen/sheet_option_icon_box_size"
+                android:layout_height="@dimen/sheet_option_icon_box_size"
+                android:background="@drawable/bg_sheet_option_icon">
 
-            <TextView
-                android:layout_width="match_parent"
+                <ImageView
+                    android:layout_width="@dimen/sheet_option_icon_size"
+                    android:layout_height="@dimen/sheet_option_icon_size"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_list"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Gói miễn phí của Google — dữ liệu bạn nhập có thể được dùng để cải thiện dịch vụ của họ. Chỉ gửi câu chữ, không kèm lịch sử giao dịch."
-                android:textColor="@color/info_text"
-                android:textSize="12sp" />
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Quản lý danh mục"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                <TextView
+                    android:id="@+id/textCategorySummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Plix.Caption" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="@dimen/inline_icon_size"
+                android:layout_height="@dimen/inline_icon_size"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_chev_right"
+                app:tint="@color/text_tertiary" />
         </LinearLayout>
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchGeminiFallback"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/rowRetrainAi"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
+        <!-- Nhóm AI & Quyền riêng tư -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingTop="@dimen/spacing_16"
+            android:paddingBottom="@dimen/spacing_4"
+            android:text="AI &amp; Quyền riêng tư"
+            android:textAllCaps="true"
+            android:textAppearance="@style/TextAppearance.Plix.Label"
+            android:textColor="@color/text_tertiary" />
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_ai_retrain" />
+        <LinearLayout
+            android:id="@+id/rowQuickAdd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/touch_target_min"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingVertical="@dimen/spacing_12">
+
+            <FrameLayout
+                android:layout_width="@dimen/sheet_option_icon_box_size"
+                android:layout_height="@dimen/sheet_option_icon_box_size"
+                android:background="@drawable/bg_sheet_option_icon">
+
+                <ImageView
+                    android:layout_width="@dimen/sheet_option_icon_size"
+                    android:layout_height="@dimen/sheet_option_icon_size"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_sparkle"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nhập nhanh bằng ngôn ngữ tự nhiên"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Bật gợi ý phân tích câu chữ khi Quick Add"
+                    android:textAppearance="@style/TextAppearance.Plix.Caption" />
+            </LinearLayout>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchQuickAdd"
+                style="@style/Widget.Plix.Switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:contentDescription="Nhập nhanh bằng ngôn ngữ tự nhiên" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowGeminiFallback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/touch_target_min"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingVertical="@dimen/spacing_12">
+
+            <FrameLayout
+                android:layout_width="@dimen/sheet_option_icon_box_size"
+                android:layout_height="@dimen/sheet_option_icon_box_size"
+                android:background="@drawable/bg_sheet_option_icon">
+
+                <ImageView
+                    android:layout_width="@dimen/sheet_option_icon_size"
+                    android:layout_height="@dimen/sheet_option_icon_size"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_info"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Cho phép dùng Gemini dự phòng"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Gói miễn phí của Google — dữ liệu bạn nhập có thể được dùng để cải thiện dịch vụ của họ. Chỉ gửi câu chữ, không kèm lịch sử giao dịch."
+                    android:textAppearance="@style/TextAppearance.Plix.Caption" />
+            </LinearLayout>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchGeminiFallback"
+                style="@style/Widget.Plix.Switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:contentDescription="Cho phép dùng Gemini dự phòng" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowRetrainAi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/touch_target_min"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingVertical="@dimen/spacing_12">
+
+            <FrameLayout
+                android:layout_width="@dimen/sheet_option_icon_box_size"
+                android:layout_height="@dimen/sheet_option_icon_box_size"
+                android:background="@drawable/bg_sheet_option_icon">
+
+                <ImageView
+                    android:layout_width="@dimen/sheet_option_icon_size"
+                    android:layout_height="@dimen/sheet_option_icon_size"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_refresh"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cải thiện gợi ý AI"
+                        android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                    <TextView
+                        android:id="@+id/badgeNewCorrections"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_8"
+                        android:background="@drawable/bg_badge_pill"
+                        android:backgroundTint="@color/budget_progress_warning"
+                        android:paddingHorizontal="@dimen/spacing_8"
+                        android:paddingVertical="@dimen/spacing_4"
+                        android:textAppearance="@style/TextAppearance.Plix.Label"
+                        android:textColor="@color/white"
+                        android:textSize="@dimen/category_badge_text_size"
+                        android:visibility="gone"
+                        tools:text="10 mới"
+                        tools:visibility="visible" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/textRetrainHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Đã đủ 10 lần sửa gợi ý — huấn luyện lại để AI hiểu bạn hơn"
+                    android:textAppearance="@style/TextAppearance.Plix.Caption"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/imageRetrainChevron"
+                android:layout_width="@dimen/inline_icon_size"
+                android:layout_height="@dimen/inline_icon_size"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_chev_right"
+                app:tint="@color/text_tertiary" />
+
+            <ProgressBar
+                android:id="@+id/progressRetrainAi"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="@dimen/inline_icon_size"
+                android:layout_height="@dimen/inline_icon_size"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Nhóm Thông báo: chỉ hiện khi chưa được cấp quyền hiển thị thông báo -->
+        <LinearLayout
+            android:id="@+id/groupNotificationPermission"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="@dimen/spacing_16"
+                android:paddingTop="@dimen/spacing_16"
+                android:paddingBottom="@dimen/spacing_4"
+                android:text="Thông báo"
+                android:textAllCaps="true"
+                android:textAppearance="@style/TextAppearance.Plix.Label"
+                android:textColor="@color/text_tertiary" />
+
+            <LinearLayout
+                android:id="@+id/bannerNotificationPermission"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/spacing_16"
+                android:layout_marginBottom="@dimen/spacing_12"
+                android:background="@drawable/bg_anomaly_info"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:orientation="horizontal"
+                android:padding="@dimen/spacing_12">
+
+                <ImageView
+                    android:layout_width="@dimen/inline_icon_size"
+                    android:layout_height="@dimen/inline_icon_size"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_bell"
+                    app:tint="@color/text_secondary" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing_12"
+                    android:layout_weight="1"
+                    android:lineSpacingMultiplier="1.3"
+                    android:text="Plix chưa được cấp quyền hiển thị thông báo, nên sẽ không thể báo khi ngân sách vượt ngưỡng. Vào Cài đặt hệ thống → Ứng dụng → Plix → Thông báo để bật bất cứ lúc nào."
+                    android:textAppearance="@style/TextAppearance.Plix.Caption" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Nhóm Khác -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingTop="@dimen/spacing_16"
+            android:paddingBottom="@dimen/spacing_4"
+            android:text="Khác"
+            android:textAllCaps="true"
+            android:textAppearance="@style/TextAppearance.Plix.Label"
+            android:textColor="@color/text_tertiary" />
+
+        <LinearLayout
+            android:id="@+id/rowLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/touch_target_min"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingVertical="@dimen/spacing_12">
+
+            <FrameLayout
+                android:layout_width="@dimen/sheet_option_icon_box_size"
+                android:layout_height="@dimen/sheet_option_icon_box_size"
+                android:background="@drawable/bg_settings_icon_danger">
+
+                <ImageView
+                    android:layout_width="@dimen/sheet_option_icon_size"
+                    android:layout_height="@dimen/sheet_option_icon_size"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_logout"
+                    app:tint="@color/budget_progress_danger" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:text="Đăng xuất"
+                android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+                android:textColor="@color/budget_progress_danger" />
+
+            <ProgressBar
+                android:id="@+id/progressLogout"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="@dimen/inline_icon_size"
+                android:layout_height="@dimen/inline_icon_size"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
-            android:layout_width="0dp"
+            android:id="@+id/textAppVersion"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Cải thiện gợi ý AI"
-            android:textSize="15sp" />
-
-        <View
-            android:id="@+id/badgeNewCorrections"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
-            android:layout_marginEnd="12dp"
-            android:background="@drawable/bg_badge_dot"
-            android:visibility="gone" />
-
-        <ProgressBar
-            android:id="@+id/progressRetrainAi"
-            style="?android:attr/progressBarStyleSmall"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:visibility="gone" />
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingTop="@dimen/spacing_16"
+            android:paddingBottom="@dimen/spacing_32"
+            android:textAppearance="@style/TextAppearance.Plix.Hint" />
     </LinearLayout>
-    <LinearLayout
-        android:id="@+id/bannerNotificationPermission"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:visibility="gone"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Bật thông báo để nhận cảnh báo ngân sách"
-            android:textSize="14sp" />
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/rowLogout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_logout"
-            android:tint="@color/budget_progress_danger" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Đăng xuất"
-            android:textColor="@color/budget_progress_danger"
-            android:textSize="15sp" />
-
-        <ProgressBar
-            android:id="@+id/progressLogout"
-            style="?android:attr/progressBarStyleSmall"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:visibility="gone" />
-    </LinearLayout>
-</LinearLayout>
+</ScrollView>

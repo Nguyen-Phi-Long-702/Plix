@@ -20,4 +20,7 @@
     <dimen name="inline_icon_size">18dp</dimen>
     <!-- Màn Quản lý danh mục: chữ nhãn "Hệ thống"/"Của bạn" (nhỏ hơn mọi mức chữ trong thang chữ) -->
     <dimen name="category_badge_text_size">10.5sp</dimen>
+    <!-- Màn Cài đặt: ô icon của dòng tài khoản (lớn hơn ô icon của các dòng mục) -->
+    <dimen name="settings_avatar_box_size">44dp</dimen>
+    <dimen name="settings_avatar_icon_size">20dp</dimen>
 </resources>

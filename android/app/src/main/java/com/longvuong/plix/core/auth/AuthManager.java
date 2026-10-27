@@ -95,7 +95,19 @@ public class AuthManager {
 
     @Nullable
     public String getCurrentUserId() {
-        String token = this.accessToken;
+        return readAccessTokenClaim("sub");
+    }
+
+    //Email của tài khoản đang đăng nhập, lấy từ claim "email" trong access token (Supabase có đưa claim này vào JWT)
+    @Nullable
+    public String getCurrentUserEmail() {
+        return readAccessTokenClaim("email");
+    }
+
+    //Giải mã phần payload của access token rồi đọc 1 claim dạng chuỗi; không có token, token sai định dạng hoặc thiếu claim thì trả về null
+    @Nullable
+    private String readAccessTokenClaim(String claimName) {
+        String token = getAccessToken();
         if (token == null) {
             return null;
         }
@@ -107,7 +119,7 @@ public class AuthManager {
             byte[] decodedPayload = Base64.getUrlDecoder().decode(parts[1]);
             JsonObject payload = JsonParser.parseString(
                     new String(decodedPayload, StandardCharsets.UTF_8)).getAsJsonObject();
-            return payload.has("sub") ? payload.get("sub").getAsString() : null;
+            return payload.has(claimName) ? payload.get(claimName).getAsString() : null;
         } catch (Exception e) {
             return null;
         }
