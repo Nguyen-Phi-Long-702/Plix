@@ -5,20 +5,29 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="@dimen/spacing_24">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tên danh mục"
+        android:textAppearance="@style/TextAppearance.Plix.Label" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/inputLayoutCategoryName"
         style="@style/Widget.Plix.TextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_8"
         android:layout_marginBottom="@dimen/spacing_16"
-        android:hint="Tên danh mục"
         app:helperText="Tối đa 50 ký tự. Trùng tên với danh mục hệ thống cùng loại sẽ bị từ chối khi lưu."
         app:helperTextEnabled="true"
-        app:placeholderText="vd: Nuôi thú cưng">
+        app:hintEnabled="false">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editCategoryName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:hint="vd: Nuôi thú cưng"
+            android:imeOptions="actionDone"
             android:inputType="textCapSentences"
             android:maxLength="50" />
     </com.google.android.material.textfield.TextInputLayout>
