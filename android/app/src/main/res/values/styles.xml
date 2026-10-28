@@ -152,6 +152,17 @@
         <item name="helperTextTextAppearance">@style/TextAppearance.Plix.Hint</item>
     </style>
 
+    <!-- Ô chọn từ danh sách: cùng viền và bo góc với ô nhập thường -->
+    <style name="Widget.Plix.TextInputLayout.Dropdown" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="boxCornerRadiusTopStart">@dimen/radius_small</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_small</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_small</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_small</item>
+        <item name="boxStrokeColor">@color/selector_input_stroke</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="boxStrokeWidthFocused">1.5dp</item>
+    </style>
+
     <!-- ===== Chip ===== -->
     <style name="Widget.Plix.Chip.Choice" parent="Widget.MaterialComponents.Chip.Choice">
         <item name="android:textAppearance">@style/TextAppearance.Plix.Label</item>
