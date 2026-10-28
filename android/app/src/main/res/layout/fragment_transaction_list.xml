@@ -17,9 +17,9 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/spacing_16"
             android:layout_marginTop="@dimen/spacing_16"
-            android:hint="Tìm theo ghi chú..."
             app:boxBackgroundColor="@color/surface"
             app:endIconMode="clear_text"
+            app:hintEnabled="false"
             app:startIconDrawable="@drawable/ic_search"
             app:startIconTint="@color/text_tertiary">
 
@@ -27,6 +27,8 @@
                 android:id="@+id/editSearch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:hint="Tìm theo ghi chú..."
+                android:imeOptions="actionDone"
                 android:inputType="text"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
