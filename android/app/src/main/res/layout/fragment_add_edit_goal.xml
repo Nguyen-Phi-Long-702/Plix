@@ -114,7 +114,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_8"
-                app:helperText="Có thể để 0 nhưng không được âm. Cập nhật thủ công mỗi khi bạn tiết kiệm thêm — Plix không tự động cộng."
+                app:helperText="Có thể để 0 nhưng không được âm, tối đa 999.999.999.999đ. Cập nhật thủ công mỗi khi bạn tiết kiệm thêm — Plix không tự động trừ/cộng."
                 app:hintEnabled="false"
                 app:suffixText="đ"
                 app:suffixTextAppearance="@style/TextAppearance.Plix.AmountSuffix">
