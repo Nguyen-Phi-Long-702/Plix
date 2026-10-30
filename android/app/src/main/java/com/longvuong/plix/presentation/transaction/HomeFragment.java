@@ -59,6 +59,10 @@ public class HomeFragment extends Fragment {
                 Navigation.findNavController(view)
                         .navigate(R.id.action_homeFragment_to_transactionListFragment));
 
+        view.findViewById(R.id.textViewAllBudgets).setOnClickListener(v ->
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_homeFragment_to_budgetGoalGraph));
+
         RecentTransactionAdapter recentAdapter = new RecentTransactionAdapter();
         RecyclerView recyclerRecent = view.findViewById(R.id.recyclerRecentTransactions);
         recyclerRecent.setAdapter(recentAdapter);
