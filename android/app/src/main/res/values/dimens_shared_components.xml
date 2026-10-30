@@ -6,6 +6,8 @@
     <dimen name="skeleton_icon_size">42dp</dimen>
     <dimen name="skeleton_line_title_height">13dp</dimen>
     <dimen name="skeleton_line_subtitle_height">11dp</dimen>
+    <dimen name="skeleton_card_title_height">14dp</dimen>
+    <dimen name="skeleton_card_bar_height">9dp</dimen>
 
     <!-- Dòng giao dịch, chip lọc và danh sách có FAB -->
     <dimen name="category_icon_box_size">42dp</dimen>

@@ -26,10 +26,17 @@
                 android:paddingBottom="@dimen/budget_goal_list_padding_bottom"
                 tools:listitem="@layout/item_goal" />
 
-            <include
+            <LinearLayout
                 android:id="@+id/layoutStateLoading"
-                layout="@layout/layout_state_loading"
-                android:visibility="gone" />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <include layout="@layout/item_skeleton_card" />
+
+                <include layout="@layout/item_skeleton_card" />
+            </LinearLayout>
 
             <com.longvuong.plix.presentation.common.EmptyStateView
                 android:id="@+id/viewEmptyState"
