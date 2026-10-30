@@ -25,4 +25,6 @@
     <!-- Màn Cài đặt: ô icon của dòng tài khoản (lớn hơn ô icon của các dòng mục) -->
     <dimen name="settings_avatar_box_size">44dp</dimen>
     <dimen name="settings_avatar_icon_size">20dp</dimen>
+    <!-- Khối trạng thái rỗng dùng chung: ô icon cố định theo thiết kế -->
+    <dimen name="empty_icon_box_size">64dp</dimen>
 </resources>

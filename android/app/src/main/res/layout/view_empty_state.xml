@@ -9,8 +9,8 @@
 
     <ImageView
         android:id="@+id/imageEmptyIcon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/empty_icon_box_size"
+        android:layout_height="@dimen/empty_icon_box_size"
         android:background="@drawable/bg_empty_icon"
         android:importantForAccessibility="no"
         android:padding="@dimen/spacing_16"
