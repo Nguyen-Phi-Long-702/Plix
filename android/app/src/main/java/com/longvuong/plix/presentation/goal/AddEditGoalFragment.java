@@ -241,7 +241,7 @@ public class AddEditGoalFragment extends Fragment {
             buttonSave.setEnabled(false);
         } else if (state instanceof UiState.Success) {
             buttonSave.setEnabled(true);
-            SnackbarHelper.showSuccess(this, "Đã lưu mục tiêu");
+            SnackbarHelper.showSuccess(this, viewModel.isEditMode() ? "Đã lưu thay đổi" : "Đã tạo mục tiêu");
             NavHostFragment.findNavController(this).popBackStack();
         } else if (state instanceof UiState.Error) {
             buttonSave.setEnabled(true);

@@ -253,7 +253,7 @@ public class AddEditBudgetFragment extends Fragment {
             buttonSave.setEnabled(false);
         } else if (state instanceof UiState.Success) {
             buttonSave.setEnabled(true);
-            SnackbarHelper.showSuccess(this, "Đã lưu ngân sách");
+            SnackbarHelper.showSuccess(this, viewModel.isEditMode() ? "Đã lưu thay đổi" : "Đã tạo ngân sách");
             NavHostFragment.findNavController(this).popBackStack();
         } else if (state instanceof UiState.Error) {
             buttonSave.setEnabled(true);
