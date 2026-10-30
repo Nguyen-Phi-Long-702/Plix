@@ -80,6 +80,7 @@ public class HomeFragment extends Fragment {
         setText(view, R.id.textNetBalance, formatCurrency(model.netBalance));
         setText(view, R.id.textIncome, formatCurrency(model.totalIncome));
         setText(view, R.id.textExpense, formatCurrency(model.totalExpense));
+        bindOverallBudgetRemaining(view, model.overallBudgetRemaining);
 
         recentAdapter.submit(model.recentTransactions, model.categoryNamesById);
 
@@ -95,6 +96,21 @@ public class HomeFragment extends Fragment {
         LinearProgressIndicator progressBudget = view.findViewById(R.id.progressBudget);
         progressBudget.setIndicatorColor(ContextCompat.getColor(requireContext(), budgetColorRes(budget.level)));
         progressBudget.setProgressCompat(Math.min(budget.percent, 100), false);
+    }
+
+    //null = tháng này chưa có ngân sách tổng -> "—"; âm = đã chi vượt hạn mức -> số âm màu đỏ nhạt (dùng được trên nền xanh đậm)
+    private void bindOverallBudgetRemaining(View view, @Nullable Long remaining) {
+        TextView textRemaining = view.findViewById(R.id.textOverallBudgetRemaining);
+        if (remaining == null) {
+            textRemaining.setText("—");
+            textRemaining.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
+            textRemaining.setContentDescription("Còn lại ngân sách tổng: chưa đặt ngân sách tổng");
+            return;
+        }
+        textRemaining.setText(formatCurrency(remaining));
+        int colorRes = remaining < 0 ? R.color.expense_on_dark : R.color.white;
+        textRemaining.setTextColor(ContextCompat.getColor(requireContext(), colorRes));
+        textRemaining.setContentDescription(null);
     }
 
     private void setText(View root, int viewId, String text) {
