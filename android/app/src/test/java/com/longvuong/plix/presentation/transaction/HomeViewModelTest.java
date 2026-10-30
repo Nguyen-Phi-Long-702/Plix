@@ -196,6 +196,55 @@ public class HomeViewModelTest {
         assertEquals(HomeUiModel.BudgetLevel.DANGER, budget.level);
     }
 
+    @Test
+    public void homeState_noBudgetThisMonth_overallRemainingIsNull() {
+        fakeTransactionRepository.allTransactions.setValue(Collections.singletonList(
+                transaction("t1", "expense", 1_000L, "sys_an_uong", thisMonth())));
+
+        assertNull(successModel().overallBudgetRemaining);
+    }
+
+    @Test
+    public void homeState_onlyCategoryBudget_overallRemainingIsNull() {
+        fakeBudgetRepository.activeBudgets.setValue(Collections.singletonList(budget("b1", "sys_an_uong", 1_000_000L, 80)));
+        fakeTransactionRepository.allTransactions.setValue(Collections.singletonList(
+                transaction("t1", "expense", 100_000L, "sys_an_uong", thisMonth())));
+
+        assertNull(successModel().overallBudgetRemaining);
+    }
+
+    @Test
+    public void homeState_overallBudget_remainingIsLimitMinusSpentThisMonth() {
+        fakeBudgetRepository.activeBudgets.setValue(Arrays.asList(
+                budget("b1", null, 5_000_000L, 80),
+                budget("b2", "sys_an_uong", 1_000_000L, 80)));
+        fakeTransactionRepository.allTransactions.setValue(Arrays.asList(
+                transaction("t1", "expense", 1_200_000L, "sys_an_uong", thisMonth()),
+                transaction("t2", "expense", 300_000L, "sys_di_chuyen", thisMonth()),
+                transaction("t3", "income", 10_000_000L, "sys_an_uong", thisMonth()), //thu nhập không tính vào đã chi
+                transaction("t4", "expense", 900_000L, "sys_an_uong", lastMonth()))); //tháng trước không tính
+
+        assertEquals(Long.valueOf(3_500_000L), successModel().overallBudgetRemaining);
+    }
+
+    @Test
+    public void homeState_overallBudgetSpentOverLimit_remainingIsNegative() {
+        fakeBudgetRepository.activeBudgets.setValue(Collections.singletonList(budget("b1", null, 500_000L, 80)));
+        fakeTransactionRepository.allTransactions.setValue(Collections.singletonList(
+                transaction("t1", "expense", 600_000L, "sys_an_uong", thisMonth())));
+
+        assertEquals(Long.valueOf(-100_000L), successModel().overallBudgetRemaining);
+    }
+
+    @Test
+    public void homeState_overallBudgetExactlyUsedUp_remainingIsZeroNotNull() {
+        fakeBudgetRepository.activeBudgets.setValue(Collections.singletonList(budget("b1", null, 500_000L, 80)));
+        fakeTransactionRepository.allTransactions.setValue(Collections.singletonList(
+                transaction("t1", "expense", 500_000L, "sys_an_uong", thisMonth())));
+
+        assertEquals(Long.valueOf(0L), successModel().overallBudgetRemaining);
+    }
+
     private HomeUiModel successModel() {
         UiState<HomeUiModel> state = viewModel.getHomeState().getValue();
         assertTrue(state instanceof UiState.Success);

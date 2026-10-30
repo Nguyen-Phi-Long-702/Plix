@@ -125,7 +125,8 @@ public class HomeViewModel extends ViewModel {
                 summary.totalIncome - summary.totalExpense,
                 recentTransactions,
                 categoryNamesById,
-                pickMostUsedBudget(categoryNamesById, periodStart, periodEnd))));
+                pickMostUsedBudget(categoryNamesById, periodStart, periodEnd),
+                calculateOverallBudgetRemaining(periodStart, periodEnd))));
     }
 
     //Ngân sách có % đã chi cao nhất trong tháng (bằng nhau thì lấy cái đứng trước); null khi tháng này chưa có ngân sách
@@ -143,6 +144,18 @@ public class HomeViewModel extends ViewModel {
             }
         }
         return mostUsed;
+    }
+
+    //Còn lại của ngân sách tổng = hạn mức - đã chi, âm khi chi vượt; null khi tháng này chưa có ngân sách tổng
+    //(getActiveByPeriod đã xếp ngân sách tổng lên đầu và AddBudgetUseCase không cho tạo 2 ngân sách tổng, nên lấy cái đầu tiên có categoryId == null)
+    private Long calculateOverallBudgetRemaining(long periodStart, long periodEnd) {
+        for (BudgetEntity budget : latestBudgets) {
+            if (budget.categoryId == null) {
+                BudgetProgress progress = calculateBudgetProgressUseCase.execute(budget, latestTransactions, periodStart, periodEnd);
+                return budget.limitAmount - progress.spentAmount;
+            }
+        }
+        return null;
     }
 
     private HomeUiModel.BudgetLevel levelOf(int percent, int thresholdPercent) {

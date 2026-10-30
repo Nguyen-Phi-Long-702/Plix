@@ -39,10 +39,12 @@ public class HomeUiModel {
     public final Map<String, String> categoryNamesById;
     @Nullable
     public final BudgetSummary budget; //null khi tháng này chưa có ngân sách nào
+    @Nullable
+    public final Long overallBudgetRemaining; //hạn mức ngân sách tổng - đã chi; âm khi vượt; null khi tháng này chưa có ngân sách tổng
 
     public HomeUiModel(String monthLabel, long totalIncome, long totalExpense, long netBalance,
                        List<TransactionEntity> recentTransactions, Map<String, String> categoryNamesById,
-                       @Nullable BudgetSummary budget) {
+                       @Nullable BudgetSummary budget, @Nullable Long overallBudgetRemaining) {
         this.monthLabel = monthLabel;
         this.totalIncome = totalIncome;
         this.totalExpense = totalExpense;
@@ -50,5 +52,6 @@ public class HomeUiModel {
         this.recentTransactions = recentTransactions;
         this.categoryNamesById = categoryNamesById;
         this.budget = budget;
+        this.overallBudgetRemaining = overallBudgetRemaining;
     }
 }
