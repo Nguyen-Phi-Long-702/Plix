@@ -322,7 +322,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Thu vs Chi"
+                            android:text="Thu vs Chi (tháng)"
                             android:textAppearance="@style/TextAppearance.Plix.Label" />
 
                         <LinearLayout
