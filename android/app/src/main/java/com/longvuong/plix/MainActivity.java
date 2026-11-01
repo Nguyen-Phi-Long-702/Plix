@@ -101,6 +101,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //Mở lại app khi đã có phiên đăng nhập lưu sẵn: vào thẳng màn hình chính, không bắt đăng nhập lại (AUTH-08)
+        //savedInstanceState != null nghĩa là hệ thống đang khôi phục màn hình (xoay máy...): NavController tự giữ vị trí cũ, không điều hướng lại
+        if (savedInstanceState == null && authManager.isLoggedIn()) {
+            navController.navigate(
+                    R.id.mainGraph,
+                    null,
+                    new NavOptions.Builder().setPopUpTo(R.id.authGraph, true).build());
+        }
         requestNotificationPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 granted -> notificationHelper.onPermissionRequestHandled());

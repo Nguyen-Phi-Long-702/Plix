@@ -58,6 +58,11 @@ public class AuthManager {
         //Retrofit client gọi backend của dự án — dùng chung cho mọi ApiService phía backend (Health, Ai, ...)
         OkHttpClient backendClient = new OkHttpClient.Builder().addInterceptor(new AuthInterceptor(this)).authenticator(new AuthAuthenticator(this)).build();
         this.backendRetrofit = new Retrofit.Builder().baseUrl(BuildConfig.BACKEND_BASE_URL).client(backendClient).addConverterFactory(GsonConverterFactory.create()).build();
+        //Mở lại app (tiến trình mới): nạp phiên đăng nhập đã lưu mã hoá vào RAM để người dùng không phải đăng nhập lại (AUTH-08)
+        if (encryptedTokenStore != null) {
+            this.accessToken = encryptedTokenStore.getAccessToken();
+            this.refreshToken = encryptedTokenStore.getRefreshToken();
+        }
     }
     public Retrofit getBackendRetrofit() {
         return backendRetrofit;
