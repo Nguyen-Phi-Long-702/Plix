@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,6 +15,7 @@ import androidx.navigation.Navigation;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.longvuong.plix.BuildConfig;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.notification.NotificationHelper;
 import com.longvuong.plix.domain.usecase.auth.LogoutOutcome;
@@ -31,9 +33,12 @@ public class SettingsFragment extends Fragment {
     private SettingsViewModel viewModel;
     private SwitchMaterial switchQuickAdd;
     private SwitchMaterial switchGeminiFallback;
+    private View groupNotificationPermission;
     private View bannerNotificationPermission;
     private View rowRetrainAi;
-    private View badgeNewCorrections;
+    private TextView badgeNewCorrections;
+    private View textRetrainHint;
+    private View imageRetrainChevron;
     private ProgressBar progressRetrainAi;
     private View rowLogout;
     private ProgressBar progressLogout;
@@ -49,8 +54,16 @@ public class SettingsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
 
+        TextView textAccountEmail = view.findViewById(R.id.textAccountEmail);
+        String email = viewModel.getCurrentUserEmail();
+        if (email != null) {
+            textAccountEmail.setText(email);
+        }
+
         View rowCategoryManagement = view.findViewById(R.id.rowCategoryManagement);
         rowCategoryManagement.setOnClickListener(v -> Navigation.findNavController(view).navigate(R.id.action_settingsFragment_to_categoryManagementFragment));
+        TextView textCategorySummary = view.findViewById(R.id.textCategorySummary);
+        viewModel.getCategorySummary().observe(getViewLifecycleOwner(), summary -> textCategorySummary.setText(summary));
 
         switchQuickAdd = view.findViewById(R.id.switchQuickAdd);
         switchGeminiFallback = view.findViewById(R.id.switchGeminiFallback);
@@ -61,11 +74,14 @@ public class SettingsFragment extends Fragment {
         viewModel.getQuickAddEnabled().observe(getViewLifecycleOwner(), enabled -> switchQuickAdd.setChecked(enabled));
         viewModel.getGeminiFallbackEnabled().observe(getViewLifecycleOwner(), enabled -> switchGeminiFallback.setChecked(enabled));
 
+        groupNotificationPermission = view.findViewById(R.id.groupNotificationPermission);
         bannerNotificationPermission = view.findViewById(R.id.bannerNotificationPermission);
         bannerNotificationPermission.setOnClickListener(v -> startActivity(notificationHelper.buildNotificationSettingsIntent()));
 
         rowRetrainAi = view.findViewById(R.id.rowRetrainAi);
         badgeNewCorrections = view.findViewById(R.id.badgeNewCorrections);
+        textRetrainHint = view.findViewById(R.id.textRetrainHint);
+        imageRetrainChevron = view.findViewById(R.id.imageRetrainChevron);
         progressRetrainAi = view.findViewById(R.id.progressRetrainAi);
         rowRetrainAi.setOnClickListener(v -> viewModel.retrain());
         viewModel.getRetrainState().observe(getViewLifecycleOwner(), this::renderRetrainState);
@@ -74,26 +90,42 @@ public class SettingsFragment extends Fragment {
         progressLogout = view.findViewById(R.id.progressLogout);
         rowLogout.setOnClickListener(v -> viewModel.logout());
         viewModel.getLogoutState().observe(getViewLifecycleOwner(), this::renderLogoutState);
+
+        TextView textAppVersion = view.findViewById(R.id.textAppVersion);
+        textAppVersion.setText("Plix v" + BuildConfig.VERSION_NAME);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        bannerNotificationPermission.setVisibility(notificationHelper.isNotificationPermissionGranted() ? View.GONE : View.VISIBLE);
-        badgeNewCorrections.setVisibility(viewModel.shouldShowNewCorrectionsBadge() ? View.VISIBLE : View.GONE);
+        groupNotificationPermission.setVisibility(notificationHelper.isNotificationPermissionGranted() ? View.GONE : View.VISIBLE);
+        showNewCorrectionsBadge(viewModel.shouldShowNewCorrectionsBadge());
+    }
+
+    //Huy hiệu "N mới" và dòng gợi ý huấn luyện lại hiện cùng nhau khi đã đủ số lần sửa gợi ý
+    private void showNewCorrectionsBadge(boolean show) {
+        if (show) {
+            badgeNewCorrections.setText(viewModel.getPendingCorrectionCount() + " mới");
+        }
+        int visibility = show ? View.VISIBLE : View.GONE;
+        badgeNewCorrections.setVisibility(visibility);
+        textRetrainHint.setVisibility(visibility);
     }
 
     private void renderRetrainState(UiState<Void> state) {
         if (state instanceof UiState.Loading) {
             rowRetrainAi.setEnabled(false);
+            imageRetrainChevron.setVisibility(View.GONE);
             progressRetrainAi.setVisibility(View.VISIBLE);
         } else if (state instanceof UiState.Success) {
             rowRetrainAi.setEnabled(true);
+            imageRetrainChevron.setVisibility(View.VISIBLE);
             progressRetrainAi.setVisibility(View.GONE);
-            badgeNewCorrections.setVisibility(View.GONE);
+            showNewCorrectionsBadge(false);
             Snackbar.make(requireActivity().findViewById(android.R.id.content), "Đã cập nhật mô hình gợi ý AI", Snackbar.LENGTH_SHORT).show();
         } else if (state instanceof UiState.Error) {
             rowRetrainAi.setEnabled(true);
+            imageRetrainChevron.setVisibility(View.VISIBLE);
             progressRetrainAi.setVisibility(View.GONE);
             String message = ((UiState.Error<Void>) state).message;
             Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();

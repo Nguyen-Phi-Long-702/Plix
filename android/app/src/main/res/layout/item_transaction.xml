@@ -3,56 +3,84 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:background="?attr/selectableItemBackground"
+    android:background="@color/surface"
     android:clickable="true"
     android:focusable="true"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
+    android:foreground="?attr/selectableItemBackground"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/spacing_16"
+        android:paddingVertical="@dimen/spacing_12">
+
+        <FrameLayout
+            android:id="@+id/layoutCategoryIcon"
+            android:layout_width="@dimen/category_icon_box_size"
+            android:layout_height="@dimen/category_icon_box_size">
+
+            <ImageView
+                android:id="@+id/imageCategoryIcon"
+                android:layout_width="@dimen/category_icon_size"
+                android:layout_height="@dimen/category_icon_size"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                tools:src="@drawable/ic_food" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_12"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textCategoryName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+                tools:text="Ăn uống" />
+
+            <TextView
+                android:id="@+id/textNoteAndMethod"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_4"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textAppearance="@style/TextAppearance.Plix.Caption"
+                tools:text="Ăn trưa văn phòng · Tiền mặt" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/textCategoryName"
+            android:id="@+id/textAmount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            tools:text="Ăn uống" />
+            android:layout_marginStart="@dimen/spacing_12"
+            android:textAppearance="@style/TextAppearance.Plix.SectionTitle"
+            tools:text="-50.000đ" />
 
-        <TextView
-            android:id="@+id/textNoteAndDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textSize="13sp"
-            android:textColor="@android:color/darker_gray"
-            tools:text="Ăn trưa văn phòng · 14/09/2026" />
-
+        <ImageButton
+            android:id="@+id/buttonDeleteTransaction"
+            android:layout_width="@dimen/transaction_row_action_size"
+            android:layout_height="@dimen/transaction_row_action_size"
+            android:layout_marginStart="@dimen/spacing_4"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Xoá giao dịch"
+            android:padding="@dimen/spacing_12"
+            android:src="@drawable/ic_trash"
+            android:tint="@color/text_tertiary" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/textAmount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        tools:text="-50.000đ" />
-
-    <ImageButton
-        android:id="@+id/buttonDeleteTransaction"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="4dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Xoá giao dịch"
-        android:padding="12dp"
-        android:src="@drawable/ic_delete"
-        android:tint="@android:color/darker_gray" />
-
+    <View
+        android:id="@+id/viewDivider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/transaction_row_divider_height"
+        android:background="@color/border" />
 </LinearLayout>

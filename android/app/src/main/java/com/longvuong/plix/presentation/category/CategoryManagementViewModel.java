@@ -26,7 +26,7 @@ public class CategoryManagementViewModel extends ViewModel {
     private final CategoryUseCase categoryUseCase;
     private final FormValidator formValidator;
     private final AuthManager authManager;
-    private final MediatorLiveData<UiState<List<CategoryEntity>>> categoryListState = new MediatorLiveData<>();
+    private final MediatorLiveData<UiState<List<CategoryListItem>>> categoryListState = new MediatorLiveData<>();
     private final MutableLiveData<UiState<Void>> formState = new MutableLiveData<>();
     @Inject
     public CategoryManagementViewModel(CategoryRepository categoryRepository,
@@ -41,12 +41,12 @@ public class CategoryManagementViewModel extends ViewModel {
             if (categories == null || categories.isEmpty()) {
                 categoryListState.setValue(new UiState.Empty<>());
             } else {
-                categoryListState.setValue(new UiState.Success<>(categories));
+                categoryListState.setValue(new UiState.Success<>(CategoryGrouper.group(categories)));
             }
         });
     }
 
-    public LiveData<UiState<List<CategoryEntity>>> getCategoryListState() {
+    public LiveData<UiState<List<CategoryListItem>>> getCategoryListState() {
         return categoryListState;
     }
 

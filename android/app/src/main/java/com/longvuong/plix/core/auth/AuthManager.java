@@ -1,13 +1,13 @@
 package com.longvuong.plix.core.auth;
 
 import com.longvuong.plix.BuildConfig;
+import com.longvuong.plix.core.error.ErrorMapper;
+import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.remote.api.AuthApiService;
-import com.longvuong.plix.data.remote.api.HealthApiService;
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
 import com.longvuong.plix.data.remote.dto.LoginRequestDto;
 import com.longvuong.plix.data.remote.dto.RefreshRequestDto;
 import com.longvuong.plix.data.remote.dto.SignupRequestDto;
-import com.longvuong.plix.data.remote.dto.WhoamiResponseDto;
 
 import java.io.IOException;
 
@@ -37,12 +37,10 @@ public class AuthManager {
         void onSuccess(AuthResponseDto response);
         void onError(String message);
     }
-    public interface TestCallback {
-        void onResult(String message);
-    }
     private final AuthApiService authApiService;
-    private final HealthApiService healthApiService;
     private final EncryptedTokenStore encryptedTokenStore;
+    //ErrorMapper không có trạng thái nên tạo trực tiếp, giữ nguyên constructor mà các test đang dùng (new AuthManager(null))
+    private final ErrorMapper errorMapper = new ErrorMapper();
     private final Retrofit backendRetrofit;
     //Lưu tạm access, refresh token trong RAM
     private volatile String accessToken;
@@ -60,7 +58,11 @@ public class AuthManager {
         //Retrofit client gọi backend của dự án — dùng chung cho mọi ApiService phía backend (Health, Ai, ...)
         OkHttpClient backendClient = new OkHttpClient.Builder().addInterceptor(new AuthInterceptor(this)).authenticator(new AuthAuthenticator(this)).build();
         this.backendRetrofit = new Retrofit.Builder().baseUrl(BuildConfig.BACKEND_BASE_URL).client(backendClient).addConverterFactory(GsonConverterFactory.create()).build();
-        this.healthApiService = backendRetrofit.create(HealthApiService.class);
+        //Mở lại app (tiến trình mới): nạp phiên đăng nhập đã lưu mã hoá vào RAM để người dùng không phải đăng nhập lại (AUTH-08)
+        if (encryptedTokenStore != null) {
+            this.accessToken = encryptedTokenStore.getAccessToken();
+            this.refreshToken = encryptedTokenStore.getRefreshToken();
+        }
     }
     public Retrofit getBackendRetrofit() {
         return backendRetrofit;
@@ -89,36 +91,6 @@ public class AuthManager {
         }
     }
 
-    public void testBackendAuth(TestCallback callback) {
-        healthApiService.health().enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, retrofit2.Response<Void> healthResponse) {
-                if (!healthResponse.isSuccessful()) {
-                    callback.onResult("health thất bại (mã lỗi " + healthResponse.code() + ")");
-                    return;
-                }
-                healthApiService.whoami().enqueue(new Callback<WhoamiResponseDto>() {
-                    @Override
-                    public void onResponse(Call<WhoamiResponseDto> call, retrofit2.Response<WhoamiResponseDto> whoamiResponse) {
-                        if (whoamiResponse.isSuccessful() && whoamiResponse.body() != null) {
-                            callback.onResult("health ok. whoami ok, user_id = " + whoamiResponse.body().userId);
-                        } else {
-                            callback.onResult("health ok. whoami thất bại(mã lỗi " + whoamiResponse.code() + ")");
-                        }
-                    }
-                    @Override
-                    public void onFailure(Call<WhoamiResponseDto> call, Throwable t) {
-                        callback.onResult("health ok. Không gọi được whoami: " + t.getMessage());
-                    }
-                });
-            }
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                callback.onResult("Không gọi được health: " + t.getMessage());
-            }
-        });
-    }
-
     public String getAccessToken() {
         return accessToken;
     }
@@ -128,7 +100,19 @@ public class AuthManager {
 
     @Nullable
     public String getCurrentUserId() {
-        String token = this.accessToken;
+        return readAccessTokenClaim("sub");
+    }
+
+    //Email của tài khoản đang đăng nhập, lấy từ claim "email" trong access token (Supabase có đưa claim này vào JWT)
+    @Nullable
+    public String getCurrentUserEmail() {
+        return readAccessTokenClaim("email");
+    }
+
+    //Giải mã phần payload của access token rồi đọc 1 claim dạng chuỗi; không có token, token sai định dạng hoặc thiếu claim thì trả về null
+    @Nullable
+    private String readAccessTokenClaim(String claimName) {
+        String token = getAccessToken();
         if (token == null) {
             return null;
         }
@@ -140,7 +124,7 @@ public class AuthManager {
             byte[] decodedPayload = Base64.getUrlDecoder().decode(parts[1]);
             JsonObject payload = JsonParser.parseString(
                     new String(decodedPayload, StandardCharsets.UTF_8)).getAsJsonObject();
-            return payload.has("sub") ? payload.get("sub").getAsString() : null;
+            return payload.has(claimName) ? payload.get(claimName).getAsString() : null;
         } catch (Exception e) {
             return null;
         }
@@ -195,12 +179,25 @@ public class AuthManager {
                 saveSession(response.body());
                 callback.onSuccess(response.body());
             } else {
-                callback.onError("Thất bại(mã lỗi " + response.code() + ")");
+                Result<Void> result = errorMapper.mapAuthHttpCode(response.code(), readErrorBodySafely(response));
+                callback.onError(((Result.Error<Void>) result).message);
             }
         }
         @Override
         public void onFailure(Call<AuthResponseDto> call, Throwable t) {
-            callback.onError("không thể kết nối đến supabase: " + t.getMessage());
+            Result<Void> result = errorMapper.mapThrowable(t);
+            callback.onError(((Result.Error<Void>) result).message);
+        }
+        @Nullable
+        private String readErrorBodySafely(retrofit2.Response<?> response) {
+            if (response.errorBody() == null) {
+                return null;
+            }
+            try {
+                return response.errorBody().string();
+            } catch (IOException e) {
+                return null;
+            }
         }
     }
     private static class ApiKeyInterceptor implements Interceptor {

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Kích thước riêng của các thành phần dùng chung (khung chờ, FAB mở rộng); thang khoảng cách và bo góc dùng token trong dimens.xml -->
+    <dimen name="fab_mini_dot_size">38dp</dimen>
+    <dimen name="fab_mini_icon_size">18dp</dimen>
+    <dimen name="skeleton_icon_size">42dp</dimen>
+    <dimen name="skeleton_line_title_height">13dp</dimen>
+    <dimen name="skeleton_line_subtitle_height">11dp</dimen>
+    <dimen name="skeleton_card_title_height">14dp</dimen>
+    <dimen name="skeleton_card_bar_height">9dp</dimen>
+
+    <!-- Dòng giao dịch, chip lọc và danh sách có FAB -->
+    <dimen name="category_icon_box_size">42dp</dimen>
+    <dimen name="category_icon_size">21dp</dimen>
+    <dimen name="category_icon_radius">12dp</dimen>
+    <dimen name="transaction_row_divider_height">1dp</dimen>
+    <dimen name="transaction_row_action_size">48dp</dimen>
+    <dimen name="filter_chip_icon_size">14dp</dimen>
+    <dimen name="transaction_list_padding_bottom">88dp</dimen>
+    <!-- Màn Nhập nhanh (AI): dòng giao dịch đề xuất, icon trong nút và khung thông báo -->
+    <dimen name="suggestion_icon_box_size">36dp</dimen>
+    <dimen name="inline_icon_size">18dp</dimen>
+    <!-- Màn Quản lý danh mục: chữ nhãn "Hệ thống"/"Của bạn" (nhỏ hơn mọi mức chữ trong thang chữ) -->
+    <dimen name="category_badge_text_size">10.5sp</dimen>
+    <!-- Màn Cài đặt: ô icon của dòng tài khoản (lớn hơn ô icon của các dòng mục) -->
+    <dimen name="settings_avatar_box_size">44dp</dimen>
+    <dimen name="settings_avatar_icon_size">20dp</dimen>
+    <!-- Khối trạng thái rỗng dùng chung: ô icon cố định theo thiết kế -->
+    <dimen name="empty_icon_box_size">64dp</dimen>
+</resources>

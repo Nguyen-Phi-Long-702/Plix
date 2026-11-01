@@ -4,28 +4,32 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.longvuong.plix.R;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
+import com.longvuong.plix.presentation.common.SnackbarHelper;
 import com.longvuong.plix.presentation.common.UiState;
 
 import java.util.List;
@@ -37,8 +41,8 @@ public class CategoryManagementFragment extends Fragment {
     private CategoryManagementViewModel viewModel;
     private CategoryAdapter adapter;
     private RecyclerView recyclerCategories;
-    private ProgressBar progressLoading;
-    private TextView textEmptyState;
+    private View layoutStateLoading;
+    private View viewEmptyState;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -49,9 +53,8 @@ public class CategoryManagementFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(CategoryManagementViewModel.class);
         recyclerCategories = view.findViewById(R.id.recyclerCategories);
-        progressLoading = view.findViewById(R.id.progressLoading);
-        textEmptyState = view.findViewById(R.id.textEmptyState);
-        FloatingActionButton fabAddCategory = view.findViewById(R.id.fabAddCategory);
+        layoutStateLoading = view.findViewById(R.id.layoutStateLoading);
+        viewEmptyState = view.findViewById(R.id.viewEmptyState);
         adapter = new CategoryAdapter(new CategoryAdapter.OnCategoryActionListener() {
             @Override
             public void onEditCategory(CategoryEntity category) {
@@ -65,25 +68,42 @@ public class CategoryManagementFragment extends Fragment {
         recyclerCategories.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerCategories.setAdapter(adapter);
 
-        fabAddCategory.setOnClickListener(v -> showCategoryDialog(null));
+        setupAddMenu();
 
         viewModel.getCategoryListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getFormState().observe(getViewLifecycleOwner(), this::renderFormState);
     }
-    private void renderState(UiState<List<CategoryEntity>> state) {
-        progressLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
-        textEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
+    private void setupAddMenu() {
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_category_management, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                if (menuItem.getItemId() == R.id.action_add_category) {
+                    showCategoryDialog(null);
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    private void renderState(UiState<List<CategoryListItem>> state) {
+        layoutStateLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
+        viewEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
         recyclerCategories.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
 
         if (state instanceof UiState.Success) {
-            adapter.submitList(((UiState.Success<List<CategoryEntity>>) state).data,
+            adapter.submitList(((UiState.Success<List<CategoryListItem>>) state).data,
                     viewModel.getCurrentUserId());
         }
     }
     private void renderFormState(UiState<Void> state) {
         if (state instanceof UiState.Success) {
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    "Đã lưu danh mục", Snackbar.LENGTH_SHORT).show();
+            SnackbarHelper.showSuccess(this, "Đã lưu danh mục");
         } else if (state instanceof UiState.Error) {
             Snackbar.make(requireActivity().findViewById(android.R.id.content),
                     ((UiState.Error<Void>) state).message, Snackbar.LENGTH_LONG).show();
@@ -120,7 +140,7 @@ public class CategoryManagementFragment extends Fragment {
                         ? ((Result.Error<Void>) validation).message : null);
             }
         });
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(isEdit ? "Sửa danh mục" : "Danh mục mới")
                 .setView(dialogView)
                 .setNegativeButton("Huỷ", null)
@@ -148,7 +168,7 @@ public class CategoryManagementFragment extends Fragment {
         dialog.show();
     }
     private void showDeleteConfirmationDialog(CategoryEntity category) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Xoá danh mục \"" + category.name + "\"?")
                 .setMessage("Các giao dịch đang dùng danh mục này sẽ hiển thị \"Danh mục không xác định\". " + "Hành động này không thể hoàn tác.")
                 .setNegativeButton("Huỷ", null)

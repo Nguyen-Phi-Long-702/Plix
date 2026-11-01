@@ -4,98 +4,201 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/toggleScope"
-            android:layout_width="match_parent"
+        android:padding="@dimen/spacing_16">
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:singleSelection="true"
-            app:selectionRequired="true">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnScopeOverall"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:minHeight="48dp"
-                android:text="Ngân sách tổng" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnScopeCategory"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:minHeight="48dp"
-                android:text="Theo danh mục" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
+            android:text="Kỳ ngân sách"
+            android:textAppearance="@style/TextAppearance.Plix.Label" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/inputLayoutPeriod"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Plix.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:hint="Kỳ ngân sách"
+            android:layout_marginTop="@dimen/spacing_8"
+            app:endIconContentDescription="Chọn tháng"
+            app:endIconDrawable="@drawable/ic_chev_down"
             app:endIconMode="custom"
-            app:endIconDrawable="@drawable/ic_calendar"
-            app:endIconContentDescription="Chọn tháng">
+            app:endIconTint="@color/text_tertiary"
+            app:hintEnabled="false"
+            app:startIconDrawable="@drawable/ic_calendar"
+            app:startIconTint="@color/text_tertiary">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editPeriod"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:focusable="false"
-                android:cursorVisible="false" />
+                android:cursorVisible="false"
+                android:focusable="false" />
         </com.google.android.material.textfield.TextInputLayout>
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/inputLayoutCategory"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_16"
+            android:text="Phạm vi"
+            android:textAppearance="@style/TextAppearance.Plix.Label" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleScope"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:hint="Danh mục"
-            android:visibility="gone"
-            app:startIconDrawable="@drawable/ic_tag"
-            app:startIconContentDescription="Danh mục">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/editCategory"
+            android:layout_marginTop="@dimen/spacing_8"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnScopeOverall"
+                style="@style/Widget.Plix.Button.Segment.Primary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ngân sách tổng" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnScopeCategory"
+                style="@style/Widget.Plix.Button.Segment.Primary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Theo danh mục" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:text="Chỉ được tạo 1 ngân sách tổng cho mỗi tháng (kiểm tra trước khi lưu)."
+            android:textAppearance="@style/TextAppearance.Plix.Hint" />
+
+        <LinearLayout
+            android:id="@+id/layoutCategoryField"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_16"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Danh mục áp dụng"
+                android:textAppearance="@style/TextAppearance.Plix.Label" />
+
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="@dimen/spacing_8"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupCategory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleLine="true"
+                    app:singleSelection="true" />
+            </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/textCategoryError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_4"
+                android:text="Vui lòng chọn danh mục cho ngân sách"
+                android:textAppearance="@style/TextAppearance.Plix.Hint"
+                android:textColor="@color/budget_progress_danger"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_16"
+            android:text="Hạn mức"
+            android:textAppearance="@style/TextAppearance.Plix.Label" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/inputLayoutLimitAmount"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            style="@style/Widget.Plix.TextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Hạn mức (đ)">
+            android:layout_marginTop="@dimen/spacing_8"
+            app:helperText="Phải lớn hơn 0, tối đa 999.999.999.999đ (999 tỷ)."
+            app:hintEnabled="false"
+            app:suffixText="đ"
+            app:suffixTextAppearance="@style/TextAppearance.Plix.AmountSuffix">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editLimitAmount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number" />
+                android:digits="0123456789."
+                android:hint="0"
+                android:imeOptions="actionDone"
+                android:inputType="number"
+                android:maxLength="17"
+                android:textAppearance="@style/TextAppearance.Plix.AmountInput" />
         </com.google.android.material.textfield.TextInputLayout>
+
         <TextView
             android:id="@+id/textThresholdLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ngưỡng cảnh báo: 80%" />
+            android:layout_marginTop="@dimen/spacing_16"
+            android:text="Ngưỡng cảnh báo — 80%"
+            android:textAppearance="@style/TextAppearance.Plix.Label" />
+
         <com.google.android.material.slider.Slider
             android:id="@+id/sliderThreshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
             android:stepSize="1"
             android:value="80"
             android:valueFrom="50"
             android:valueTo="100" />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/buttonSave"
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="Lưu ngân sách" />
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="50%"
+                android:textAppearance="@style/TextAppearance.Plix.Hint" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100%"
+                android:textAppearance="@style/TextAppearance.Plix.Hint" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_8"
+            android:text="Khi chi tiêu vượt ngưỡng, thanh tiến độ sẽ đổi màu và Plix gửi thông báo nhắc bạn."
+            android:textAppearance="@style/TextAppearance.Plix.Hint" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonSave"
+            style="@style/Widget.Plix.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_24"
+            android:text="Lưu ngân sách"
+            app:icon="@drawable/ic_check"
+            app:iconGravity="textStart" />
     </LinearLayout>
 </ScrollView>

@@ -1,12 +1,16 @@
 package com.longvuong.plix.presentation.settings;
 
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.longvuong.plix.core.auth.AuthManager;
 import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.data.repository.AiRepository;
+import com.longvuong.plix.data.repository.CategoryRepository;
 import com.longvuong.plix.domain.usecase.auth.LogoutOutcome;
 import com.longvuong.plix.domain.usecase.auth.LogoutUseCase;
 import com.longvuong.plix.presentation.common.UiState;
@@ -23,15 +27,32 @@ public class SettingsViewModel extends ViewModel {
     private final AiRepository aiRepository;
     private final LogoutUseCase logoutUseCase;
     private final AppExecutors appExecutors;
+    private final AuthManager authManager;
+    private final MediatorLiveData<String> categorySummary = new MediatorLiveData<>();
     private final MutableLiveData<UiState<Void>> retrainState = new MutableLiveData<>();
     //Empty = chưa làm gì, Loading = đang kiểm tra/đồng bộ lần cuối/xoá, Success = đã đăng xuất hoặc cần xác nhận, Error = lỗi bất ngờ
     private final MutableLiveData<UiState<LogoutOutcome>> logoutState = new MutableLiveData<>(new UiState.Empty<>());
 
     @Inject
-    public SettingsViewModel(AiRepository aiRepository, LogoutUseCase logoutUseCase, AppExecutors appExecutors) {
+    public SettingsViewModel(AiRepository aiRepository, LogoutUseCase logoutUseCase, AppExecutors appExecutors,
+                             AuthManager authManager, CategoryRepository categoryRepository) {
         this.aiRepository = aiRepository;
         this.logoutUseCase = logoutUseCase;
         this.appExecutors = appExecutors;
+        this.authManager = authManager;
+        categorySummary.addSource(categoryRepository.getActiveCategories(),
+                categories -> categorySummary.setValue(CategorySummaryText.of(categories)));
+    }
+
+    //Email hiển thị ở dòng tài khoản đầu màn Cài đặt
+    @Nullable
+    public String getCurrentUserEmail() {
+        return authManager.getCurrentUserEmail();
+    }
+
+    //Dòng phụ của "Quản lý danh mục", vd "12 hệ thống · 2 của bạn"
+    public LiveData<String> getCategorySummary() {
+        return categorySummary;
     }
 
     public LiveData<UiState<Void>> getRetrainState() {
@@ -65,6 +86,11 @@ public class SettingsViewModel extends ViewModel {
 
     public boolean shouldShowNewCorrectionsBadge() {
         return aiRepository.getPendingCorrectionCount() >= NEW_CORRECTIONS_BADGE_THRESHOLD;
+    }
+
+    //Số lần sửa gợi ý mới, hiển thị trên huy hiệu "N mới"
+    public int getPendingCorrectionCount() {
+        return aiRepository.getPendingCorrectionCount();
     }
 
     //Người dùng nhấn "Đăng xuất": kiểm tra pending -> huỷ/chờ SyncWorker -> đồng bộ lần cuối (tối đa 10 giây)

@@ -21,4 +21,5 @@ public interface TransactionRepository {
     void getAllOnce(RepositoryCallback<List<TransactionEntity>> callback);
 
     void countPendingByCategory(String userId, String categoryId, String excludeTransactionId, RepositoryCallback<Integer> callback);
+    void findSimilar(long amount, String categoryId, long dayStart, long dayEnd, RepositoryCallback<TransactionEntity> callback);
 }

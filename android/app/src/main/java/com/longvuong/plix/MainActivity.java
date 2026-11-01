@@ -7,11 +7,13 @@ import android.os.Build;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -39,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<String> requestNotificationPermissionLauncher;
     private NavController navController;
+    private AppBarConfiguration appBarConfiguration;
     private BottomNavigationView bottomNavigationView;
 
     @Override
@@ -56,11 +59,25 @@ public class MainActivity extends AppCompatActivity {
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         navController = navHostFragment.getNavController();
 
+        //4 màn gốc (4 tab; tab Ngân sách & Mục tiêu có 2 màn con) và màn Đăng nhập: không hiện nút quay lại
+        appBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.loginFragment,
+                R.id.homeFragment,
+                R.id.budgetGoalFragment,
+                R.id.goalListFragment,
+                R.id.analyticsFragment,
+                R.id.settingsFragment).build();
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         NavigationUI.setupWithNavController(bottomNavigationView, navController);
 
-        //Chỉ hiện thanh điều hướng dưới khi đang ở trong mainGraph
-        navController.addOnDestinationChangedListener((controller, destination, arguments) -> updateBottomNavVisibility(destination));
+        //Chỉ hiện thanh điều hướng dưới khi đang ở trong mainGraph; màn Đăng nhập không có ActionBar (theo thiết kế)
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            updateBottomNavVisibility(destination);
+            updateActionBarVisibility(destination);
+            updateBudgetGoalTabTitle(destination);
+        });
 
         SyncStatusViewModel syncStatusViewModel = new ViewModelProvider(this).get(SyncStatusViewModel.class);
         addMenuProvider(new SyncIndicatorMenuProvider(this, syncStatusViewModel, navController));
@@ -84,6 +101,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //Mở lại app khi đã có phiên đăng nhập lưu sẵn: vào thẳng màn hình chính, không bắt đăng nhập lại (AUTH-08)
+        //savedInstanceState != null nghĩa là hệ thống đang khôi phục màn hình (xoay máy...): NavController tự giữ vị trí cũ, không điều hướng lại
+        if (savedInstanceState == null && authManager.isLoggedIn()) {
+            navController.navigate(
+                    R.id.mainGraph,
+                    null,
+                    new NavOptions.Builder().setPopUpTo(R.id.authGraph, true).build());
+        }
         requestNotificationPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 granted -> notificationHelper.onPermissionRequestHandled());
@@ -93,6 +118,34 @@ public class MainActivity extends AppCompatActivity {
                 requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         });
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp();
+    }
+
+    private void updateActionBarVisibility(NavDestination destination) {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null) {
+            return;
+        }
+        if (destination.getId() == R.id.loginFragment) {
+            actionBar.hide();
+        } else {
+            actionBar.show();
+        }
+    }
+
+    //Theo thiết kế: nhãn tab dưới là "Ngân sách" hoặc "Mục tiêu" tuỳ tab con đang mở; ở các màn khác giữ nguyên nhãn lần trước
+    private void updateBudgetGoalTabTitle(NavDestination destination) {
+        int id = destination.getId();
+        boolean inGoal = id == R.id.goalListFragment || id == R.id.addEditGoalFragment;
+        boolean inBudget = id == R.id.budgetGoalFragment || id == R.id.addEditBudgetFragment;
+        if (!inGoal && !inBudget) {
+            return;
+        }
+        bottomNavigationView.getMenu().findItem(R.id.budgetGoalGraph).setTitle(inGoal ? "Mục tiêu" : "Ngân sách");
     }
 
     private void updateBottomNavVisibility(NavDestination destination) {

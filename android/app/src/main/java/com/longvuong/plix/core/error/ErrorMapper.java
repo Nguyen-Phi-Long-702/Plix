@@ -59,6 +59,27 @@ public class ErrorMapper {
         return new Result.Error<>(ErrorType.UNKNOWN, "Đã xảy ra lỗi không xác định (mã " + code + ")", null);
     }
 
+    //Lỗi trả về từ Supabase Auth khi đăng nhập/đăng ký: nhận diện theo error_code của Supabase; lỗi lạ dùng câu chung, không đưa mã HTTP ra giao diện
+    public <T> Result<T> mapAuthHttpCode(int code, @Nullable String errorBodyJson) {
+        String errorCode = extractServerErrorCode(errorBodyJson);
+        if ("invalid_credentials".equals(errorCode)) {
+            return new Result.Error<>(ErrorType.AUTH, "Email hoặc mật khẩu không đúng", null);
+        }
+        if ("user_already_exists".equals(errorCode) || "email_exists".equals(errorCode)) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Email này đã được đăng ký", null);
+        }
+        if ("weak_password".equals(errorCode)) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Mật khẩu quá yếu, vui lòng chọn mật khẩu mạnh hơn", null);
+        }
+        if ("email_address_invalid".equals(errorCode)) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Email không hợp lệ", null);
+        }
+        if (code == 429 || code >= 500) {
+            return mapHttpCode(code, errorBodyJson);
+        }
+        return new Result.Error<>(ErrorType.UNKNOWN, "Không thực hiện được, vui lòng kiểm tra lại thông tin", null);
+    }
+
     //Dịch vụ dự phòng Gemini lỗi, quá thời gian chờ hoặc hết hạn mức: không phải lỗi kỹ thuật, chỉ cần báo người dùng nhập tay
     public <T> Result<T> mapAiBusy() {
         return new Result.Error<>(ErrorType.AI_BUSY, AI_BUSY_MESSAGE, null);

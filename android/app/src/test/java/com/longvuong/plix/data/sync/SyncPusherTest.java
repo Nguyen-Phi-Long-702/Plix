@@ -12,7 +12,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import okhttp3.Request;
 import okio.Timeout;
@@ -91,7 +93,80 @@ public class SyncPusherTest {
 
         assertEquals(0, fakeTransactionDao.getPendingSync(USER_ID).size());
     }
+    //Ghi lại id của từng lô được đẩy lên, để kiểm tra kích thước lô và không id nào bị gửi trùng hoặc bị bỏ sót
+    private TransactionSyncableEntity recordingTable(List<List<String>> sentBatches) {
+        return new TransactionSyncableEntity(fakeTransactionDao, null) {
+            @Override
+            public Call<SyncPushResponseDto> push(List<TransactionSyncRecordDto> records) {
+                List<String> ids = new ArrayList<>();
+                for (TransactionSyncRecordDto record : records) {
+                    ids.add(record.id);
+                }
+                sentBatches.add(ids);
+                return new FakeCall(successFor(records), null);
+            }
+        };
+    }
 
+    private static Set<String> distinctIds(List<List<String>> batches) {
+        Set<String> ids = new HashSet<>();
+        for (List<String> batch : batches) {
+            ids.addAll(batch);
+        }
+        return ids;
+    }
+
+    @Test
+    public void push_120PendingRecords_sendsBatchesOf50And50And20_eachIdExactlyOnce() throws IOException {
+        insertPendingTransactions(120);
+        List<List<String>> sentBatches = new ArrayList<>();
+
+        syncPusher.push(recordingTable(sentBatches), USER_ID, () -> false);
+
+        assertEquals(3, sentBatches.size());
+        assertEquals(50, sentBatches.get(0).size());
+        assertEquals(50, sentBatches.get(1).size());
+        assertEquals(20, sentBatches.get(2).size());
+        assertEquals(120, distinctIds(sentBatches).size()); //tổng 120 lượt gửi mà có đúng 120 id khác nhau: không id nào gửi trùng, không id nào bị bỏ sót
+        assertEquals(0, fakeTransactionDao.getPendingSync(USER_ID).size());
+
+        List<List<String>> secondRunBatches = new ArrayList<>();
+        syncPusher.push(recordingTable(secondRunBatches), USER_ID, () -> false);
+        assertEquals(0, secondRunBatches.size()); //lượt đồng bộ sau không gửi lại bản ghi nào
+    }
+
+    @Test
+    public void push_exactly100PendingRecords_sendsTwoFullBatchesAndNoEmptyBatch() throws IOException {
+        insertPendingTransactions(100);
+        List<List<String>> sentBatches = new ArrayList<>();
+
+        syncPusher.push(recordingTable(sentBatches), USER_ID, () -> false);
+
+        assertEquals(2, sentBatches.size());
+        assertEquals(50, sentBatches.get(0).size());
+        assertEquals(50, sentBatches.get(1).size());
+        assertEquals(0, fakeTransactionDao.getPendingSync(USER_ID).size());
+    }
+
+    @Test
+    public void push_120PendingNetworkLostOnSecondBatch_retryOnlySendsTheRemaining70() throws IOException {
+        insertPendingTransactions(120);
+        assertThrows(IOException.class, () -> syncPusher.push(tableFailingOnCall(2), USER_ID, () -> false));
+        Set<String> expectedRetryIds = new HashSet<>();
+        for (TransactionEntity entity : fakeTransactionDao.getPendingSync(USER_ID)) {
+            expectedRetryIds.add(entity.id);
+        }
+        assertEquals(70, expectedRetryIds.size()); //lô đầu 50 bản ghi đã synced, còn 70 bản ghi pending
+
+        List<List<String>> retryBatches = new ArrayList<>();
+        syncPusher.push(recordingTable(retryBatches), USER_ID, () -> false);
+
+        assertEquals(2, retryBatches.size());
+        assertEquals(50, retryBatches.get(0).size());
+        assertEquals(20, retryBatches.get(1).size());
+        assertEquals(expectedRetryIds, distinctIds(retryBatches)); //chỉ gửi đúng 70 bản ghi còn lại, không gửi lại 50 bản ghi đã synced
+        assertEquals(0, fakeTransactionDao.getPendingSync(USER_ID).size());
+    }
     //Call giả: trả sẵn kết quả, hoặc ném IOException như khi mất mạng
     private static class FakeCall implements Call<SyncPushResponseDto> {
         private final SyncPushResponseDto body;

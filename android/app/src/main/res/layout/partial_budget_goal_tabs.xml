@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.button.MaterialButtonToggleGroup xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/toggleBudgetGoal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="16dp"
-    app:singleSelection="true"
-    app:selectionRequired="true">
+    android:layout_marginHorizontal="@dimen/spacing_16"
+    android:layout_marginTop="@dimen/spacing_12"
+    android:layout_marginBottom="@dimen/spacing_4"
+    android:background="@drawable/bg_segment"
+    android:orientation="horizontal"
+    android:padding="@dimen/segment_padding">
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnTabBudget"
+        style="@style/Widget.Plix.Button.SegmentTab"
         android:layout_width="0dp"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:minHeight="48dp"
-        android:text="Ngân sách" />
+        android:text="Ngân sách"
+        app:icon="@drawable/ic_wallet" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnTabGoal"
+        style="@style/Widget.Plix.Button.SegmentTab"
         android:layout_width="0dp"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/segment_padding"
         android:layout_weight="1"
-        android:minHeight="48dp"
-        android:text="Mục tiêu" />
-
-</com.google.android.material.button.MaterialButtonToggleGroup>
+        android:text="Mục tiêu"
+        app:icon="@drawable/ic_target" />
+</LinearLayout>

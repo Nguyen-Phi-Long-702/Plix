@@ -114,4 +114,71 @@ public class ErrorMapperTest {
 
         assertEquals(ErrorType.SERVER, ((Result.Error<Object>) result).type);
     }
+
+    @Test
+    public void mapAuthHttpCode_invalidCredentials_returnsFriendlyAuthError() {
+        String body = "{\"code\":400,\"error_code\":\"invalid_credentials\",\"msg\":\"Invalid login credentials\"}";
+
+        Result<Object> result = errorMapper.mapAuthHttpCode(400, body);
+
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.AUTH, error.type);
+        assertEquals("Email hoặc mật khẩu không đúng", error.message);
+    }
+
+    @Test
+    public void mapAuthHttpCode_userAlreadyExists_returnsEmailRegisteredMessage() {
+        String body = "{\"code\":422,\"error_code\":\"user_already_exists\",\"msg\":\"User already registered\"}";
+
+        Result<Object> result = errorMapper.mapAuthHttpCode(422, body);
+
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.VALIDATION, error.type);
+        assertEquals("Email này đã được đăng ký", error.message);
+    }
+
+    @Test
+    public void mapAuthHttpCode_weakPassword_returnsWeakPasswordMessage() {
+        String body = "{\"code\":422,\"error_code\":\"weak_password\",\"msg\":\"Password should be at least 8 characters.\"}";
+
+        Result<Object> result = errorMapper.mapAuthHttpCode(422, body);
+
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.VALIDATION, error.type);
+        assertEquals("Mật khẩu quá yếu, vui lòng chọn mật khẩu mạnh hơn", error.message);
+    }
+
+    @Test
+    public void mapAuthHttpCode_invalidEmail_returnsInvalidEmailMessage() {
+        String body = "{\"code\":400,\"error_code\":\"email_address_invalid\",\"msg\":\"Email address is invalid\"}";
+
+        Result<Object> result = errorMapper.mapAuthHttpCode(400, body);
+
+        assertEquals("Email không hợp lệ", ((Result.Error<Object>) result).message);
+    }
+
+    @Test
+    public void mapAuthHttpCode_429_returnsRetryLaterMessage() {
+        Result<Object> result = errorMapper.mapAuthHttpCode(429, null);
+
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.SERVER, error.type);
+        assertEquals("Vui lòng thử lại sau ít phút", error.message);
+    }
+
+    @Test
+    public void mapAuthHttpCode_500_returnsServerBusyMessage() {
+        Result<Object> result = errorMapper.mapAuthHttpCode(500, null);
+
+        assertEquals("Máy chủ đang bận, thử lại sau", ((Result.Error<Object>) result).message);
+    }
+
+    @Test
+    public void mapAuthHttpCode_unknownError_neverShowsHttpCode() {
+        Result<Object> result = errorMapper.mapAuthHttpCode(422, "{\"code\":422,\"error_code\":\"signup_disabled\"}");
+
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.UNKNOWN, error.type);
+        assertEquals("Không thực hiện được, vui lòng kiểm tra lại thông tin", error.message);
+    }
 }

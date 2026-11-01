@@ -1,20 +1,21 @@
 package com.longvuong.plix.presentation.goal;
 
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.GoalEntity;
 import com.longvuong.plix.domain.usecase.goal.GoalProgress;
-import com.longvuong.plix.domain.usecase.goal.GoalRequiredMonthly;
 import com.longvuong.plix.domain.usecase.goal.GoalStatus;
 
 import java.text.NumberFormat;
@@ -73,8 +74,9 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
         private final TextView textGoalStatusBadge;
         private final TextView textGoalPercent;
         private final ImageButton buttonDeleteGoal;
-        private final ProgressBar progressGoal;
+        private final CircularProgressIndicator progressGoal;
         private final TextView textGoalAmount;
+        private final TextView textGoalDeadline;
         private final TextView textGoalRequiredMonthly;
 
         GoalViewHolder(@NonNull View itemView) {
@@ -85,6 +87,7 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
             buttonDeleteGoal = itemView.findViewById(R.id.buttonDeleteGoal);
             progressGoal = itemView.findViewById(R.id.progressGoal);
             textGoalAmount = itemView.findViewById(R.id.textGoalAmount);
+            textGoalDeadline = itemView.findViewById(R.id.textGoalDeadline);
             textGoalRequiredMonthly = itemView.findViewById(R.id.textGoalRequiredMonthly);
         }
 
@@ -93,57 +96,32 @@ public class GoalAdapter extends RecyclerView.Adapter<GoalAdapter.GoalViewHolder
 
             GoalProgress progress = progressByGoalId.get(goal.id);
             GoalStatus status = progress != null ? progress.status : GoalStatus.ACTIVE;
-            int percent = progress != null ? progress.percent : 0;
+            int percent = progress != null ? Math.max(0, Math.min(progress.percent, 100)) : 0;
 
-            textGoalStatusBadge.setText(statusLabel(status));
-            textGoalStatusBadge.setTextColor(statusColor(status));
+            textGoalStatusBadge.setText(GoalDisplayText.statusLabel(status));
+            textGoalStatusBadge.setTextColor(color(GoalDisplayText.statusTextColorRes(status)));
+            textGoalStatusBadge.setBackgroundTintList(ColorStateList.valueOf(color(GoalDisplayText.statusBackgroundColorRes(status))));
             textGoalPercent.setText(percent + "%");
-            progressGoal.setProgress(Math.max(0, Math.min(percent, 100)));
+            progressGoal.setIndicatorColor(color(percent >= 100 ? R.color.primary : R.color.color_income));
+            progressGoal.setProgressCompat(percent, false);
 
-            textGoalAmount.setText("Đã có " + formatCurrency(goal.currentAmount) + " / " + formatCurrency(goal.targetAmount) + " · Hạn " + formatDate(goal.deadline));
+            textGoalAmount.setText(formatCurrency(goal.currentAmount) + " / " + formatCurrency(goal.targetAmount));
+            textGoalDeadline.setText("Hạn: " + formatDate(goal.deadline));
 
-            textGoalRequiredMonthly.setText(progress != null ? requiredMonthlyLabel(progress.requiredMonthly) : "");
+            if (progress != null) {
+                textGoalRequiredMonthly.setText(GoalDisplayText.requiredMonthlyText(
+                        status, progress.requiredMonthly, goal.currentAmount, goal.targetAmount));
+                textGoalRequiredMonthly.setTextColor(color(GoalDisplayText.requiredMonthlyColorRes(status, progress.requiredMonthly)));
+            } else {
+                textGoalRequiredMonthly.setText("");
+            }
 
             itemView.setOnClickListener(v -> actionListener.onGoalClick(goal));
             buttonDeleteGoal.setOnClickListener(v -> actionListener.onDeleteGoal(goal));
         }
 
-        private String statusLabel(GoalStatus status) {
-            switch (status) {
-                case ACHIEVED:
-                    return "Đã đạt mục tiêu";
-                case EXPIRED:
-                    return "Đã hết hạn";
-                case ACTIVE:
-                default:
-                    return "Đang thực hiện";
-            }
-        }
-
-        private int statusColor(GoalStatus status) {
-            switch (status) {
-                case ACHIEVED:
-                    return ContextCompat.getColor(itemView.getContext(), R.color.color_income);
-                case EXPIRED:
-                    return ContextCompat.getColor(itemView.getContext(), R.color.budget_progress_danger);
-                case ACTIVE:
-                default:
-                    return ContextCompat.getColor(itemView.getContext(), R.color.black);
-            }
-        }
-
-        private String requiredMonthlyLabel(GoalRequiredMonthly requiredMonthly) {
-            switch (requiredMonthly.caseType) {
-                case ACHIEVED:
-                    return "Đã đạt mục tiêu, không cần tiết kiệm thêm";
-                case EXCEEDED:
-                    return "Đã vượt mục tiêu";
-                case DUE_NOW:
-                    return "Đến hạn, cần bổ sung ngay " + formatCurrency(requiredMonthly.monthlyAmount);
-                case NORMAL:
-                default:
-                    return "Cần tiết kiệm " + formatCurrency(requiredMonthly.monthlyAmount) + "/tháng";
-            }
+        private int color(@ColorRes int colorRes) {
+            return ContextCompat.getColor(itemView.getContext(), colorRes);
         }
 
         private String formatCurrency(long amount) {

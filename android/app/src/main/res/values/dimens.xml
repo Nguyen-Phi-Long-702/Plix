@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Thang khoảng cách -->
+    <dimen name="spacing_4">4dp</dimen>
+    <dimen name="spacing_8">8dp</dimen>
+    <dimen name="spacing_12">12dp</dimen>
+    <dimen name="spacing_16">16dp</dimen>
+    <dimen name="spacing_20">20dp</dimen>
+    <dimen name="spacing_24">24dp</dimen>
+    <dimen name="spacing_32">32dp</dimen>
+
+    <!-- Bo góc -->
+    <dimen name="radius_small">8dp</dimen>
+    <dimen name="radius_medium">14dp</dimen>
+    <dimen name="radius_large">20dp</dimen>
+
+    <!-- Vùng chạm tối thiểu (trợ năng) -->
+    <dimen name="touch_target_min">48dp</dimen>
+
+    <!-- Màn Đăng nhập / Đăng ký -->
+    <dimen name="auth_logo_size">72dp</dimen>
+
+    <!-- Màn Home -->
+    <dimen name="home_content_bottom_padding">88dp</dimen>
+    <dimen name="home_category_tile_size">42dp</dimen>
+    <dimen name="home_month_icon_size">14dp</dimen>
+    <dimen name="home_progress_thickness">9dp</dimen>
+
+    <!-- Form Thêm/Sửa giao dịch -->
+    <dimen name="banner_icon_size">18dp</dimen>
+    <dimen name="segment_stroke_width">1.5dp</dimen>
+    <dimen name="ai_box_icon_box_size">30dp</dimen>
+    <dimen name="ai_box_icon_size">16dp</dimen>
+    <dimen name="ai_box_stroke_width">1.5dp</dimen>
+    <dimen name="ai_box_dash_width">6dp</dimen>
+    <dimen name="ai_box_dash_gap">4dp</dimen>
+    <dimen name="sheet_handle_width">36dp</dimen>
+    <dimen name="sheet_handle_height">4dp</dimen>
+    <dimen name="sheet_option_icon_box_size">36dp</dimen>
+    <dimen name="sheet_option_icon_size">18dp</dimen>
+
+    <!-- Màn Ngân sách & Mục tiêu -->
+    <dimen name="segment_radius">12dp</dimen>
+    <dimen name="segment_tab_radius">9dp</dimen>
+    <dimen name="segment_padding">3dp</dimen>
+    <dimen name="segment_tab_icon_size">16dp</dimen>
+    <dimen name="budget_goal_list_padding_bottom">88dp</dimen>
+    <dimen name="budget_icon_box_size">34dp</dimen>
+    <dimen name="budget_warning_icon_size">15dp</dimen>
+    <dimen name="goal_ring_size">56dp</dimen>
+    <dimen name="goal_ring_thickness">6dp</dimen>
+    <dimen name="radius_pill">100dp</dimen>
+
+    <!-- Màn Thống kê -->
+    <dimen name="analytics_pie_size">110dp</dimen>
+    <dimen name="analytics_bar_chart_height">140dp</dimen>
+    <dimen name="analytics_sparkline_width">118dp</dimen>
+    <dimen name="analytics_sparkline_height">38dp</dimen>
+    <dimen name="analytics_legend_dot_size">10dp</dimen>
+    <dimen name="analytics_legend_dot_radius">3dp</dimen>
+    <dimen name="analytics_skeleton_chart_height">180dp</dimen>
+    <dimen name="analytics_skeleton_summary_height">140dp</dimen>
+    <dimen name="analytics_forecast_icon_size">14dp</dimen>
+    <dimen name="analytics_total_icon_size">12dp</dimen>
+</resources>

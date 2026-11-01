@@ -124,6 +124,6 @@ public class SyncIndicatorMenuProvider implements MenuProvider {
                 message = "Không có lỗi đồng bộ. Các thay đổi trên máy sẽ tự được gửi lên máy chủ khi có mạng.";
                 break;
         }
-        new MaterialAlertDialogBuilder(activity).setTitle("Trạng thái đồng bộ").setMessage(message).setPositiveButton("Đóng", null).show();
+        new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_Plix_MaterialAlertDialog).setTitle("Trạng thái đồng bộ").setMessage(message).setPositiveButton("Đóng", null).show();
     }
 }

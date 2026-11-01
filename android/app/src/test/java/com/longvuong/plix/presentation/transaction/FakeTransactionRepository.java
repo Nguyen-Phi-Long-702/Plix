@@ -1,6 +1,7 @@
 package com.longvuong.plix.presentation.transaction;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.core.error.Result;
@@ -18,8 +19,13 @@ class FakeTransactionRepository implements TransactionRepository {
     TransactionEntity lastInserted;
     final List<TransactionEntity> insertedEntities = new ArrayList<>();
     Result<Integer> countPendingResult = new Result.Success<>(0);
+    Result<TransactionEntity> findSimilarResult = new Result.Success<>(null);
+    int findSimilarCallCount;
 
     private final Map<String, TransactionEntity> storage = new HashMap<>();
+
+    //Chưa có giá trị = Room chưa trả dữ liệu lần đầu; test đặt danh sách (đã sắp theo ngày giảm dần) bằng setValue
+    final MutableLiveData<List<TransactionEntity>> allTransactions = new MutableLiveData<>();
 
     void seed(TransactionEntity entity) {
         storage.put(entity.id, entity);
@@ -27,7 +33,7 @@ class FakeTransactionRepository implements TransactionRepository {
 
     @Override
     public LiveData<List<TransactionEntity>> getAll() {
-        return null;
+        return allTransactions;
     }
 
     @Override
@@ -63,5 +69,10 @@ class FakeTransactionRepository implements TransactionRepository {
     @Override
     public void countPendingByCategory(String userId, String categoryId, String excludeTransactionId, RepositoryCallback<Integer> callback) {
         callback.onResult(countPendingResult);
+    }
+    @Override
+    public void findSimilar(long amount, String categoryId, long dayStart, long dayEnd, RepositoryCallback<TransactionEntity> callback) {
+        findSimilarCallCount++;
+        callback.onResult(findSimilarResult);
     }
 }

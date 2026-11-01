@@ -4,12 +4,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavOptions;
@@ -17,11 +15,14 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.BudgetEntity;
+import com.longvuong.plix.presentation.common.EmptyStateView;
 import com.longvuong.plix.presentation.common.UiState;
 
 import java.text.NumberFormat;
@@ -36,10 +37,12 @@ public class BudgetListFragment extends Fragment {
     private BudgetListViewModel viewModel;
     private BudgetAdapter adapter;
     private RecyclerView recyclerBudgets;
-    private ProgressBar progressLoading;
-    private TextView textEmptyState;
+    private View layoutStateLoading;
+    private EmptyStateView viewEmptyState;
+    private TextView textBudgetPeriod;
     private FloatingActionButton fabAddBudget;
-    private MaterialButtonToggleGroup toggleBudgetGoal;
+    private MaterialButton btnTabBudget;
+    private MaterialButton btnTabGoal;
 
     @Nullable
     @Override
@@ -55,6 +58,8 @@ public class BudgetListFragment extends Fragment {
         setupTabToggle();
         setupRecyclerView();
         fabAddBudget.setOnClickListener(v -> navigateToAddBudget());
+        viewEmptyState.setOnActionClickListener(v -> navigateToAddBudget());
+        textBudgetPeriod.setText(viewModel.getPeriodLabel());
         viewModel.getBudgetListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getProgressByBudgetId().observe(getViewLifecycleOwner(), adapter::submitProgress);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(), adapter::submitCategories);
@@ -63,18 +68,17 @@ public class BudgetListFragment extends Fragment {
 
     private void bindViews(View view) {
         recyclerBudgets = view.findViewById(R.id.recyclerBudgets);
-        progressLoading = view.findViewById(R.id.progressLoading);
-        textEmptyState = view.findViewById(R.id.textEmptyState);
+        layoutStateLoading = view.findViewById(R.id.layoutStateLoading);
+        viewEmptyState = view.findViewById(R.id.viewEmptyState);
+        textBudgetPeriod = view.findViewById(R.id.textBudgetPeriod);
         fabAddBudget = view.findViewById(R.id.fabAddBudget);
-        toggleBudgetGoal = view.findViewById(R.id.toggleBudgetGoal);
+        btnTabBudget = view.findViewById(R.id.btnTabBudget);
+        btnTabGoal = view.findViewById(R.id.btnTabGoal);
     }
 
     private void setupTabToggle() {
-        toggleBudgetGoal.check(R.id.btnTabBudget);
-        toggleBudgetGoal.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked || checkedId != R.id.btnTabGoal) {
-                return;
-            }
+        btnTabBudget.setSelected(true);
+        btnTabGoal.setOnClickListener(v -> {
             NavOptions options = new NavOptions.Builder()
                     .setPopUpTo(R.id.budgetGoalFragment, true)
                     .build();
@@ -114,7 +118,7 @@ public class BudgetListFragment extends Fragment {
         String message = "Ngân sách kỳ Tháng " + period.getMonthValue() + " / " + period.getYear()
                 + " với hạn mức " + formatCurrency(budget.limitAmount)
                 + " sẽ bị xoá. Các giao dịch liên quan không bị ảnh hưởng. Hành động này không thể hoàn tác.";
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Xoá ngân sách \"" + displayName + "\"?")
                 .setMessage(message)
                 .setNegativeButton("Huỷ", null)
@@ -138,15 +142,13 @@ public class BudgetListFragment extends Fragment {
     }
 
     private void renderState(UiState<List<BudgetEntity>> state) {
-        progressLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
-        textEmptyState.setVisibility((state instanceof UiState.Empty || state instanceof UiState.Error) ? View.VISIBLE : View.GONE);
-        recyclerBudgets.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
-        if (state instanceof UiState.Success) {
+        layoutStateLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
+        viewEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
+        boolean hasData = state instanceof UiState.Success;
+        recyclerBudgets.setVisibility(hasData ? View.VISIBLE : View.GONE);
+        textBudgetPeriod.setVisibility(hasData ? View.VISIBLE : View.GONE);
+        if (hasData) {
             adapter.submitList(((UiState.Success<List<BudgetEntity>>) state).data);
-        } else if (state instanceof UiState.Error) {
-            textEmptyState.setText(((UiState.Error<List<BudgetEntity>>) state).message);
-        } else if (state instanceof UiState.Empty) {
-            textEmptyState.setText("Chưa có ngân sách — tạo ngân sách đầu tiên");
         }
     }
 }

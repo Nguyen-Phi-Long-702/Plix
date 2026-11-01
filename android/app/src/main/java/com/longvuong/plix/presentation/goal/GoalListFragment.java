@@ -4,12 +4,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavOptions;
@@ -17,8 +14,11 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.longvuong.plix.presentation.common.EmptyStateView;
 import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.GoalEntity;
@@ -33,10 +33,11 @@ public class GoalListFragment extends Fragment {
     private GoalListViewModel viewModel;
     private GoalAdapter adapter;
     private RecyclerView recyclerGoals;
-    private ProgressBar progressLoading;
-    private TextView textEmptyState;
+    private View layoutStateLoading;
+    private EmptyStateView viewEmptyState;
     private FloatingActionButton fabAddGoal;
-    private MaterialButtonToggleGroup toggleBudgetGoal;
+    private MaterialButton btnTabBudget;
+    private MaterialButton btnTabGoal;
 
     @Nullable
     @Override
@@ -52,6 +53,7 @@ public class GoalListFragment extends Fragment {
         setupTabToggle();
         setupRecyclerView();
         fabAddGoal.setOnClickListener(v -> navigateToAddGoal());
+        viewEmptyState.setOnActionClickListener(v -> navigateToAddGoal());
         viewModel.getGoalListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getProgressByGoalId().observe(getViewLifecycleOwner(), adapter::submitProgress);
         viewModel.getDeleteState().observe(getViewLifecycleOwner(), this::renderDeleteState);
@@ -59,18 +61,16 @@ public class GoalListFragment extends Fragment {
 
     private void bindViews(View view) {
         recyclerGoals = view.findViewById(R.id.recyclerGoals);
-        progressLoading = view.findViewById(R.id.progressLoading);
-        textEmptyState = view.findViewById(R.id.textEmptyState);
+        layoutStateLoading = view.findViewById(R.id.layoutStateLoading);
+        viewEmptyState = view.findViewById(R.id.viewEmptyState);
         fabAddGoal = view.findViewById(R.id.fabAddGoal);
-        toggleBudgetGoal = view.findViewById(R.id.toggleBudgetGoal);
+        btnTabBudget = view.findViewById(R.id.btnTabBudget);
+        btnTabGoal = view.findViewById(R.id.btnTabGoal);
     }
 
     private void setupTabToggle() {
-        toggleBudgetGoal.check(R.id.btnTabGoal);
-        toggleBudgetGoal.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked || checkedId != R.id.btnTabBudget) {
-                return;
-            }
+        btnTabGoal.setSelected(true);
+        btnTabBudget.setOnClickListener(v -> {
             NavOptions options = new NavOptions.Builder().setPopUpTo(R.id.goalListFragment, true).build();
             Navigation.findNavController(requireView()).navigate(R.id.action_goalListFragment_to_budgetGoalFragment, null, options);
         });
@@ -103,7 +103,7 @@ public class GoalListFragment extends Fragment {
     }
 
     private void showDeleteConfirmationDialog(GoalEntity goal) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Xoá mục tiêu \"" + goal.name + "\"?")
                 .setMessage("Hành động này không thể hoàn tác.")
                 .setNegativeButton("Huỷ", null)
@@ -112,15 +112,12 @@ public class GoalListFragment extends Fragment {
     }
 
     private void renderState(UiState<List<GoalEntity>> state) {
-        progressLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
-        textEmptyState.setVisibility((state instanceof UiState.Empty || state instanceof UiState.Error) ? View.VISIBLE : View.GONE);
-        recyclerGoals.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
-        if (state instanceof UiState.Success) {
+        layoutStateLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
+        viewEmptyState.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
+        boolean hasData = state instanceof UiState.Success;
+        recyclerGoals.setVisibility(hasData ? View.VISIBLE : View.GONE);
+        if (hasData) {
             adapter.submitList(((UiState.Success<List<GoalEntity>>) state).data);
-        } else if (state instanceof UiState.Error) {
-            textEmptyState.setText(((UiState.Error<List<GoalEntity>>) state).message);
-        } else if (state instanceof UiState.Empty) {
-            textEmptyState.setText("Chưa có mục tiêu tiết kiệm — tạo mục tiêu đầu tiên");
         }
     }
 

@@ -369,7 +369,71 @@ public class AppDatabaseTest {
         assertTrue(onlyElement(database.goalDao().getPendingSync("user-1")).isDeleted);
         assertTrue(onlyElement(database.correctionDao().getPendingSync("user-1")).isDeleted);
     }
+    private static final long SIMILAR_DAY_START = 1_000_000L;
+    private static final long SIMILAR_DAY_END = 2_000_000L; //đầu ngày kế tiếp, không thuộc khoảng
 
+    private TransactionEntity similarCandidate(String id, long amount, String categoryId, long occurredAt, boolean isDeleted) {
+        TransactionEntity entity = new TransactionEntity();
+        entity.id = id;
+        entity.userId = "user-1";
+        entity.amount = amount;
+        entity.type = "expense";
+        entity.categoryId = categoryId;
+        entity.occurredAt = occurredAt;
+        entity.updatedAt = occurredAt;
+        entity.syncStatus = "pending";
+        entity.isDeleted = isDeleted;
+        return entity;
+    }
+
+    @Test
+    public void transaction_findSimilar_sameAmountCategoryAndDay_returnsThatTransaction() {
+        database.transactionDao().insert(similarCandidate("tx-similar", 45000, "sys_an_uong", SIMILAR_DAY_START + 500_000L, false));
+
+        TransactionEntity found = database.transactionDao().findSimilar(45000, "sys_an_uong", SIMILAR_DAY_START, SIMILAR_DAY_END);
+
+        assertNotNull(found);
+        assertEquals("tx-similar", found.id);
+    }
+
+    @Test
+    public void transaction_findSimilar_differentAmountOrCategory_returnsNull() {
+        database.transactionDao().insert(similarCandidate("tx-similar", 45000, "sys_an_uong", SIMILAR_DAY_START + 500_000L, false));
+
+        assertNull(database.transactionDao().findSimilar(46000, "sys_an_uong", SIMILAR_DAY_START, SIMILAR_DAY_END));
+        assertNull(database.transactionDao().findSimilar(45000, "sys_di_chuyen", SIMILAR_DAY_START, SIMILAR_DAY_END));
+    }
+
+    @Test
+    public void transaction_findSimilar_dayRangeIncludesStartButExcludesEnd() {
+        database.transactionDao().insert(similarCandidate("tx-at-start", 1000, "sys_an_uong", SIMILAR_DAY_START, false));
+        database.transactionDao().insert(similarCandidate("tx-at-end", 2000, "sys_an_uong", SIMILAR_DAY_END, false));
+        database.transactionDao().insert(similarCandidate("tx-before-start", 3000, "sys_an_uong", SIMILAR_DAY_START - 1, false));
+
+        TransactionEntity atStart = database.transactionDao().findSimilar(1000, "sys_an_uong", SIMILAR_DAY_START, SIMILAR_DAY_END);
+        assertNotNull(atStart);
+        assertEquals("tx-at-start", atStart.id);
+        assertNull(database.transactionDao().findSimilar(2000, "sys_an_uong", SIMILAR_DAY_START, SIMILAR_DAY_END));
+        assertNull(database.transactionDao().findSimilar(3000, "sys_an_uong", SIMILAR_DAY_START, SIMILAR_DAY_END));
+    }
+
+    @Test
+    public void transaction_findSimilar_softDeletedTransaction_isIgnored() {
+        database.transactionDao().insert(similarCandidate("tx-deleted", 45000, "sys_an_uong", SIMILAR_DAY_START + 500_000L, true));
+
+        assertNull(database.transactionDao().findSimilar(45000, "sys_an_uong", SIMILAR_DAY_START, SIMILAR_DAY_END));
+    }
+
+    @Test
+    public void transaction_findSimilar_severalMatches_returnsLatestOne() {
+        database.transactionDao().insert(similarCandidate("tx-early", 45000, "sys_an_uong", SIMILAR_DAY_START + 100_000L, false));
+        database.transactionDao().insert(similarCandidate("tx-late", 45000, "sys_an_uong", SIMILAR_DAY_START + 900_000L, false));
+
+        TransactionEntity found = database.transactionDao().findSimilar(45000, "sys_an_uong", SIMILAR_DAY_START, SIMILAR_DAY_END);
+
+        assertNotNull(found);
+        assertEquals("tx-late", found.id);
+    }
     private <T> T onlyElement(List<T> list) {
         assertEquals(1, list.size());
         return list.get(0);

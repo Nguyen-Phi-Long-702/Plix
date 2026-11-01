@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/touch_target_min"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/spacing_8">
+
+    <FrameLayout
+        android:layout_width="@dimen/sheet_option_icon_box_size"
+        android:layout_height="@dimen/sheet_option_icon_box_size"
+        android:background="@drawable/bg_sheet_option_icon">
+
+        <ImageView
+            android:id="@+id/imagePaymentIcon"
+            android:layout_width="@dimen/sheet_option_icon_size"
+            android:layout_height="@dimen/sheet_option_icon_size"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            app:tint="@color/text_secondary" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/textPaymentLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_12"
+        android:layout_weight="1"
+        android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+    <ImageView
+        android:id="@+id/imagePaymentCheck"
+        android:layout_width="@dimen/sheet_option_icon_size"
+        android:layout_height="@dimen/sheet_option_icon_size"
+        android:contentDescription="Đang chọn"
+        android:src="@drawable/ic_check"
+        android:visibility="invisible"
+        app:tint="@color/primary" />
+</LinearLayout>
