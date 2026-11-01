@@ -91,7 +91,7 @@ Ngoại lệ (đã xem từng chỗ):
 | B5 | Thấp | Bản ghi bị server `rejected` được Android giữ `pending` và đẩy lại mỗi lượt đồng bộ (`SyncPusher.java:65-66`). | Kế hoạch chưa có yêu cầu xử lý riêng; để sau. |
 | B6 | Thấp | Thư viện `logging-interceptor` (`build.gradle.kts:79`) không được dùng trong mã. | Xoá khi dọn dependency. |
 | B7 | Thấp | Chuyển dữ liệu giữa hai máy (Android 12 trở lên) do `data_extraction_rules.xml` quyết định; file này vẫn là bản mẫu mặc định và chưa kiểm tra ảnh hưởng của `allowBackup="false"` lên việc này. | Kiểm tra khi có thời gian dự phòng. |
-| B8 | Thấp | `backend/docs/ngay51-ket-qua-regression-va-ban-release.md` mục 3 còn 5 ô `<ĐẠT/KHÔNG ĐẠT>` và dòng 37 chưa điền. | Long điền kết quả thật. |
+| B8 | Thấp | `backend/docs/ngay51-ket-qua-regression-va-ban-release.md` mục 3 còn 5 ô `<ĐẠT/KHÔNG ĐẠT>` và dòng 37 chưa điền. | Đã xử lý ở Ngày 53: Long điền kết quả thật. |
 
 ## 7. Known Limitations (bảo mật)
 

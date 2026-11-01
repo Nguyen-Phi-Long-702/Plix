@@ -24,16 +24,16 @@ Năm nhóm Danh mục, Thống kê, Giao dịch định kỳ, Ngân sách, Mục
 
 | Bước | Nội dung | Kết quả |
 |---|---|---|
-| C1 | Đăng nhập | <ĐẠT/KHÔNG ĐẠT> |
-| C2 | Thêm giao dịch (45.000, "cà phê test R8") | <ĐẠT/KHÔNG ĐẠT> |
-| C3 | Đồng bộ (icon hết quay, dòng có trên bảng `transactions`) | <ĐẠT/KHÔNG ĐẠT> |
-| C4 | Gợi ý phân loại ("cà phê") | <ĐẠT/KHÔNG ĐẠT> |
-| C5 | Mở màn Thống kê | <ĐẠT/KHÔNG ĐẠT> |
+| C1 | Đăng nhập | ĐẠT |
+| C2 | Thêm giao dịch (45.000, "cà phê test R8") | ĐẠT |
+| C3 | Đồng bộ (icon hết quay, dòng có trên bảng `transactions`) | ĐẠT |
+| C4 | Gợi ý phân loại ("cà phê") | ĐẠT |
+| C5 | Mở màn Thống kê | ĐẠT |
 
 ## 4. Lỗi phát hiện và cách sửa
 
 Lần chạy `connectedDebugAndroidTest` đầu tiên (chạy ngay sau unit test, emulator đang chịu tải) có 1/25 test lỗi: `TransactionListPerformanceTest.transactionList_5000Rows_sortedListUnder100ms`, trung vị 179.5 ms so với mục tiêu < 100 ms. Test lọc theo danh mục + khoảng ngày (cũng gọi `getAll()` trên 5.000 dòng) vẫn đạt trong cùng lượt chạy. Không sửa code, không đổi ngưỡng. Chạy lại bộ 25 test khi máy yên: 25/25 đạt.
 
-<Các lỗi khác ở luồng release (nếu có): Không có>
+Các lỗi khác ở luồng release: Không có.
 
 Lưu ý: bản release ký tạm bằng khoá debug chỉ để chạy thử; cấu hình ký chính thức làm ở Ngày 57.
