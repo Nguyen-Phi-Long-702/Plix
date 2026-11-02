@@ -172,3 +172,158 @@ sequenceDiagram
 ```
 
 Nguồn code: `SyncScheduler`, `SyncWorker`, `SyncPusher`, `SyncPuller`, `SyncTables`, `backend/app/routers/sync.py`, `backend/app/services/sync_service.py`.
+
+## 3. Phân loại, sửa gợi ý và huấn luyện lại
+
+### 3.1 Gợi ý danh mục khi gõ ghi chú
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Người dùng
+    participant AF as AddEditTransactionFragment
+    participant VM as AddEditTransactionViewModel
+    participant AR as AiRepositoryImpl
+    participant BE as Backend FastAPI (/api/v1/categorize)
+    participant PG as Postgres (Supabase)
+    participant DB as Room (CategoryDao)
+
+    U->>AF: Gõ ghi chú giao dịch
+    AF->>VM: setNote(note)
+    VM->>VM: scheduleCategorize: huỷ lượt chờ và request cũ
+    alt Ghi chú rỗng
+        VM-->>AF: UiState.Empty (ẩn thẻ gợi ý)
+    else Đang mất mạng
+        VM-->>AF: UiState.Empty (ẩn thẻ gợi ý, không gọi AI)
+    else Có ghi chú và có mạng
+        VM->>VM: Chờ 500 ms không gõ thêm (debounce)
+        VM-->>AF: UiState.Loading
+        VM->>AR: categorize(note)
+        AR->>BE: POST /api/v1/categorize {note}
+        BE->>BE: verify_jwt, user_id lấy từ JWT
+        BE->>PG: load_model_params(user_id)
+        opt Chưa có model riêng hoặc training_sample_count nhỏ hơn 10
+            BE->>PG: load_model_params(seed) để dùng model seed
+        end
+        BE->>BE: NaiveBayesClassifier.predict(note) trả về tên danh mục và confidence
+        BE->>PG: SELECT id FROM categories WHERE chưa xoá AND (hệ thống hoặc của user) AND name khớp
+        alt Gọi thành công
+            BE-->>AR: 200 {category_id, confidence}
+            AR->>DB: categoryDao.getById(category_id)
+            AR-->>VM: Result.Success(CategorySuggestion)
+        else Lỗi máy chủ hoặc mất mạng
+            BE-->>AR: Mã lỗi HTTP hoặc IOException
+            AR-->>VM: Result.Error
+        end
+        alt Ghi chú đã đổi trong lúc chờ phản hồi
+            VM->>VM: Bỏ kết quả cũ
+        else Kết quả là lỗi
+            VM-->>AF: UiState.Error "Không lấy được gợi ý, nhập tay"
+        else confidence nhỏ hơn 0.4
+            VM-->>AF: Success: nhãn "Độ tin cậy thấp" kèm phần trăm, không tự điền danh mục
+        else confidence từ 0.4 trở lên
+            VM-->>AF: Success: thẻ "Tên danh mục" kèm phần trăm
+        end
+    end
+    opt Thẻ gợi ý có độ tin cậy đủ
+        U->>AF: Bấm thẻ gợi ý
+        AF->>VM: applySuggestedCategory() (điền danh mục nếu cùng loại thu/chi)
+    end
+```
+
+Nguồn code: `AddEditTransactionViewModel` (`setNote`, `scheduleCategorize`, `requestCategorize`), `AiRepositoryImpl.categorize`, `backend/app/routers/categorize.py`, `backend/app/services/ai/categorize_service.py`.
+
+### 3.2 Sửa gợi ý (correction)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Người dùng
+    participant AF as AddEditTransactionFragment
+    participant VM as AddEditTransactionViewModel
+    participant AR as AiRepositoryImpl
+    participant BE as Backend FastAPI (/api/v1/correction)
+    participant PG as Postgres (Supabase)
+
+    U->>AF: Chọn danh mục khác với gợi ý của AI, bấm Lưu
+    AF->>VM: save()
+    VM->>VM: Chụp lại suggestedCategoryId (danh mục AI gợi ý) trước khi lưu
+    VM->>VM: Lưu giao dịch vào Room (thêm mới như mục 2.1, hoặc cập nhật nếu đang sửa)
+    Note over VM: Chỉ khi lưu cục bộ thành công mới chạy tiếp
+    VM->>VM: reportCorrectionIfNeeded(transactionId, predicted, corrected)
+    alt Không có gợi ý AI hoặc danh mục cuối trùng gợi ý
+        VM->>VM: Không gửi correction
+    else Danh mục cuối khác gợi ý
+        VM->>AR: submitCorrection(transactionId, predicted, corrected)
+        AR->>BE: POST /api/v1/correction {transaction_id, predicted_category_id, corrected_category_id}
+        BE->>BE: verify_jwt, user_id lấy từ JWT
+        BE->>PG: SELECT user_id FROM transactions WHERE id AND is_deleted = false
+        alt Giao dịch đã có trên Postgres và thuộc về user
+            BE->>PG: INSERT INTO corrections
+            BE-->>AR: 201 {id}
+            AR->>AR: Tăng số correction mới (SharedPreferences) cho huy hiệu ở Cài đặt
+        else Giao dịch chưa có trên Postgres hoặc không thuộc user
+            BE-->>AR: 403
+            AR->>AR: ErrorMapper.mapHttpCode(403)
+        end
+        AR-->>VM: Result
+        Note over VM: ViewModel bỏ qua kết quả (best-effort), không ảnh hưởng giao dịch đã lưu
+    end
+    Note over AR,PG: Giao dịch vừa tạo mới chỉ lên Postgres sau khi SyncWorker đẩy xong (mục 2.2), nên request correction gửi trước thời điểm đó rơi vào nhánh 403
+```
+
+Nguồn code: `AddEditTransactionViewModel` (`save`, `reportCorrectionIfNeeded`), `AiRepositoryImpl.submitCorrection`, `backend/app/routers/correction.py`, `backend/app/services/ai/correction_service.py`.
+
+### 3.3 Huấn luyện lại mô hình
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Người dùng
+    participant SF as SettingsFragment
+    participant VM as SettingsViewModel
+    participant AR as AiRepositoryImpl
+    participant BE as Backend FastAPI (/api/v1/retrain)
+    participant PG as Postgres (Supabase)
+
+    U->>SF: Bấm dòng "Cải thiện gợi ý AI"
+    SF->>VM: retrain()
+    VM-->>SF: retrainState = Loading (khoá dòng, hiện ProgressBar)
+    VM->>AR: retrain(callback)
+    AR->>BE: POST /api/v1/retrain
+    BE->>BE: verify_jwt, user_id lấy từ JWT
+    BE->>PG: check_retrain_cooldown: đọc trained_at trong ai_model_params
+    alt Chưa hết thời gian chờ (mặc định 3600 giây) kể từ lần huấn luyện trước
+        BE-->>AR: 429 "Vui lòng đợi thêm khoảng N phút trước khi huấn luyện lại"
+    else Hết thời gian chờ
+        BE->>PG: Giành khoá: ai_model_params.is_training = true (chỉ khi đang false)
+        alt Đang có lượt huấn luyện khác
+            BE-->>AR: 409 "Đang huấn luyện mô hình, vui lòng thử lại sau"
+        else Giành được khoá
+            BE->>PG: SELECT note, tên danh mục FROM transactions JOIN categories (cả hai chưa xoá)
+            alt Không có dòng nào
+                BE->>PG: Xoá hàng ai_model_params tạm
+                BE-->>AR: 400 "Chưa có giao dịch nào có danh mục trên máy chủ..."
+            else Có dữ liệu
+                BE->>BE: TfidfVectorizer.fit và NaiveBayesClassifier.fit
+                BE->>PG: COUNT corrections chưa xoá, làm training_sample_count
+                BE->>PG: save_model_params (lưu tham số model, trained_at)
+                BE->>PG: load_model_params
+                BE-->>AR: 200 {trained_at, training_sample_count}
+            end
+        end
+    end
+    alt Thành công
+        AR->>AR: Đặt lại số correction mới về 0
+        AR-->>VM: Result.Success
+        VM-->>SF: retrainState = Success
+        SF-->>U: Snackbar "Đã cập nhật mô hình gợi ý AI", ẩn huy hiệu số mới
+    else Lỗi
+        AR->>AR: ErrorMapper.mapHttpCode(code, body)
+        AR-->>VM: Result.Error(message)
+        VM-->>SF: retrainState = Error
+        SF-->>U: Snackbar hiện message lỗi
+    end
+```
+
+Nguồn code: `SettingsFragment`, `SettingsViewModel.retrain`, `AiRepositoryImpl.retrain`, `backend/app/routers/retrain.py`, `backend/app/core/rate_limit.py`, `backend/app/services/ai/retrain_service.py`.
