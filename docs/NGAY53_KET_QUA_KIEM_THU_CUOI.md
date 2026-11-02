@@ -39,7 +39,7 @@ Hai test thuộc `TransactionListPerformanceTest` (ngưỡng < 100 ms, trung v�
 | `transactionList_5000Rows_sortedListUnder100ms` | 263.6352 ms | 206.9291 ms |
 | `transactionList_filterByCategoryAndDateRange_under100ms` | 261.3291 ms | 118.958 ms |
 
-Không sửa mã và không đổi ngưỡng. Lần chạy lại sau khi để máy yên vẫn vượt ngưỡng. [ĐIỀN: nguyên nhân tìm được và kết quả lần chạy tiếp theo]
+Không sửa mã và không đổi ngưỡng. Lần chạy lại sau khi để máy yên vẫn vượt ngưỡng. Nguyên nhân chưa xác định (không điều tra thêm).
 
 ## 4. Lỗi ghi nhận, chưa sửa
 
