@@ -327,3 +327,107 @@ sequenceDiagram
 ```
 
 Nguồn code: `SettingsFragment`, `SettingsViewModel.retrain`, `AiRepositoryImpl.retrain`, `backend/app/routers/retrain.py`, `backend/app/core/rate_limit.py`, `backend/app/services/ai/retrain_service.py`.
+
+## 4. Quản lý danh mục
+
+### 4.1 Thêm, sửa, xoá danh mục (lưu cục bộ trước)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Người dùng
+    participant CF as CategoryManagementFragment
+    participant VM as CategoryManagementViewModel
+    participant UC as CategoryUseCase
+    participant CR as CategoryRepositoryImpl
+    participant DB as Room (CategoryDao)
+    participant SS as SyncScheduler (WorkManager)
+
+    Note over CF,DB: Xem danh sách: ViewModel quan sát getActiveCategories() (Room, is_deleted = 0), CategoryGrouper chia nhóm Chi tiêu và Thu nhập
+    alt Thêm danh mục
+        U->>CF: Bấm dấu + trên thanh tiêu đề, nhập tên, chọn loại, bấm Lưu
+        CF->>VM: validateNameField(name) (sai thì báo lỗi ngay trong hộp thoại)
+        CF->>VM: addCategory(name, type)
+        VM->>VM: Tạo CategoryEntity (id = UUID, userId lấy từ JWT, syncStatus = pending, isDeleted = false)
+        VM->>UC: addCategory(entity, callback)
+        UC->>UC: validateCategoryName
+        UC->>CR: findSystemCategoryByNameAndType(name, type)
+        CR->>DB: Truy vấn danh mục hệ thống cùng tên và loại
+        alt Trùng danh mục hệ thống
+            UC-->>VM: Result.Error "Tên danh mục đã tồn tại trong danh mục hệ thống..."
+        else Không trùng
+            UC->>CR: insert(entity)
+            CR->>DB: categoryDao.insert(entity) (luồng diskIO)
+            CR->>SS: requestSync()
+            CR-->>UC: Result.Success
+        end
+    else Sửa danh mục (chỉ danh mục của chính mình)
+        U->>CF: Bấm nút sửa, đổi tên hoặc loại, bấm Lưu
+        CF->>VM: updateCategory(existing, newName, newType)
+        VM->>VM: Cập nhật name, type, updatedAt = now, syncStatus = pending
+        VM->>UC: updateCategory(entity, userId, callback)
+        UC->>UC: validateCategoryName và validateOwnership (danh mục hệ thống hoặc của người khác bị từ chối)
+        UC->>CR: findSystemCategoryByNameAndType(name, type)
+        alt Trùng danh mục hệ thống
+            UC-->>VM: Result.Error "Tên danh mục đã tồn tại trong danh mục hệ thống..."
+        else Không trùng
+            UC->>CR: update(entity)
+            CR->>DB: categoryDao.update(entity)
+            CR->>SS: requestSync()
+            CR-->>UC: Result.Success
+        end
+    else Xoá danh mục (chỉ danh mục của chính mình)
+        U->>CF: Bấm nút xoá
+        CF-->>U: Hộp thoại xác nhận (giao dịch đang dùng sẽ hiện "Danh mục không xác định")
+        U->>CF: Bấm Xoá
+        CF->>VM: deleteCategory(existing)
+        VM->>UC: deleteCategory(entity, userId, callback)
+        UC->>UC: validateOwnership, rồi isDeleted = true, updatedAt = now, syncStatus = pending
+        UC->>CR: update(entity) (xoá mềm, không xoá hàng khỏi Room)
+        CR->>DB: categoryDao.update(entity)
+        CR->>SS: requestSync()
+        CR-->>UC: Result.Success
+    end
+    UC-->>VM: callback(Result)
+    VM-->>CF: formState = Success hoặc Error
+    CF-->>U: Snackbar "Đã lưu danh mục" hoặc thông báo lỗi
+    DB-->>CF: LiveData phát danh sách mới, danh mục đã xoá biến khỏi danh sách
+```
+
+Nguồn code: `CategoryManagementFragment`, `CategoryManagementViewModel`, `CategoryUseCase`, `FormValidator`, `CategoryRepositoryImpl`, `CategoryGrouper`.
+
+### 4.2 Đồng bộ danh mục
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SS as SyncScheduler (WorkManager)
+    participant SW as SyncWorker
+    participant DB as Room (CategoryDao)
+    participant BE as Backend FastAPI (/api/v1/sync/categories)
+    participant PG as Postgres (Supabase)
+    participant MA as MainActivity
+
+    SS->>SW: doWork() sau 3 giây khi có mạng
+    Note over SW: categories là bảng đầu tiên trong thứ tự đồng bộ (chi tiết chung xem mục 2.2)
+    SW->>DB: getPendingSync(userId) lấy danh mục pending (kể cả bản ghi đã xoá mềm)
+    SW->>BE: POST /api/v1/sync/categories/push {records}
+    BE->>BE: verify_jwt, user_id lấy từ JWT
+    loop Mỗi danh mục trong lô
+        BE->>PG: SELECT user_id FROM categories WHERE id (chủ sở hữu)
+        alt Danh mục hệ thống hoặc của user khác
+            BE->>BE: _can_write_category = false, thêm vào rejected (forbidden)
+        else Danh mục mới hoặc của chính user
+            BE->>PG: INSERT ... ON CONFLICT (id) DO UPDATE ... WHERE cùng user_id AND updated_at cũ < updated_at mới
+        end
+    end
+    BE-->>SW: 200 {upserted_ids, rejected}
+    SW->>DB: markSynced(id, updatedAt) cho các id trong upserted_ids
+    Note over SW,PG: Sau khi đẩy xong cả 5 bảng, SyncWorker kéo categories về từ máy chủ (mục 2.2)
+    SW->>SW: deletedCategoryNotice.checkAfterPull(danh mục vừa kéo về)
+    opt Danh mục vừa bị xoá trên thiết bị khác mà giao dịch trên máy vẫn dùng
+        SW-->>MA: Đặt cờ shouldShow, MainActivity hiện 1 thông báo ngắn
+    end
+```
+
+Nguồn code: `SyncWorker`, `SyncPusher`, `DeletedCategoryNotice`, `MainActivity`, `backend/app/services/sync_service.py` (`_can_write_category`).
