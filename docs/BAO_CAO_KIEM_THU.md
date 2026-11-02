@@ -94,3 +94,96 @@ Cột "Kết quả" lấy từ lần chạy ở Mục 2. Tên từng test nằm 
 | Nhập nhanh và Gemini dự phòng | `test_nl_parser` (38), `test_parse_nl_endpoint` (10), `test_gemini_fallback` (28), `test_validation_service` (26) | 102 | Tách câu và nhận diện số tiền; khớp từ khoá với danh mục; chỉ gọi Gemini khi mọi phần đều dưới ngưỡng tin cậy và `allow_gemini = true`; lỗi gọi Gemini (mã 4xx/5xx, mất mạng, quá thời gian, phản hồi không phải JSON) coi là không khả dụng và trả `AI_BUSY`; kiểm tra schema và danh mục hợp lệ của kết quả Gemini | ĐẠT |
 | Quyền ghi danh mục, giới hạn body, định dạng lỗi | `test_category_service` (5), `test_request_size_limit` (2), `test_validation_error_format` (1) | 8 | Danh mục của chính mình hợp lệ, danh mục hệ thống hoặc của người khác bị từ chối; body trong 1 MB được nhận, vượt 1 MB bị từ chối; lỗi trả về theo định dạng chung | ĐẠT |
 | **Tổng** | | **379** | | |
+
+## 4. Kiểm thử hiệu năng (Master Plan Mục 19.8)
+
+Mục tiêu: Room truy vấn danh sách giao dịch với 5.000 bản ghi dưới 100 ms; Backend phản hồi dưới 3 giây sau khi làm nóng. Chỉ là benchmark cơ bản, không phải load test hay stress test.
+
+### 4.1. Room — Ngày 50
+
+Nguồn: `backend/docs/ngay50-ket-qua-hieu-nang-room.md`. Ngày chạy 19/10/2026, thiết bị Medium Phone (Android 16, emulator), bản debug, test `TransactionListPerformanceTest`.
+
+Cách đo: tạo 5.000 giao dịch giả lập cố định (trải khoảng 21 tháng) trong file Room riêng; mỗi phép đo chạy 1 lần khởi động (không tính) rồi đo 5 lần, lấy trung vị so với 100 ms.
+
+| Phép đo | Số dòng | Nhỏ nhất (ms) | Trung vị (ms) | Lớn nhất (ms) | Mục tiêu | Kết quả |
+|---|---|---|---|---|---|---|
+| `getAll`, sắp xếp mới nhất trước | 5000 | 53.7 | 59.9 | 73.2 | < 100 ms | ĐẠT |
+| `getAll` + lọc danh mục + khoảng ngày | 73 | 60.2 | 71.6 | 75.8 | < 100 ms | ĐẠT |
+| `searchByNote` + sắp xếp | 111 | 5.7 | 6.6 | 6.6 | < 100 ms | ĐẠT |
+
+### 4.2. Room — các lần đo lại
+
+Cột là trung vị (ms). Dấu "—" nghĩa là biên bản không ghi số, chỉ ghi test đạt.
+
+| Lần chạy | Ngày | Thiết bị | `getAll` | `getAll` + lọc | `searchByNote` | Kết quả |
+|---|---|---|---|---|---|---|
+| Ngày 50 | 19/10/2026 | Medium Phone, Android 16 | 59.9 | 71.6 | 6.6 | ĐẠT |
+| Ngày 51, lần đầu | 20/10/2026 | Medium Phone, Android 16 | 179.5 | — | — | KHÔNG ĐẠT (1/25 test; máy đang chịu tải sau unit test) |
+| Ngày 51, chạy lại khi máy yên | 20/10/2026 | Medium Phone, Android 16 | — | — | — | ĐẠT (25/25) |
+| Ngày UI-7 | 31/10/2026 | Pixel 5, Android 11 | — | — | — | ĐẠT (29/29) |
+| Ngày 53, lần 1 | 01/11/2026 | Pixel 5, Android 11 | 263.6 | 261.3 | — | KHÔNG ĐẠT (2/29) |
+| Ngày 53, chạy lại | 01/11/2026 | Pixel 5, Android 11 | 206.9 | 119.0 | — | KHÔNG ĐẠT (2/29) |
+| Ngày 55, lần chạy full (Mục 2) | 02/11/2026 | Pixel 5, Android 11 | 156.2 | 161.7 | 31.5 | KHÔNG ĐẠT (2/3 phép đo; 2/29 test) |
+| Ngày 55, chạy riêng lớp test khi máy yên | 02/11/2026 | Pixel 5, Android 11 | 82.9 | 62.3 | 9.2 | ĐẠT (3/3) |
+
+Số nhỏ nhất và lớn nhất của 2 lần chạy Ngày 55 (ms): lần chạy full `getAll` 152.8 – 196.8, lọc 150.7 – 171.1, `searchByNote` 21.8 – 49.2; lần chạy riêng `getAll` 57.1 – 94.5, lọc 59.4 – 64.8, `searchByNote` 8.0 – 10.2. Nguồn: Logcat tag `PlixPerf` ngày 02/11/2026.
+
+### 4.3. Đánh giá Room
+
+Ở lần đo riêng Ngày 55 (chạy lớp `TransactionListPerformanceTest` khi máy yên) cả 3 phép đo đều dưới 100 ms (trung vị lớn nhất 82.9 ms, lần đo đơn lớn nhất 94.5 ms). Tuy nhiên lần chạy full ngay trước đó cùng ngày vẫn có 2 phép đo vượt ngưỡng (156.2 ms và 161.7 ms). Kết quả dao động giữa các lần chạy và giữa các thiết bị: Ngày 53 có 2 phép đo vượt ngưỡng ở cả hai lần chạy trên Pixel 5. Nguyên nhân chưa được xác định; ở Ngày 51, lần vượt ngưỡng xảy ra khi emulator đang chịu tải và đạt khi chạy lại lúc máy yên. Báo cáo ghi cả lần đạt và lần không đạt; không đổi ngưỡng và không sửa mã để đạt số liệu. Số đo chỉ gồm thời gian truy vấn và dựng danh sách trên emulator, bản debug, chưa gồm thời gian vẽ giao diện, nên kết quả trên máy thật có thể khác.
+
+### 4.4. Backend trên Render — Ngày 50
+
+Nguồn: `backend/docs/ngay50-ket-qua-hieu-nang-backend.md`, script `backend/scripts/benchmark_render_latency.py`, backend https://plix-7jfp.onrender.com.
+
+Cách đo: đăng nhập Supabase lấy JWT thật; gọi `GET /api/v1/health` để làm nóng (không tính); mỗi endpoint gọi 1 lần khởi động rồi đo 5 lần liên tiếp, thời gian tính từ máy chạy script tới khi nhận đủ phản hồi (gồm độ trễ mạng). ĐẠT khi cả 5 lần đo dưới 3 giây.
+
+| Endpoint | Điều kiện đo | Nhỏ nhất (ms) | Trung vị (ms) | Lớn nhất (ms) | Mục tiêu | Kết quả |
+|---|---|---|---|---|---|---|
+| `POST /api/v1/categorize` | ghi chú "cà phê" | 2060.4 | 2099.2 | 2793.2 | < 3000 ms | ĐẠT |
+| `GET /api/v1/sync/transactions/pull` | since=0, limit=500, trả 500 bản ghi | 1669.1 | 1702.3 | 2384.0 | < 3000 ms | ĐẠT |
+
+Lần đo chậm nhất là 2793.2 ms, dưới 3 giây. Backend chỉ đo 1 lần ở Ngày 50 (không chạy lại ở Ngày 55).
+
+### 4.5. Huấn luyện lại mô hình — Ngày 26
+
+Nguồn: `backend/docs/ngay26-xu-ly-van-de-phat-sinh.md` mục 3. Đo bằng `python -m app.services.ai.benchmark_retrain` với 5.000 giao dịch giả lập của 1 người dùng, chạy từ máy cá nhân tới Supabase thật (không đo trên Render): `retrain_user_model` mất 1.037 giây; ước tính 1 lần gọi `/retrain` khoảng 1.470 giây (chưa gồm xác thực JWT); mốc tham chiếu dưới 3 giây: ĐẠT.
+
+## 5. Trường hợp biên đã kiểm thử ở các Sprint trước
+
+Kết quả "ĐẠT" của các dòng có test tự động nghĩa là test đó nằm trong lần chạy ở Mục 2 với 0 lỗi.
+
+### 5.1. Trường hợp biên của Ngày 49
+
+| Mã | Trường hợp biên | Cách kiểm tra và bằng chứng | Kết quả |
+|---|---|---|---|
+| E1 | Bản build không chứa khoá bí mật của máy chủ (chỉ chứa khoá công khai) | Giá trị đưa vào bản build Android (`BuildConfig` trong `android/app/build.gradle.kts`) chỉ gồm `SUPABASE_URL`, `SUPABASE_ANON_KEY` (khoá công khai) và `BACKEND_BASE_URL`. Tìm `service_role`, `SERVICE_KEY`, `sb_secret`, `AIza` bằng `git grep -n -i -E "service_role\|SERVICE_KEY\|sb_secret\|AIza" -- android backend`: không có kết quả (chạy lại Ngày 55 trên commit `ee8d8b1`, cùng kết quả). Ngày 52 đã tìm cùng mẫu trong `android`, `backend`, `docs` với cùng kết quả (`docs/SECURITY_REVIEW.md`, SEC-07) | ĐẠT |
+| E2 | Log không chứa dữ liệu nhạy cảm | Rà soát mã nguồn (SEC-08 trong `docs/SECURITY_REVIEW.md`): Timber chỉ bật ở bản debug; không có `HttpLoggingInterceptor`, `printStackTrace`, `System.out`; backend chỉ ghi `logger.warning` không chứa khoá, câu người dùng hay token; 4 lời gọi `Log.e` chỉ ghi thông báo cố định và exception. Đây là rà soát mã, không phải test tự động | ĐẠT |
+| E3 | Worker giao dịch định kỳ chạy sau khi đã đăng xuất | `RecurringTransactionWorkerTest`: `isEligibleToRun_noSession_returnsFalse`, `isEligibleToRun_hasAccessTokenInMemory_returnsTrue`, `isEligibleToRun_afterRealLogout_returnsFalse`. Worker kiểm tra `AuthManager.isLoggedIn()` và tự huỷ công việc nếu không còn phiên | ĐẠT |
+| E4 | Hơn 100 bản ghi chờ đồng bộ cùng lúc | `SyncPusherTest`: `push_120PendingRecords_sendsBatchesOf50And50And20_eachIdExactlyOnce`, `push_exactly100PendingRecords_sendsTwoFullBatchesAndNoEmptyBatch`, `push_120PendingNetworkLostOnSecondBatch_retryOnlySendsTheRemaining70` | ĐẠT |
+| E5 | Ngân sách của danh mục vừa bị xoá | `BudgetDisplayNameTest.of_categoryDeleted_returnsUnknownCategoryName` (hiển thị "Danh mục không xác định"); phía giao dịch: `DeletedCategoryNoticeTest` (7 test) | ĐẠT |
+
+### 5.2. Trường hợp biên của các Sprint khác
+
+| Mã | Trường hợp biên | Bằng chứng | Kết quả |
+|---|---|---|---|
+| E6 | Ngân sách tại các mốc ngưỡng: 0%, 79%, từ 79% lên 80%, đã ở ngưỡng thì không báo lại, từ 79% lên 100%, đã vượt 100%, hạn mức bằng 0 | `BudgetThresholdCheckerTest` (7 test), `CalculateBudgetProgressUseCaseTest.execute_limitAmountZero_doesNotDivideByZero` | ĐẠT |
+| E7 | Sửa giao dịch làm vượt ngưỡng; kéo dữ liệu về làm vượt ngưỡng; nhiều giao dịch kéo về cùng ngân sách chỉ báo 1 lần | `CheckBudgetThresholdUseCaseTest.checkAfterUpdate_editAmountPushesOverThreshold_notifies`, `checkAfterPull_severalPulledTransactionsSameBudget_notifiesOnlyOnce`, `checkAfterPull_alreadyAboveThresholdBeforePull_doesNotNotifyAgain` | ĐẠT |
+| E8 | Chặn 2 ngân sách tổng cùng tháng; trùng danh mục cùng kỳ | `AddBudgetUseCaseTest.execute_secondOverallBudgetSameMonth_rejectsWithCorrectMessage`, `execute_secondCategoryBudgetSamePeriodAndCategory_rejectsWithCorrectMessage` | ĐẠT |
+| E9 | Giao dịch định kỳ: ngày 31 vào tháng 30 ngày, tháng 2 thường và tháng 2 nhuận; bù 3 tháng bị bỏ lỡ; chạy 2 lần cùng kỳ không trùng | `RecurringTransactionWorkerTest`: `generateMissingInstances_day31RuleInto30DayMonth_clampsToDay30`, `..._day31RuleIntoNonLeapFebruary_clampsToDay28`, `..._day31RuleIntoLeapFebruary_clampsToDay29`, `..._threeConsecutiveMonthsMissed_catchesUpExactlyThreeInstances`, `..._calledTwiceSamePeriod_doesNotCreateDuplicate` | ĐẠT |
+| E10 | Sửa quy tắc định kỳ không đổi giao dịch đã sinh; xoá mẫu không xoá giao dịch đã sinh; xoá giao dịch đã sinh không sinh lại | `RecurringTransactionWorkerTest`: `editingRecurrenceRuleAfterInstanceGenerated_doesNotChangePastInstance`, `softDeletingTemplate_stopsGeneratingNewInstances_butKeepsAlreadyGeneratedOnes`, `deletingGeneratedInstance_doesNotRegenerateOnNextWorkerRun`; trên Room thật: `RecurringTransactionWorkerRoomTest` (3 test) | ĐẠT |
+| E11 | Mục tiêu: đã đạt, đã vượt, đến hạn chưa đạt, chia không hết (làm tròn lên); đã đạt nhưng giảm số tiền thì quay lại đang thực hiện | `CalculateGoalRequiredMonthlyUseCaseTest` (6 test), `GoalStatusUseCaseTest.execute_currentReducedBelowTargetAfterAchieved_returnsActiveAgain` | ĐẠT |
+| E12 | Thống kê: danh sách rỗng hoặc `null`; thu bằng 0 không chia cho 0; loại giao dịch đã xoá | `AggregateAnalyticsUseCaseTest.execute_emptyList_returnsZeroedSummaryWithoutCrash`, `execute_nullList_...`, `execute_savingsRate_zeroIncome_doesNotDivideByZero`, `execute_excludesDeletedTransactions` | ĐẠT |
+| E13 | Kiểm tra dữ liệu nhập tại biên: số tiền 0, âm, vượt giới hạn, đúng giới hạn; ghi chú đúng 500 ký tự và vượt 500; ngày quá xa | `FormValidatorTest` (28 test) | ĐẠT |
+| E14 | Danh mục hệ thống không được sửa/xoá; trùng tên và loại với danh mục hệ thống; tên rỗng; tên dài hơn 50 ký tự; ghi danh mục của người khác qua đồng bộ | `CategoryUseCaseTest` (14 test), `test_category_service` (5 test), `test_sync_categories_write` (7 test); Room: `AppDatabaseTest.category_exactDuplicateNameAndType_throwsConstraintException` | ĐẠT |
+| E15 | Kéo dữ liệu: hơn 500 bản ghi (lặp theo con trỏ), đúng 500 bản ghi, 501 bản ghi cùng thời gian cập nhật (dừng khi 2 lần trả cùng tập), lỗi giữa chừng giữ con trỏ lô trước, lô có bản ghi hỏng không ghi gì | `SyncPullerTest` (23 test), `SyncPullerRoomTest` (2 test) | ĐẠT |
+| E16 | Xung đột: `updated_at` khác nhau thì bản mới thắng ở cả hai thứ tự đến; trùng `updated_at` thì giữ bản đã lưu; bản xoá không hồi sinh; gửi trùng yêu cầu không tạo bản ghi thứ hai | `SyncPullerTest.upsertBatch_differentUpdatedAt_newerWinsInEitherArrivalOrder`, `upsertBatch_sameUpdatedAt_firstStoredVersionWinsAndLaterOneNeverOverwrites`; backend `test_sync_tombstone_duplicate` (7 test) | ĐẠT |
+| E17 | Token hết hạn giữa lúc đồng bộ; nhiều yêu cầu cùng gặp 401 chỉ làm mới token 1 lần | `AuthAuthenticatorTest.authenticate_manyConcurrent401_refreshesExactlyOnce`, `authenticate_expiredToken_refreshesOnceAndRetriesWithNewToken`; backend `test_sync_expired_token` (2 test) | ĐẠT |
+| E18 | Đăng xuất: không còn dữ liệu chờ, còn dữ liệu chờ khi mất mạng, đồng bộ lần cuối quá thời gian chờ, thành công một phần, "Vẫn đăng xuất", huỷ | `LogoutUseCaseTest` (7 test) | ĐẠT |
+| E19 | Token giả mạo trên cả 18 endpoint: hết hạn, ký bằng khoá khác, sai định dạng, thiếu header; token `alg=none`, ký HS256, sửa payload, thiếu `sub` | `test_security_jwt_all_endpoints` (74 test), `test_security_jwt_http` (8 test), `test_security` (3 test) | ĐẠT |
+| E20 | Cách ly người dùng: `user_id` do client gửi không tới database ở cả 18 endpoint; sửa gợi ý trên giao dịch của người khác bị từ chối | `test_security_user_isolation` (27 test), `test_correction_endpoint.test_correction_is_rejected_when_transaction_belongs_to_another_user` | ĐẠT |
+| E21 | Body yêu cầu vượt 1 MB; thiếu trường bắt buộc | `test_request_size_limit` (2 test), `test_validation_error_format` (1 test) | ĐẠT |
+| E22 | `/retrain`: bị chặn trong thời gian chờ (429), cho phép khi đúng bằng thời gian chờ, 2 yêu cầu đồng thời chỉ 1 thành công (409), chưa có dữ liệu huấn luyện (400) | `test_retrain_endpoint` (3), `test_rate_limit` (4), `test_retrain_service` (2), `test_retrain_no_data` (2); demo thật Ngày 27: 2 yêu cầu đồng thời ra `[200, 409]`, gọi ngay sau ra 429 (`backend/docs/ngay27-demo-noi-bo-sprint3.md`) | ĐẠT |
+| E23 | "Chưa đủ dữ liệu": phát hiện bất thường dưới 5 mẫu; dự báo dưới 4 tuần trọn vẹn | `test_anomaly_stats.test_fewer_than_five_samples_is_insufficient_data_for_high_amount`, `test_anomaly_endpoint.test_anomaly_returns_insufficient_data_for_new_category`, `test_forecast.test_three_complete_weeks_is_insufficient_data`, `test_four_complete_weeks_is_enough` | ĐẠT |
+| E24 | Gemini lỗi hoặc hết hạn mức thì trả `AI_BUSY`; công tắc tắt hoặc thiếu trường `allow_gemini` thì không gọi Gemini | `test_gemini_fallback` (28 test), `test_parse_nl_endpoint.test_parse_nl_returns_ai_busy_when_gemini_is_unavailable`, `test_parse_nl_does_not_call_gemini_when_allow_gemini_is_false`, `test_parse_nl_does_not_call_gemini_when_allow_gemini_is_omitted`; Android: `ErrorMapperTest` | ĐẠT |
+| E25 | Giao dịch tương tự: cùng số tiền, danh mục, cùng ngày; bỏ qua giao dịch đã xoá; ranh giới nửa đêm | `FindSimilarTransactionUseCaseTest` (6 test), `AppDatabaseTest.transaction_findSimilar_*` (5 test) | ĐẠT |
