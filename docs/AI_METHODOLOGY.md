@@ -36,10 +36,60 @@ Ghi chú kỹ thuật: hiện `/categorize` gọi trực tiếp `NaiveBayesClass
 - Ngưỡng 0,4: dưới ngưỡng này giao diện hiển thị "Độ tin cậy thấp" và không điền danh mục (để người dùng chọn tay). Đây là ngưỡng do nhóm chọn cho giao diện, không suy ra từ việc hiệu chỉnh xác suất.
 - Ví dụ minh hoạ (model seed hiện tại): có 10 category, mỗi category có cùng số ví dụ nên prior bằng nhau. Một ghi chú không chứa từ nào có trong vocabulary khiến 10 category bằng điểm nhau, confidence ra đúng 0,1000. Con số này chỉ phản ánh việc chia đều, không phản ánh mức chắc chắn.
 
-## 4. Đo chất lượng
+## 4. Đánh giá độ chính xác phân loại danh mục
+
+### 4.1 Cách đo
 
 - Chỉ số: accuracy = số ghi chú được dự đoán đúng danh mục / tổng số ghi chú kiểm tra, tính cả tổng thể lẫn theo từng danh mục.
-- Các lần đo đã thực hiện (đều gọi thật `POST /api/v1/categorize`; lần đo của Vương gọi API trên Render, lần đo của Long gọi backend chạy local bằng uvicorn với Postgres Supabase thật):
+- Tập kiểm tra độc lập: `backend/data/test_categorization_holdout.csv`, gồm 50 ghi chú (5 ghi chú mỗi danh mục, 10 danh mục). Không có ghi chú nào trùng với seed hiện tại (so khớp nguyên ghi chú, bỏ khác biệt chữ hoa, chữ thường và dấu câu).
+- Model được đo: model seed dùng chung (`user_id = '__seed__'`), huấn luyện trên `backend/data/seed_categorization.csv`. Seed hiện tại có 600 dòng, mỗi danh mục 60 dòng.
+- Cách gọi: gọi thật `POST /api/v1/categorize` cho từng ghi chú (backend chạy local bằng uvicorn, kết nối Postgres Supabase thật), đối chiếu tên danh mục trả về qua `GET /api/v1/categories`. Script: `backend/app/services/ai/evaluate_holdout_accuracy.py`. Kết quả từng dòng: `backend/data/day26_holdout_results.csv`.
+
+### 4.2 Kết quả tổng thể
+
+Model hiện tại (seed 600 dòng, đo Ngày 26): **43/50 = 86,0%**. Mốc nhóm đã xác nhận là từ 80% trở lên: đạt.
+
+### 4.3 Độ chính xác theo từng danh mục
+
+Cùng một tập kiểm tra 50 ghi chú, đo trên hai phiên bản seed:
+
+| Danh mục | Seed 500 dòng (Ngày 25) | Seed 600 dòng (Ngày 26) | Tỷ lệ (seed 600 dòng) |
+|---|---|---|---|
+| Di chuyển | 4/5 | 4/5 | 80% |
+| Ăn uống | 3/5 | 4/5 | 80% |
+| Nhu yếu phẩm | 3/5 | 5/5 | 100% |
+| Hoá đơn (điện/nước/internet) | 5/5 | 5/5 | 100% |
+| Giải trí | 3/5 | 4/5 | 80% |
+| Sức khoẻ | 4/5 | 5/5 | 100% |
+| Giáo dục | 5/5 | 5/5 | 100% |
+| Nhà ở/Thuê nhà | 3/5 | 3/5 | 60% |
+| Mua sắm | 3/5 | 3/5 | 60% |
+| Lương | 5/5 | 5/5 | 100% |
+| **Tổng** | **38/50** | **43/50** | **86,0%** |
+
+### 4.4 Nhận xét
+
+- Theo seed 600 dòng: 5 danh mục đúng 5/5 (Nhu yếu phẩm, Hoá đơn (điện/nước/internet), Sức khoẻ, Giáo dục, Lương); 3 danh mục đúng 4/5 (Di chuyển, Ăn uống, Giải trí); 2 danh mục đúng 3/5 (Nhà ở/Thuê nhà, Mua sắm).
+- Hai danh mục thấp nhất là Nhà ở/Thuê nhà và Mua sắm: cùng 3/5 ở cả hai lần đo, và chiếm 4 trong 7 ghi chú dự đoán sai. Cả 2 ghi chú Mua sắm sai đều bị dự đoán thành Nhu yếu phẩm.
+- Seed cân bằng (mỗi danh mục 60 dòng) nên chênh lệch giữa các danh mục không đến từ việc có danh mục ít ví dụ hơn danh mục khác. Nhóm chưa điều tra nguyên nhân cụ thể khiến hai danh mục trên thấp hơn.
+- So với Ngày 25: 6 ghi chú sai ở Ngày 25 đã được dự đoán đúng, 1 ghi chú mới bị sai (`mua kính râm đi biển`); số ghi chú sai giảm từ 12 xuống 7.
+- Mỗi danh mục chỉ có 5 ghi chú, nên 86,0% và tỷ lệ theo từng danh mục chỉ là ước lượng thô để so sánh tương đối, không phải cam kết độ chính xác.
+
+7 ghi chú dự đoán sai (đo Ngày 26, nguồn `backend/data/day26_holdout_results.csv`):
+
+| Ghi chú | Danh mục đúng | Model dự đoán | Confidence |
+|---|---|---|---|
+| `nạp tiền vào ví grab` | Di chuyển | Hoá đơn (điện/nước/internet) | 0,4087 |
+| `mua bánh sinh nhật` | Ăn uống | Nhu yếu phẩm | 0,5589 |
+| `đặt phòng karaoke sinh nhật bạn` | Giải trí | Nhà ở/Thuê nhà | 0,7668 |
+| `thanh toán tiền nhà tháng 11` | Nhà ở/Thuê nhà | Hoá đơn (điện/nước/internet) | 0,5846 |
+| `phí gửi xe máy khu trọ` | Nhà ở/Thuê nhà | Di chuyển | 0,5368 |
+| `mua bàn ủi hơi nước` | Mua sắm | Nhu yếu phẩm | 0,8262 |
+| `mua kính râm đi biển` | Mua sắm | Nhu yếu phẩm | 0,3066 |
+
+### 4.5 Các lần đo đã thực hiện
+
+Tất cả các lần đo đều gọi thật `POST /api/v1/categorize`; lần đo của Vương gọi API trên Render, lần đo của Long gọi backend chạy local bằng uvicorn với Postgres Supabase thật:
 
 | Lần đo | Seed | Tập kiểm tra (50 ghi chú, 5 ghi chú mỗi danh mục) | Kết quả | Nguồn |
 |---|---|---|---|---|
@@ -49,6 +99,10 @@ Ghi chú kỹ thuật: hiện `/categorize` gọi trực tiếp `NaiveBayesClass
 
 - Hai tập kiểm tra là hai tập khác nhau nên 80,0% và 76,0% không so sánh trực tiếp với nhau. Mỗi danh mục chỉ có 5 ghi chú nên chỉ cần sai 1 ghi chú là tỷ lệ theo danh mục đổi 20 điểm phần trăm.
 - Sau khi seed tăng lên 600 dòng, 3 ghi chú của `eval_categorization_test.csv` (`mua nước lau kính`, `đi công viên nước`, `phí quản lý toà nhà`) trùng với ghi chú trong seed (so khớp nguyên ghi chú, bỏ khác biệt chữ hoa, chữ thường và dấu câu), nên tập này chỉ còn hợp lệ cho lần đo trên seed 500 dòng. Với cùng cách so khớp, `test_categorization_holdout.csv` không có ghi chú nào trùng với seed 600 dòng.
+- Chỉ lần đo Ngày 26 được đo trên model hiện tại (seed 600 dòng) với tập kiểm tra không trùng seed, nên là kết quả dùng ở mục 4.2 và 4.3.
+
+### 4.6 Thời gian huấn luyện lại
+
 - Thời gian huấn luyện lại: đo bằng `python -m app.services.ai.benchmark_retrain` với 5000 giao dịch giả lập của 1 người dùng, chạy từ máy cá nhân tới Supabase thật (chưa đo trực tiếp trên Render). `retrain_user_model` mất 1,037 giây; ước tính một lần gọi `/retrain` khoảng 1,470 giây (chưa gồm xác thực JWT). Nguồn: `backend/docs/ngay26-xu-ly-van-de-phat-sinh.md`.
 
 ## 5. Huấn luyện lại (`/retrain`) và giới hạn tần suất
