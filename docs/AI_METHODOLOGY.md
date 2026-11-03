@@ -1,7 +1,6 @@
-# AI Methodology — bản nháp (phân biệt ML cổ điển và LLM)
+# AI Methodology — phương pháp AI và đánh giá độ chính xác
 
-> Bản nháp Ngày 25, cập nhật Ngày 27 và Ngày 46. Chỉ mô tả những gì đã có trong code hoặc đã ghi trong kế hoạch; phần nào chưa làm thì ghi rõ là chưa triển khai.
-
+> Hoàn thiện Ngày 55 (từ bản nháp Ngày 25, cập nhật Ngày 27 và Ngày 46). Chỉ mô tả những gì đã có trong code hoặc đã đo thật; phần nào chưa làm thì ghi rõ là chưa triển khai.
 ## 1. Hai loại kỹ thuật AI trong dự án
 
 | Tiêu chí | Machine Learning cổ điển (TF-IDF + Naive Bayes) | Mô hình ngôn ngữ lớn — LLM (Gemini) |
@@ -35,7 +34,7 @@ Ghi chú kỹ thuật: hiện `/categorize` gọi trực tiếp `NaiveBayesClass
 - Đây là điểm chuẩn hoá (normalized score) để so sánh tương đối giữa các category, không phải xác suất đã hiệu chỉnh (calibrated probability). Nhóm không có bước hiệu chỉnh nào nên không thể nói "confidence 0,8 nghĩa là đúng khoảng 80%". Naive Bayes còn giả định các từ độc lập với nhau nên điểm số càng không nên đọc như xác suất thật.
 - Cách viết trong báo cáo, README và giao diện: dùng "confidence" hoặc "điểm tin cậy tương đối", không viết "xác suất chính xác X%". Giao diện Android hiển thị confidence dạng phần trăm (ví dụ "Ăn uống · 62%") chỉ là cách định dạng số trong khoảng 0–1, không mang nghĩa xác suất đúng 62%.
 - Ngưỡng 0,4: dưới ngưỡng này giao diện hiển thị "Độ tin cậy thấp" và không điền danh mục (để người dùng chọn tay). Đây là ngưỡng do nhóm chọn cho giao diện, không suy ra từ việc hiệu chỉnh xác suất.
-- Ví dụ minh hoạ (model seed, tại thời điểm viết nháp): có 10 category, mỗi category có cùng số ví dụ nên prior bằng nhau. Một ghi chú không chứa từ nào có trong vocabulary khiến 10 category bằng điểm nhau, confidence ra đúng 0,1000. Con số này chỉ phản ánh việc chia đều, không phản ánh mức chắc chắn.
+- Ví dụ minh hoạ (model seed hiện tại): có 10 category, mỗi category có cùng số ví dụ nên prior bằng nhau. Một ghi chú không chứa từ nào có trong vocabulary khiến 10 category bằng điểm nhau, confidence ra đúng 0,1000. Con số này chỉ phản ánh việc chia đều, không phản ánh mức chắc chắn.
 
 ## 4. Đo chất lượng
 
