@@ -118,6 +118,9 @@ dependencies {
     //MPAndroidChart (biểu đồ Analytics)
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
+    //SplashScreen API (tương thích Android 8 trở lên)
+    implementation("androidx.core:core-splashscreen:1.2.0")
+
     //Test livedata đồng bộ trong unit test
     testImplementation("androidx.arch.core:core-testing:2.2.0")
 
