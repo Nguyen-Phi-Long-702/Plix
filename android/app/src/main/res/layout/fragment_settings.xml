@@ -391,6 +391,82 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Nhóm Dữ liệu -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingTop="@dimen/spacing_16"
+            android:paddingBottom="@dimen/spacing_4"
+            android:text="Dữ liệu"
+            android:textAllCaps="true"
+            android:textAppearance="@style/TextAppearance.Plix.Label"
+            android:textColor="@color/text_tertiary" />
+
+        <LinearLayout
+            android:id="@+id/rowExportCsv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/touch_target_min"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingVertical="@dimen/spacing_12">
+
+            <FrameLayout
+                android:layout_width="@dimen/sheet_option_icon_box_size"
+                android:layout_height="@dimen/sheet_option_icon_box_size"
+                android:background="@drawable/bg_sheet_option_icon">
+
+                <ImageView
+                    android:layout_width="@dimen/sheet_option_icon_size"
+                    android:layout_height="@dimen/sheet_option_icon_size"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_export"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Xuất dữ liệu ra CSV"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tối đa 1 lần/giờ · chia sẻ qua ứng dụng khác"
+                    android:textAppearance="@style/TextAppearance.Plix.Caption" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/imageExportChevron"
+                android:layout_width="@dimen/inline_icon_size"
+                android:layout_height="@dimen/inline_icon_size"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_chev_right"
+                app:tint="@color/text_tertiary" />
+
+            <ProgressBar
+                android:id="@+id/progressExportCsv"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="@dimen/inline_icon_size"
+                android:layout_height="@dimen/inline_icon_size"
+                android:visibility="gone" />
+        </LinearLayout>
+
         <!-- Nhóm Khác -->
         <TextView
             android:layout_width="match_parent"
