@@ -206,7 +206,49 @@ Cách 2 — chép file `app-debug.apk` sang điện thoại, mở file đó và 
 
 ### 4.4. Bản release
 
-Bản `release` đã bật thu gọn mã bằng R8 (`isMinifyEnabled = true`). Mã nguồn hiện **chưa có cấu hình ký** cho bản release, nên chưa cài được bản này lên thiết bị. Cấu hình ký chính thức (khoá riêng, không đưa lên kho mã nguồn) được làm ở Ngày 57; cách build và cài bản đã ký sẽ được bổ sung vào mục này sau ngày đó.
+Bản `release` đã bật thu gọn mã bằng R8 (`isMinifyEnabled = true`) và được ký bằng khoá riêng của nhóm. Khoá không nằm trong kho mã nguồn.
+
+**Tạo khoá ký (làm 1 lần):**
+
+1. Android Studio → **Build → Generate Signed App Bundle / APK… → APK → Create new…**, tạo file `.jks` ở thư mục **ngoài** repo (ví dụ `D:\Plix-secrets\plix-release.jks`), alias `plix`, hiệu lực 25 năm. Bấm **OK** rồi **Cancel** hộp thoại ký.
+2. Sao lưu file `.jks` và mật khẩu ở nơi an toàn. Mất khoá thì không thể cập nhật ứng dụng cùng chữ ký.
+3. Tạo file `android/keystore.properties` (đã nằm trong `.gitignore`, **không** commit):
+
+```
+storeFile=D:/Plix-secrets/plix-release.jks
+storePassword=<mật-khẩu-kho-khoá>
+keyAlias=plix
+keyPassword=<mật-khẩu-khoá>
+```
+
+Dùng dấu `/` trong đường dẫn. Máy không có `keystore.properties` vẫn build được `release` nhưng ra file chưa ký (`app-release-unsigned.apk`), không cài được.
+
+**Build:** trong thư mục `android`:
+
+```
+gradlew.bat assembleRelease
+```
+
+File APK đã ký nằm tại:
+
+```
+android\app\build\outputs\apk\release\app-release.apk
+```
+
+**Kiểm tra chữ ký** (công cụ `apksigner` nằm trong thư mục `build-tools` của Android SDK):
+
+```
+apksigner.bat verify --verbose --print-certs app\build\outputs\apk\release\app-release.apk
+```
+
+**Cài lên điện thoại:** nếu máy đang có bản `debug`, gỡ trước vì hai bản dùng chữ ký khác nhau:
+
+```
+adb uninstall com.longvuong.plix
+adb install app\build\outputs\apk\release\app-release.apk
+```
+
+Hoặc chép file `app-release.apk` sang điện thoại và mở file đó.
 
 ## 5. Kiểm tra sau triển khai
 
