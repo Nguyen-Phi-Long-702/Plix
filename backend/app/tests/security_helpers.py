@@ -18,6 +18,7 @@ PROTECTED_ENDPOINTS = [
     ("GET", "/api/v1/categories", {}),
     ("GET", "/api/v1/anomaly", {"params": {"category_id": "cat-1", "amount": 50000}}),
     ("GET", "/api/v1/forecast", {}),
+    ("GET", "/api/v1/export/csv", {}),
     ("POST", "/api/v1/categorize", {"json": {"note": "cà phê"}}),
     (
         "POST",

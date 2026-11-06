@@ -157,12 +157,20 @@
                 <action
                     android:id="@+id/action_settingsFragment_to_categoryManagementFragment"
                     app:destination="@id/categoryManagementFragment" />
+                <action
+                    android:id="@+id/action_settingsFragment_to_aboutFragment"
+                    app:destination="@id/aboutFragment" />
             </fragment>
             <fragment
                 android:id="@+id/categoryManagementFragment"
                 android:name="com.longvuong.plix.presentation.category.CategoryManagementFragment"
                 android:label="Quản lý danh mục"
                 tools:layout="@layout/fragment_category_management" />
+            <fragment
+                android:id="@+id/aboutFragment"
+                android:name="com.longvuong.plix.presentation.settings.AboutFragment"
+                android:label="Giới thiệu"
+                tools:layout="@layout/fragment_about" />
         </navigation>
     </navigation>
 </navigation>

@@ -101,6 +101,7 @@ public class SettingsFragment extends Fragment {
         rowExportCsv.setOnClickListener(v -> exportViewModel.exportCsv());
         exportViewModel.getExportState().observe(getViewLifecycleOwner(), this::renderExportState);
 
+        view.findViewById(R.id.rowAbout).setOnClickListener(v -> Navigation.findNavController(view).navigate(R.id.action_settingsFragment_to_aboutFragment));
         rowLogout = view.findViewById(R.id.rowLogout);
         progressLogout = view.findViewById(R.id.progressLogout);
         rowLogout.setOnClickListener(v -> viewModel.logout());
