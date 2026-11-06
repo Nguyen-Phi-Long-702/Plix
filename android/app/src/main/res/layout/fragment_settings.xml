@@ -390,33 +390,6 @@
                     android:textAppearance="@style/TextAppearance.Plix.Caption" />
             </LinearLayout>
         </LinearLayout>
-        <LinearLayout
-            android:id="@+id/rowAbout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/surface"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:gravity="center_vertical"
-            android:minHeight="@dimen/touch_target_min"
-            android:orientation="horizontal"
-            android:paddingHorizontal="@dimen/spacing_16"
-            android:paddingVertical="@dimen/spacing_12">
-
-            <FrameLayout
-                android:layout_width="@dimen/sheet_option_icon_box_size"
-                android:layout_height="@dimen/sheet_option_icon_box_size"
-                android:background="@drawable/bg_sheet_option_icon">
-
-                <ImageView
-                    android:layout_width="@dimen/sheet_option_icon_size"
-                    android:layout_height="@dimen/sheet_option_icon_size"
-                    android:layout_gravity="center"
-                    android:importantForAccessibility="no"
-                    android:src="@drawable/ic_info"
-                    app:tint="@color/text_secondary" />
-            </FrameLayout>
 
         <!-- Nhóm Dữ liệu -->
         <TextView
@@ -469,14 +442,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Xuất dữ liệu ra CSV"
-                    android:text="Giới thiệu"
                     android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Tối đa 1 lần/phút · chia sẻ qua ứng dụng khác"
-                    android:text="Phiên bản, nhóm thực hiện"
                     android:textAppearance="@style/TextAppearance.Plix.Caption" />
             </LinearLayout>
 
@@ -496,7 +467,6 @@
                 android:visibility="gone" />
         </LinearLayout>
 
-        </LinearLayout>
         <!-- Nhóm Khác -->
         <TextView
             android:layout_width="match_parent"
@@ -508,6 +478,62 @@
             android:textAllCaps="true"
             android:textAppearance="@style/TextAppearance.Plix.Label"
             android:textColor="@color/text_tertiary" />
+
+        <LinearLayout
+            android:id="@+id/rowAbout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/touch_target_min"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/spacing_16"
+            android:paddingVertical="@dimen/spacing_12">
+
+            <FrameLayout
+                android:layout_width="@dimen/sheet_option_icon_box_size"
+                android:layout_height="@dimen/sheet_option_icon_box_size"
+                android:background="@drawable/bg_sheet_option_icon">
+
+                <ImageView
+                    android:layout_width="@dimen/sheet_option_icon_size"
+                    android:layout_height="@dimen/sheet_option_icon_size"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_info"
+                    app:tint="@color/text_secondary" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_12"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Giới thiệu"
+                    android:textAppearance="@style/TextAppearance.Plix.SectionTitle" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Phiên bản, nhóm thực hiện"
+                    android:textAppearance="@style/TextAppearance.Plix.Caption" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="@dimen/inline_icon_size"
+                android:layout_height="@dimen/inline_icon_size"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_chev_right"
+                app:tint="@color/text_tertiary" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/rowLogout"
