@@ -239,7 +239,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Gói miễn phí của Google — dữ liệu bạn nhập có thể được dùng để cải thiện dịch vụ của họ. Chỉ gửi câu chữ, không kèm lịch sử giao dịch."
+                    android:text="Gói miễn phí của Google — dữ liệu bạn nhập có thể được dùng để cải thiện dịch vụ của họ. Chỉ gửi câu chữ và tên các danh mục của bạn, không kèm lịch sử giao dịch."
                     android:textAppearance="@style/TextAppearance.Plix.Caption" />
             </LinearLayout>
 
