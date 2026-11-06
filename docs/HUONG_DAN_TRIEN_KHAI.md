@@ -137,6 +137,7 @@ Trên https://dashboard.render.com chọn **New +** → **Web Service** → ch�
 | `GEMINI_API_KEY` | Không | Khoá lấy từ Google AI Studio. Chỉ đặt ở đây, không đưa vào mã nguồn hay ứng dụng |
 | `RETRAIN_COOLDOWN_SECONDS` | Không | Bỏ trống thì dùng mặc định 3600 |
 | `MAX_PULL_LIMIT` | Không | Bỏ trống thì dùng mặc định 500 |
+| `EXPORT_COOLDOWN_SECONDS` | Không | Bỏ trống thì dùng mặc định 60 |
 
 Không cần đặt `SUPABASE_SERVICE_KEY` hay `SUPABASE_JWT_SECRET`: Backend xác minh JWT bằng khoá công khai lấy từ JWKS và không đọc 2 biến này (`app/core/config.py`).
 

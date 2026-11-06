@@ -68,6 +68,7 @@ Mở `backend/.env` và điền giá trị thật. File `.env` đã nằm trong 
 | `RETRAIN_COOLDOWN_SECONDS` | Không | Số giây tối thiểu giữa 2 lần gọi `/retrain` thành công của cùng 1 người dùng. Mặc định 3600 |
 | `MAX_PULL_LIMIT` | Không | Số bản ghi tối đa mỗi lần gọi `GET /sync/{table}/pull`. Mặc định 500 |
 | `GEMINI_API_KEY` | Không | Khoá Gemini từ Google AI Studio. Thiếu khoá thì nhánh dự phòng Gemini của `/parse-nl` báo "AI đang bận, vui lòng nhập tay"; phần còn lại của `/parse-nl` vẫn chạy |
+| `EXPORT_COOLDOWN_SECONDS` | Không | Số giây tối thiểu giữa 2 lần gọi `GET /export/csv` của cùng 1 người dùng. Mặc định 60 |
 
 Thiếu `SUPABASE_URL` hoặc `DATABASE_URL`, Backend dừng ngay khi khởi động với thông báo "Thiếu biến môi trường ... — kiểm tra file .env".
 
