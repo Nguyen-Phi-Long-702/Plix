@@ -475,7 +475,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Tối đa 1 lần/giờ · chia sẻ qua ứng dụng khác"
+                    android:text="Tối đa 1 lần/phút · chia sẻ qua ứng dụng khác"
                     android:text="Phiên bản, nhóm thực hiện"
                     android:textAppearance="@style/TextAppearance.Plix.Caption" />
             </LinearLayout>
