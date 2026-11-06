@@ -18,6 +18,8 @@ Plix theo kiến trúc local-first: dữ liệu được ghi vào cơ sở dữ 
 - Giao dịch định kỳ hằng tháng.
 - Ngân sách có cảnh báo khi đạt ngưỡng (thông báo cục bộ) và mục tiêu tiết kiệm.
 - Thống kê bằng biểu đồ.
+- Xuất danh sách giao dịch ra file CSV (tối đa 1 lần/phút) và chia sẻ qua ứng dụng khác.
+- Màn Giới thiệu: phiên bản, nhóm thực hiện, liên kết kho mã nguồn.
 - Đồng bộ hai chiều cho 5 bảng: giao dịch, danh mục, ngân sách, mục tiêu tiết kiệm, dữ liệu sửa gợi ý AI. Xung đột xử lý theo nguyên tắc ghi đè lần cuối cùng thắng (dựa trên thời gian cập nhật); dữ liệu bị xoá chỉ được đánh dấu xoá, không xoá vật lý.
 - Tính năng AI: xem bảng bên dưới.
 
@@ -45,8 +47,8 @@ Plix theo kiến trúc local-first: dữ liệu được ghi vào cơ sở dữ 
 
 ## Cài đặt và triển khai
 
-- Hướng dẫn cài đặt (Android và Backend): docs/HUONG_DAN_TRIEN_KHAI.md
-- Hướng dẫn triển khai (Android và Backend): docs/HUONG_DAN_CAI_DAT.md
+- Hướng dẫn cài đặt (dựng môi trường phát triển Android và Backend trên máy cá nhân): [docs/HUONG_DAN_CAI_DAT.md](docs/HUONG_DAN_CAI_DAT.md)
+- Hướng dẫn triển khai (Supabase, Render và cài ứng dụng Android): [docs/HUONG_DAN_TRIEN_KHAI.md](docs/HUONG_DAN_TRIEN_KHAI.md)
 
 ## Cấu trúc thư mục
 
@@ -69,6 +71,12 @@ Plix theo kiến trúc local-first: dữ liệu được ghi vào cơ sở dữ 
 | [docs/UI6_DOI_CHIEU_MAN_LONG.md](docs/UI6_DOI_CHIEU_MAN_LONG.md) | Đối chiếu chéo giao diện các màn với bản thiết kế (Ngày UI-6) |
 | [docs/UI7_KET_QUA_HOI_QUY.md](docs/UI7_KET_QUA_HOI_QUY.md) | Kết quả hồi quy và kiểm thử bản release R8 (Ngày UI-7) |
 | [docs/NGAY53_KET_QUA_KIEM_THU_CUOI.md](docs/NGAY53_KET_QUA_KIEM_THU_CUOI.md) | Kết quả kiểm thử cuối và đối chiếu Exit Criteria (Ngày 53) |
+| [docs/SO_DO_KIEN_TRUC.md](docs/SO_DO_KIEN_TRUC.md) | Sơ đồ kiến trúc hệ thống |
+| [docs/SO_DO_ERD.md](docs/SO_DO_ERD.md) | Sơ đồ quan hệ thực thể cơ sở dữ liệu |
+| [docs/BAO_CAO_KIEM_THU.md](docs/BAO_CAO_KIEM_THU.md) | Báo cáo kiểm thử |
+| [docs/PHU_LUC_DANH_SACH_TEST.md](docs/PHU_LUC_DANH_SACH_TEST.md) | Danh sách toàn bộ test case |
+| [docs/KICH_BAN_DEMO.md](docs/KICH_BAN_DEMO.md) | Kịch bản demo |
+| [docs/NGAY57_KET_QUA_BAN_RELEASE_CUOI.md](docs/NGAY57_KET_QUA_BAN_RELEASE_CUOI.md) | Kết quả build và kiểm thử bản release cuối (Ngày 57) |
 
 ## Giới hạn đã biết của hệ thống
 
