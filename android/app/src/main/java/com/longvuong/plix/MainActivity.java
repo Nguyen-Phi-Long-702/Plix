@@ -19,6 +19,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.graphics.Insets;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.core.splashscreen.SplashScreen;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this); //phải gọi trước super.onCreate để đổi từ theme khởi động sang Theme.Plix
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 

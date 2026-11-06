@@ -41,4 +41,10 @@
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Plix.MaterialAlertDialog</item>
         <item name="android:datePickerDialogTheme">@style/Theme.Plix.DatePicker</item>
     </style>
+    <!-- Theme chỉ áp cho MainActivity lúc khởi động; hết splash hệ thống tự chuyển sang Theme.Plix -->
+    <style name="Theme.Plix.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Plix</item>
+    </style>
 </resources>

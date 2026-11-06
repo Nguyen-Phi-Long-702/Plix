@@ -6,12 +6,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.content.Intent;
+import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.core.content.FileProvider;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -22,6 +25,7 @@ import com.longvuong.plix.domain.usecase.auth.LogoutOutcome;
 import com.longvuong.plix.presentation.common.UiState;
 
 import javax.inject.Inject;
+import java.io.File;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -40,6 +44,10 @@ public class SettingsFragment extends Fragment {
     private View textRetrainHint;
     private View imageRetrainChevron;
     private ProgressBar progressRetrainAi;
+    private ExportViewModel exportViewModel;
+    private View rowExportCsv;
+    private View imageExportChevron;
+    private ProgressBar progressExportCsv;
     private View rowLogout;
     private ProgressBar progressLogout;
 
@@ -86,6 +94,13 @@ public class SettingsFragment extends Fragment {
         rowRetrainAi.setOnClickListener(v -> viewModel.retrain());
         viewModel.getRetrainState().observe(getViewLifecycleOwner(), this::renderRetrainState);
 
+        exportViewModel = new ViewModelProvider(this).get(ExportViewModel.class);
+        rowExportCsv = view.findViewById(R.id.rowExportCsv);
+        imageExportChevron = view.findViewById(R.id.imageExportChevron);
+        progressExportCsv = view.findViewById(R.id.progressExportCsv);
+        rowExportCsv.setOnClickListener(v -> exportViewModel.exportCsv());
+        exportViewModel.getExportState().observe(getViewLifecycleOwner(), this::renderExportState);
+
         view.findViewById(R.id.rowAbout).setOnClickListener(v -> Navigation.findNavController(view).navigate(R.id.action_settingsFragment_to_aboutFragment));
         rowLogout = view.findViewById(R.id.rowLogout);
         progressLogout = view.findViewById(R.id.progressLogout);
@@ -131,6 +146,31 @@ public class SettingsFragment extends Fragment {
             String message = ((UiState.Error<Void>) state).message;
             Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
         }
+    }
+    
+    private void renderExportState(UiState<File> state) {
+        boolean loading = state instanceof UiState.Loading;
+        rowExportCsv.setEnabled(!loading);
+        imageExportChevron.setVisibility(loading ? View.GONE : View.VISIBLE);
+        progressExportCsv.setVisibility(loading ? View.VISIBLE : View.GONE);
+        if (state instanceof UiState.Success) {
+            shareCsvFile(((UiState.Success<File>) state).data);
+            exportViewModel.onExportHandled();
+        } else if (state instanceof UiState.Error) {
+            String message = ((UiState.Error<File>) state).message;
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
+            exportViewModel.onExportHandled();
+        }
+    }
+
+    //Mở bảng chia sẻ của hệ thống để người dùng chọn ứng dụng nhận file CSV
+    private void shareCsvFile(File file) {
+        Uri uri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".fileprovider", file);
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+        sendIntent.setType("text/csv");
+        sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(sendIntent, "Chia sẻ file CSV"));
     }
 
     private void renderLogoutState(UiState<LogoutOutcome> state) {
