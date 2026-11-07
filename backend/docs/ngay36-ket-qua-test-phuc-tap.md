@@ -3,7 +3,7 @@
 **Người thực hiện:** Nguyễn Đại Vương, Nguyễn Phi Long
 **Ngày giờ chạy:** 
 **Backend đã kiểm tra:** local (uvicorn + Postgres Supabase) và Render (https://plix-7jfp.onrender.com)
-**Android:** nhánh `sprint4-android-long`, emulator/thiết bị đã dùng
+**Android:** nhánh `sprint4-android-long`
 
 ## 1. Test tự động phía backend (pytest, pool giả)
 

@@ -25,12 +25,9 @@ Người thực hiện: Nguyễn Đại Vương. Nguồn đối chiếu: `plix-u
 | N7 | Khung chờ | Không có hiệu ứng lấp lánh; độ dài vạch giả 50% thay vì 60% (Mục tiêu) | Không có trong kế hoạch (YAGNI) |
 
 ## Lệch phát hiện khi chạy app
-| Màn | Trạng thái | Thiết kế | App | Xử lý |
-|---|---|---|---|---|
-| (điền) | | | | |
-
+Không phát hiện lệch thêm khi chạy app.
 ## Trạng thái không tái hiện được trên emulator
-
+Không có.
 ## Kiểm tra danh sách đủ Đang tải / Rỗng và imeAction
 - Đủ Đang tải + Rỗng (Fragment và ViewModel đều có): Giao dịch, Ngân sách, Mục tiêu, Quản lý danh mục (không thể rỗng theo Master Plan 10.1), Thống kê, Home.
 - `imeAction`: giao dịch (Số tiền, Ghi chú = Done), ngân sách (Hạn mức = Done), mục tiêu (Tên = Next, Số tiền mục tiêu = Done, Số tiền đã tiết kiệm = Done); đã thử bấm trên emulator.

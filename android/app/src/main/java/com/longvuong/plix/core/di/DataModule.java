@@ -38,6 +38,9 @@ import com.longvuong.plix.data.remote.api.SyncApiService;
 import com.longvuong.plix.data.repository.AiRepository;
 import com.longvuong.plix.data.repository.AiRepositoryImpl;
 import com.longvuong.plix.data.local.dao.CorrectionDao;
+import com.longvuong.plix.data.remote.api.ExportApiService;
+import com.longvuong.plix.data.repository.ExportRepository;
+import com.longvuong.plix.data.repository.ExportRepositoryImpl;
 
 @Module
 @InstallIn(SingletonComponent.class)
@@ -142,6 +145,18 @@ public class DataModule {
     @Provides
     @Singleton
     public LogoutRepository provideLogoutRepository(LogoutRepositoryImpl impl) {
+        return impl;
+    }
+
+    @Provides
+    @Singleton
+    public ExportApiService provideExportApiService(AuthManager authManager) {
+        return authManager.getBackendRetrofit().create(ExportApiService.class);
+    }
+
+    @Provides
+    @Singleton
+    public ExportRepository provideExportRepository(ExportRepositoryImpl impl) {
         return impl;
     }
 }

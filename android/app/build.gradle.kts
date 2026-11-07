@@ -1,6 +1,15 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.dagger.hilt.android")
+}
+
+//Thông tin ký bản release đọc từ android/keystore.properties (file này nằm trong .gitignore, không đưa lên kho mã nguồn)
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val hasReleaseKeystore = keystorePropertiesFile.exists()
+val keystoreProperties = Properties()
+if (hasReleaseKeystore) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
 android {
@@ -28,12 +37,26 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField("String", "BACKEND_BASE_URL", "\"https://plix-7jfp.onrender.com/\"")
         }
         release {
             isMinifyEnabled = true
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             buildConfigField("String", "BACKEND_BASE_URL", "\"https://plix-7jfp.onrender.com/\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -94,6 +117,9 @@ dependencies {
 
     //MPAndroidChart (biểu đồ Analytics)
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    //SplashScreen API (tương thích Android 8 trở lên)
+    implementation("androidx.core:core-splashscreen:1.2.0")
 
     //Test livedata đồng bộ trong unit test
     testImplementation("androidx.arch.core:core-testing:2.2.0")

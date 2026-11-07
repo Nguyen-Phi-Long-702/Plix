@@ -1,9 +1,9 @@
 # Demo nội bộ luồng đồng bộ dữ liệu và Exit Sprint — Ngày 37
 
 **Người thực hiện:** Nguyễn Đại Vương, Nguyễn Phi Long
-**Ngày giờ demo thực tế:** <ngày giờ thực tế>
+**Ngày giờ demo thực tế:** 09/10/2026
 **Backend:** Render (https://plix-7jfp.onrender.com), Postgres Supabase
-**Android:** nhánh `sprint4-android-long`, thiết bị A: <emulator/thiết bị A>, thiết bị B: <emulator/thiết bị B>
+**Android:** nhánh `sprint4-android-long`
 **Tài khoản:** tài khoản demo riêng (chưa từng chạy script kiểm thử)
 
 ## 1. Regression phía backend

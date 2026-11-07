@@ -1,7 +1,7 @@
 # Kết quả Sync Test Suite Phần 1 (Functional) — Ngày 35
 
 **Người thực hiện:** Nguyễn Đại Vương, Nguyễn Phi Long
-**Ngày giờ chạy:** 
+**Ngày giờ chạy:** theo ngày commit biên bản
 **Backend đã kiểm tra:** local (uvicorn + Postgres Supabase) và Render (https://plix-7jfp.onrender.com)
 
 ## 1. Test tự động phía backend (pytest, pool giả)
