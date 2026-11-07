@@ -77,6 +77,7 @@ Plix theo kiến trúc local-first: dữ liệu được ghi vào cơ sở dữ 
 | [docs/PHU_LUC_DANH_SACH_TEST.md](docs/PHU_LUC_DANH_SACH_TEST.md) | Danh sách toàn bộ test case |
 | [docs/KICH_BAN_DEMO.md](docs/KICH_BAN_DEMO.md) | Kịch bản demo |
 | [docs/NGAY57_KET_QUA_BAN_RELEASE_CUOI.md](docs/NGAY57_KET_QUA_BAN_RELEASE_CUOI.md) | Kết quả build và kiểm thử bản release cuối (Ngày 57) |
+| [docs/MA_TRAN_TRUY_VET.md](docs/MA_TRAN_TRUY_VET.md) | Ma trận truy vết yêu cầu (75 mã) tới mã nguồn, kiểm thử và tài liệu |
 
 ## Giới hạn đã biết của hệ thống
 
