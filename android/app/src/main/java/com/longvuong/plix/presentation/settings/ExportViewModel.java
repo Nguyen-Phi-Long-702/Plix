@@ -18,7 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class ExportViewModel extends ViewModel {
 
     private final ExportRepository exportRepository;
-    //Empty = chưa làm gì; Loading = đang tải file CSV; Success = đã có file để chia sẻ; Error = lỗi (mất mạng, bị giới hạn 1 lần/giờ, máy chủ lỗi...)
+    //Empty = chưa làm gì; Loading = đang tải file CSV; Success = đã có file để chia sẻ; Error = lỗi (mất mạng, bị giới hạn 1 lần/phút, máy chủ lỗi...)
     private final MutableLiveData<UiState<File>> exportState = new MutableLiveData<>(new UiState.Empty<>());
 
     @Inject
