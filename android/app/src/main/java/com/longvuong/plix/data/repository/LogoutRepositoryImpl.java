@@ -5,6 +5,8 @@ import android.content.Context;
 import androidx.work.WorkManager;
 
 import com.longvuong.plix.core.auth.AuthManager;
+import com.longvuong.plix.core.auth.UserSessionCleaner;
+import com.longvuong.plix.core.auth.UserSessionCleaners;
 import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.core.network.NetworkObserver;
 import com.longvuong.plix.data.local.AppDatabase;
@@ -17,6 +19,7 @@ import com.longvuong.plix.data.sync.SyncWorker;
 import com.longvuong.plix.data.sync.SyncableEntity;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -41,12 +44,13 @@ public class LogoutRepositoryImpl implements LogoutRepository {
     private final SyncLock syncLock;
     private final NetworkObserver networkObserver;
     private final AppExecutors appExecutors;
+    private final Set<UserSessionCleaner> userSessionCleaners;
 
     @Inject
     public LogoutRepositoryImpl(@ApplicationContext Context context, AuthManager authManager, AppDatabase appDatabase,
                                 SyncTables syncTables, SyncPusher syncPusher, SyncPreferences syncPreferences,
                                 SyncScheduler syncScheduler, SyncLock syncLock, NetworkObserver networkObserver,
-                                AppExecutors appExecutors) {
+                                AppExecutors appExecutors, Set<UserSessionCleaner> userSessionCleaners) {
         this.context = context;
         this.authManager = authManager;
         this.appDatabase = appDatabase;
@@ -57,6 +61,7 @@ public class LogoutRepositoryImpl implements LogoutRepository {
         this.syncLock = syncLock;
         this.networkObserver = networkObserver;
         this.appExecutors = appExecutors;
+        this.userSessionCleaners = userSessionCleaners;
     }
 
     @Override
@@ -141,6 +146,8 @@ public class LogoutRepositoryImpl implements LogoutRepository {
                 });
                 syncPreferences.clearPullCursors(userId);
             }
+            //Mỗi tính năng tự đăng ký bộ dọn của mình; gọi cả khi userId null, trước khi xoá token (NF-11)
+            UserSessionCleaners.clearAll(userSessionCleaners, userId);
             syncPreferences.clearLastError();
             authManager.logout();
             Timber.d("Đã đăng xuất và xoá dữ liệu cục bộ của phiên");

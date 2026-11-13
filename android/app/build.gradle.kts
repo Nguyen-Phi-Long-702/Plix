@@ -121,6 +121,15 @@ dependencies {
     //SplashScreen API (tương thích Android 8 trở lên)
     implementation("androidx.core:core-splashscreen:1.2.0")
 
+    //ML Kit Text Recognition (OCR hoá đơn trên thiết bị, mô hình tải qua Google Play services)
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.2")
+
+    //Kéo để làm mới (Home, Giao dịch, Ngân sách, Mục tiêu)
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
+
+    //Theo dõi app về foreground (ProcessLifecycleOwner) cho đồng bộ tự động
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
+
     //Test livedata đồng bộ trong unit test
     testImplementation("androidx.arch.core:core-testing:2.2.0")
 
