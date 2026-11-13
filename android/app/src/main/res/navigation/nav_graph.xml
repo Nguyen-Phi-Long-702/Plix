@@ -65,6 +65,32 @@
                     app:argType="string"
                     app:nullable="true"
                     android:defaultValue="@null" />
+                <argument
+                    android:name="prefillAmount"
+                    app:argType="long"
+                    android:defaultValue="0L" />
+                <argument
+                    android:name="prefillType"
+                    app:argType="string"
+                    android:defaultValue="" />
+                <argument
+                    android:name="prefillOccurredAt"
+                    app:argType="long"
+                    android:defaultValue="0L" />
+                <argument
+                    android:name="prefillNote"
+                    app:argType="string"
+                    app:nullable="true"
+                    android:defaultValue="@null" />
+                <argument
+                    android:name="prefillCategoryId"
+                    app:argType="string"
+                    app:nullable="true"
+                    android:defaultValue="@null" />
+                <argument
+                    android:name="prefillRecurringDay"
+                    app:argType="integer"
+                    android:defaultValue="0" />
             </fragment>
             <fragment
                 android:id="@+id/transactionListFragment"
