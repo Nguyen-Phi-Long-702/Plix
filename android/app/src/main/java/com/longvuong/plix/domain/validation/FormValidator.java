@@ -18,7 +18,7 @@ public class FormValidator {
     public static final int MAX_NOTE_LENGTH = 500;
     public static final int MAX_CATEGORY_NAME_LENGTH = 50;
     public static final int MAX_GOAL_NAME_LENGTH = 50;
-    private static final int MAX_PAST_YEARS = 5;
+    public static final int MAX_PAST_YEARS = 5;
 
     @Inject
     public FormValidator() {
