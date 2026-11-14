@@ -22,10 +22,14 @@ public class ReceiptTextParser {
             "thanh toan", "tong thanh toan", "phai tra", "grand total", "amount due"};
     private static final String[] TOTAL_KEYWORDS_P2 = {
             "tong cong", "tong tien", "tong so tien", "total"};
+    private static final String[] TITLE_WORDS = {"hoa don", "phieu", "receipt", "invoice"};
+    private static final String[] ADDRESS_WORDS = {"dc:", "dia chi"};
     private static final String[] EXCLUDED_KEYWORDS = {
             "giam gia", "chiet khau", "khuyen mai", "tien thua", "khach dua", "tam tinh", "subtotal",
             "sub total", "change", "diem", "chua vat", "chua thue", "truoc thue"};
 
+    private static final int STORE_NAME_SCAN_LINES = 5;
+    private static final int MIN_STORE_NAME_LETTERS = 2;
     private static final int MIN_BARE_DIGITS = 4;
     private static final int MAX_BARE_DIGITS = 12;
     private static final int MAX_AMOUNT_DIGITS = 15; //dài hơn thì chắc chắn vượt MAX_AMOUNT, bỏ qua để không tràn kiểu long
@@ -57,7 +61,7 @@ public class ReceiptTextParser {
             total = findFallbackMax(normalized);
             source = total != null ? TotalSource.FALLBACK_MAX : TotalSource.NONE;
         }
-        return new ReceiptParseResult(total, source, findDate(normalized, today), null); //tên cửa hàng làm ở bước sau
+        return new ReceiptParseResult(total, source, findDate(normalized, today), findStoreName(lines, normalized));
     }
 
     //NFD, bỏ dấu, đ thành d, chữ thường, gộp khoảng trắng. Ví dụ 'TỔNG CỘNG' và 'TONG CÔNG' đều thành 'tong cong'
@@ -201,5 +205,32 @@ public class ReceiptTextParser {
         } catch (DateTimeException e) {
             return null; //ngày không tồn tại như 31/02
         }
+    }
+
+    //Tên cửa hàng: dòng đầu tiên trong 5 dòng đầu có ít nhất 2 chữ cái (loại luôn dòng chỉ gồm số, ngày, điện thoại),
+    //không chứa từ tiêu đề, từ địa chỉ hay từ khoá tổng; giữ nguyên chữ gốc của dòng
+    private String findStoreName(List<String> originalLines, List<String> normalized) {
+        int scan = Math.min(STORE_NAME_SCAN_LINES, normalized.size());
+        for (int i = 0; i < scan; i++) {
+            String line = normalized.get(i);
+            if (countLetters(line) < MIN_STORE_NAME_LETTERS) {
+                continue;
+            }
+            if (containsAny(line, TITLE_WORDS) || containsAny(line, ADDRESS_WORDS) || hasTotalKeyword(line)) {
+                continue;
+            }
+            return originalLines.get(i).trim();
+        }
+        return null;
+    }
+
+    private static int countLetters(String line) {
+        int count = 0;
+        for (int i = 0; i < line.length(); i++) {
+            if (Character.isLetter(line.charAt(i))) {
+                count++;
+            }
+        }
+        return count;
     }
 }
