@@ -4,6 +4,7 @@ import com.longvuong.plix.domain.usecase.ocr.ReceiptParseResult.TotalSource;
 import com.longvuong.plix.domain.validation.FormValidator;
 
 import java.text.Normalizer;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,7 @@ public class ReceiptTextParser {
             total = findFallbackMax(normalized);
             source = total != null ? TotalSource.FALLBACK_MAX : TotalSource.NONE;
         }
-        return new ReceiptParseResult(total, source, null, null); //ngày và tên cửa hàng làm ở các bước sau
+        return new ReceiptParseResult(total, source, findDate(normalized, today), null); //tên cửa hàng làm ở bước sau
     }
 
     //NFD, bỏ dấu, đ thành d, chữ thường, gộp khoảng trắng. Ví dụ 'TỔNG CỘNG' và 'TONG CÔNG' đều thành 'tong cong'
@@ -172,5 +173,33 @@ public class ReceiptTextParser {
             return null; //ngoài khoảng của FormValidator thì coi như không có
         }
         return amount;
+    }
+
+    //Ngày hợp lệ đầu tiên nằm trong khoảng của FormValidator.validateOccurredAt: từ today trừ MAX_PAST_YEARS năm đến hết năm của today
+    private LocalDate findDate(List<String> normalized, LocalDate today) {
+        LocalDate min = today.minusYears(FormValidator.MAX_PAST_YEARS);
+        LocalDate max = LocalDate.of(today.getYear(), 12, 31);
+        for (String line : normalized) {
+            Matcher matcher = DATE_PATTERN.matcher(line);
+            while (matcher.find()) {
+                LocalDate date = toDate(matcher.group(1), matcher.group(2), matcher.group(3));
+                if (date != null && !date.isBefore(min) && !date.isAfter(max)) {
+                    return date;
+                }
+            }
+        }
+        return null;
+    }
+
+    private LocalDate toDate(String day, String month, String year) {
+        int yearValue = Integer.parseInt(year);
+        if (year.length() == 2) {
+            yearValue += 2000; //năm hai chữ số hiểu là 20yy
+        }
+        try {
+            return LocalDate.of(yearValue, Integer.parseInt(month), Integer.parseInt(day));
+        } catch (DateTimeException e) {
+            return null; //ngày không tồn tại như 31/02
+        }
     }
 }
