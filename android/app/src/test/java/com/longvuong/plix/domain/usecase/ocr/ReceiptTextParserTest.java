@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ReceiptTextParserTest {
@@ -200,5 +201,93 @@ public class ReceiptTextParserTest {
 
         assertNull(result.totalAmount);
         assertEquals(TotalSource.NONE, result.totalSource);
+    }
+
+    /**
+     * TN2-U12
+     * Các định dạng ngày '08/11/2026', '08-11-2026', '08.11.2026', '08/11/26' đều cho 2026-11-08.
+     */
+    @Test
+    public void parse_variousDateFormats_allGive20261108() {
+        LocalDate expected = LocalDate.of(2026, 11, 8);
+
+        assertEquals(expected, parse("08/11/2026").date);
+        assertEquals(expected, parse("08-11-2026").date);
+        assertEquals(expected, parse("08.11.2026").date);
+        assertEquals(expected, parse("08/11/26").date);
+    }
+
+    /**
+     * TN2-U13
+     * '01/01/2027' với today = 2026-11-08: vượt hết năm hiện tại (31/12/2026) nên date = null.
+     */
+    @Test
+    public void parse_dateBeyondEndOfCurrentYear_returnsNullDate() {
+        assertNull(parse("01/01/2027").date);
+    }
+
+    /**
+     * TN2-U14
+     * '08/11/2020' với today = 2026-11-08: trước giới hạn dưới 2021-11-08 nên date = null.
+     */
+    @Test
+    public void parse_dateMoreThanFiveYearsAgo_returnsNullDate() {
+        assertNull(parse("08/11/2020").date);
+    }
+
+    /**
+     * TN2-U15
+     * '31/02/2026' là ngày không tồn tại: date = null.
+     */
+    @Test
+    public void parse_nonexistentDate_returnsNullDate() {
+        assertNull(parse("31/02/2026").date);
+    }
+
+    /**
+     * TN2-U16
+     * ['HOA DON BAN HANG', 'SIEU THI COOPMART', 'DC: 12 Le Loi']: bỏ qua dòng tiêu đề, tên = 'SIEU THI COOPMART'.
+     */
+    @Test
+    public void parse_storeName_skipsTitleLine() {
+        ReceiptParseResult result = parse("HOA DON BAN HANG", "SIEU THI COOPMART", "DC: 12 Le Loi");
+
+        assertEquals("SIEU THI COOPMART", result.storeName);
+    }
+
+    /**
+     * TN2-U17
+     * ['0909123456', '08/11/2026', 'GS25']: bỏ qua dòng toàn số, dòng ngày và số điện thoại, tên = 'GS25'.
+     */
+    @Test
+    public void parse_storeName_skipsNumericDateAndPhoneLines() {
+        ReceiptParseResult result = parse("0909123456", "08/11/2026", "GS25");
+
+        assertEquals("GS25", result.storeName);
+    }
+
+    /**
+     * TN2-U18
+     * Danh sách rỗng: total = null, date = null, store = null.
+     */
+    @Test
+    public void parse_emptyList_returnsAllNull() {
+        ReceiptParseResult result = parser.parse(Collections.<String>emptyList(), TODAY);
+
+        assertNull(result.totalAmount);
+        assertEquals(TotalSource.NONE, result.totalSource);
+        assertNull(result.date);
+        assertNull(result.storeName);
+    }
+
+    /**
+     * TN2-U19
+     * ['Thanh toan 100.000', 'Thanh toan 90.000']: nhiều dòng THANH TOÁN thì lấy dòng cuối, total = 90000.
+     */
+    @Test
+    public void parse_multiplePaymentLines_takesLastOne() {
+        ReceiptParseResult result = parse("Thanh toan 100.000", "Thanh toan 90.000");
+
+        assertEquals(Long.valueOf(90_000L), result.totalAmount);
     }
 }
