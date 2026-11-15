@@ -6,7 +6,9 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 
+import com.longvuong.plix.core.error.ErrorType;
 import com.longvuong.plix.core.error.Result;
+import com.longvuong.plix.data.repository.ReceiptCaptureTarget;
 import com.longvuong.plix.domain.usecase.ocr.ReceiptTextParser;
 import com.longvuong.plix.presentation.common.UiState;
 
@@ -49,6 +51,12 @@ public class ReceiptScanViewModelTest {
         return date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
+    //Đặt đích chụp ảnh mà lần onCaptureRequested() kế tiếp sẽ nhận được
+    private void givenNextCapture(String token) {
+        fakeReceiptRepository.createCaptureResult =
+                new Result.Success<>(new ReceiptCaptureTarget("content://fake/receipts/" + token, token));
+    }
+
     /**
      * TN2-U20
      * OCR thành công với HD1: state = Success(amount 135000, type 'expense', occurredAt đầu ngày 2026-11-08, note 'HIGHLANDS COFFEE'); deleteCapture được gọi đúng 1 lần.
@@ -87,5 +95,57 @@ public class ReceiptScanViewModelTest {
         assertEquals("Không đọc được số tiền trên hoá đơn", ((UiState.Error<ReceiptPrefill>) state).message);
         assertTrue(viewModel.canEnterManually());
         assertEquals(Collections.singletonList(FakeReceiptRepository.DEFAULT_TOKEN), fakeReceiptRepository.deletedTokens);
+    }
+
+    /**
+     * TN2-U22
+     * OCR lỗi engine (Result.Error('Không đọc được ảnh')): state = Error đúng nguyên văn; ảnh tạm bị xoá.
+     */
+    @Test
+    public void onImageCaptured_engineError_emitsErrorMessageAndDeletesCapture() {
+        fakeReceiptRepository.recognizeResult = new Result.Error<>(ErrorType.UNKNOWN, "Không đọc được ảnh", null);
+
+        viewModel.onCaptureRequested();
+        viewModel.onImageCaptured(FakeReceiptRepository.DEFAULT_TOKEN, FakeReceiptRepository.DEFAULT_URI);
+
+        UiState<ReceiptPrefill> state = viewModel.getScanState().getValue();
+        assertTrue(state instanceof UiState.Error);
+        assertEquals("Không đọc được ảnh", ((UiState.Error<ReceiptPrefill>) state).message);
+        assertEquals(Collections.singletonList(FakeReceiptRepository.DEFAULT_TOKEN), fakeReceiptRepository.deletedTokens);
+    }
+
+    /**
+     * TN2-U23
+     * Huỷ chụp và onCleared xoá ảnh tạm: deleteCapture(token) gọi đúng 1 lần cho mỗi capture; không gọi cho ảnh chọn từ thư viện.
+     */
+    @Test
+    public void onCaptureCancelledAndOnCleared_deleteEachHeldCaptureExactlyOnce() {
+        fakeReceiptRepository.recognizeResult = new Result.Success<>(HD1);
+        viewModel.onImagePicked("content://fake/gallery/hd1.jpg"); //ảnh thư viện: không bị xoá
+
+        givenNextCapture("token-1");
+        viewModel.onCaptureRequested();
+        viewModel.onCaptureCancelled();
+        viewModel.onCaptureCancelled(); //gọi lần nữa không xoá thêm
+
+        givenNextCapture("token-2");
+        viewModel.onCaptureRequested();
+        viewModel.onCleared();
+
+        assertEquals(Arrays.asList("token-1", "token-2"), fakeReceiptRepository.deletedTokens);
+    }
+
+    /**
+     * TN2-U24
+     * Ảnh từ thư viện không bị xoá: onImagePicked(uriString) rồi OCR xong thì deleteCapture không được gọi.
+     */
+    @Test
+    public void onImagePicked_ocrDone_doesNotDeleteAnyCapture() {
+        fakeReceiptRepository.recognizeResult = new Result.Success<>(HD1);
+
+        viewModel.onImagePicked("content://fake/gallery/hd1.jpg");
+
+        assertTrue(viewModel.getScanState().getValue() instanceof UiState.Success);
+        assertTrue(fakeReceiptRepository.deletedTokens.isEmpty());
     }
 }
