@@ -134,4 +134,30 @@ public class FormValidator {
         }
         return new Result.Success<>(null);
     }
+
+    public Result<Void> validateNewPassword(String password, String confirm) {
+        if (password == null || password.isEmpty()) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Vui lòng nhập mật khẩu mới", null);
+        }
+        if (!password.equals(confirm)) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Mật khẩu nhập lại không khớp", null);
+        }
+        return new Result.Success<>(null);
+    }
+
+    public Result<Void> validateRecoveryEmail(String email) {
+        String trimmed = email != null ? email.trim() : "";
+        if (trimmed.isEmpty()) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Vui lòng nhập email", null);
+        }
+        return new Result.Success<>(null);
+    }
+
+    public Result<Void> validateRecoveryCode(String code) {
+        String trimmed = code != null ? code.trim() : "";
+        if (!trimmed.matches("\\d{6}")) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Mã gồm 6 chữ số", null);
+        }
+        return new Result.Success<>(null);
+    }
 }
