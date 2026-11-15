@@ -74,6 +74,12 @@ public class ErrorMapper {
         if ("email_address_invalid".equals(errorCode)) {
             return new Result.Error<>(ErrorType.VALIDATION, "Email không hợp lệ", null);
         }
+        if ("otp_expired".equals(errorCode)) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Mã xác nhận không đúng hoặc đã hết hạn", null);
+        }
+        if ("same_password".equals(errorCode)) {
+            return new Result.Error<>(ErrorType.VALIDATION, "Mật khẩu mới phải khác mật khẩu hiện tại", null);
+        }
         if (code == 429 || code >= 500) {
             return mapHttpCode(code, errorBodyJson);
         }

@@ -1,6 +1,7 @@
 package com.longvuong.plix.core.error;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -180,5 +181,36 @@ public class ErrorMapperTest {
         Result.Error<Object> error = (Result.Error<Object>) result;
         assertEquals(ErrorType.UNKNOWN, error.type);
         assertEquals("Không thực hiện được, vui lòng kiểm tra lại thông tin", error.message);
+    }
+
+    /**
+     * TN1-U01
+     * mapAuthHttpCode(403, body có error_code 'otp_expired'): Result.Error(VALIDATION) với message 'Mã xác nhận không đúng hoặc đã hết hạn', không chứa mã HTTP.
+     */
+    @Test
+    public void mapAuthHttpCode_otpExpired_returnsInvalidOrExpiredCodeMessage() {
+        String body = "{\"code\":403,\"error_code\":\"otp_expired\",\"msg\":\"Token has expired or is invalid\"}";
+
+        Result<Object> result = errorMapper.mapAuthHttpCode(403, body);
+
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.VALIDATION, error.type);
+        assertEquals("Mã xác nhận không đúng hoặc đã hết hạn", error.message);
+        assertFalse(error.message.contains("403"));
+    }
+
+    /**
+     * TN1-U02
+     * mapAuthHttpCode(422, body có error_code 'same_password'): Result.Error(VALIDATION) với message 'Mật khẩu mới phải khác mật khẩu hiện tại'.
+     */
+    @Test
+    public void mapAuthHttpCode_samePassword_returnsNewPasswordMustDifferMessage() {
+        String body = "{\"code\":422,\"error_code\":\"same_password\",\"msg\":\"New password should be different from the old password.\"}";
+
+        Result<Object> result = errorMapper.mapAuthHttpCode(422, body);
+
+        Result.Error<Object> error = (Result.Error<Object>) result;
+        assertEquals(ErrorType.VALIDATION, error.type);
+        assertEquals("Mật khẩu mới phải khác mật khẩu hiện tại", error.message);
     }
 }
