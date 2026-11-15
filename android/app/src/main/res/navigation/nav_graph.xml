@@ -112,6 +112,17 @@
                     app:popUpTo="@id/quickAddNlFragment"
                     app:popUpToInclusive="true" />
             </fragment>
+            <fragment
+                android:id="@+id/receiptScanFragment"
+                android:name="com.longvuong.plix.presentation.transaction.ReceiptScanFragment"
+                android:label="Quét hoá đơn"
+                tools:layout="@layout/fragment_receipt_scan">
+                <action
+                    android:id="@+id/action_receiptScanFragment_to_addEditTransactionFragment"
+                    app:destination="@id/addEditTransactionFragment"
+                    app:popUpTo="@id/receiptScanFragment"
+                    app:popUpToInclusive="true" />
+            </fragment>
         </navigation>
         <navigation
             android:id="@+id/budgetGoalGraph"
