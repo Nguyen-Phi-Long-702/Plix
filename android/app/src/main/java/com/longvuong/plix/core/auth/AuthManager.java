@@ -6,8 +6,11 @@ import com.longvuong.plix.core.error.Result;
 import com.longvuong.plix.data.remote.api.AuthApiService;
 import com.longvuong.plix.data.remote.dto.AuthResponseDto;
 import com.longvuong.plix.data.remote.dto.LoginRequestDto;
+import com.longvuong.plix.data.remote.dto.RecoverRequestDto;
 import com.longvuong.plix.data.remote.dto.RefreshRequestDto;
 import com.longvuong.plix.data.remote.dto.SignupRequestDto;
+import com.longvuong.plix.data.remote.dto.UpdateUserRequestDto;
+import com.longvuong.plix.data.remote.dto.VerifyOtpRequestDto;
 
 import java.io.IOException;
 
@@ -35,6 +38,11 @@ import java.util.Base64;
 public class AuthManager {
     public interface AuthCallback {
         void onSuccess(AuthResponseDto response);
+        void onError(String message);
+    }
+    //Callback cho các luồng quên mật khẩu và đổi mật khẩu: chỉ báo thành công hoặc thông báo lỗi tiếng Việt đã qua ErrorMapper, không mang theo token
+    public interface ActionCallback {
+        void onSuccess();
         void onError(String message);
     }
     private final AuthApiService authApiService;
@@ -72,6 +80,29 @@ public class AuthManager {
     }
     public void login(String email, String password, AuthCallback callback) {
         authApiService.login("password", new LoginRequestDto(email, password)).enqueue(new SimpleCallback(callback));
+    }
+    //Quên mật khẩu, bước 1: gửi mã 6 chữ số tới email (Supabase trả 200 kể cả khi email chưa đăng ký)
+    public void requestPasswordRecovery(String email, ActionCallback callback) {
+        authApiService.recover(new RecoverRequestDto(email)).enqueue(new VoidActionCallback(callback, false));
+    }
+    //Quên mật khẩu, bước 2: xác minh mã rồi đặt mật khẩu mới bằng access token của lần xác minh
+    //Token chỉ nằm trong biến cục bộ, không lưu vào RAM của AuthManager hay EncryptedTokenStore nên người dùng vẫn chưa đăng nhập (AUTH-16)
+    public void resetPasswordWithCode(String email, String code, String newPassword, ActionCallback callback) {
+        authApiService.verifyRecovery(new VerifyOtpRequestDto(email, code)).enqueue(new Callback<AuthResponseDto>() {
+            @Override
+            public void onResponse(Call<AuthResponseDto> call, retrofit2.Response<AuthResponseDto> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String recoveryAccessToken = response.body().accessToken;
+                    authApiService.updateUser("Bearer " + recoveryAccessToken, new UpdateUserRequestDto(newPassword)).enqueue(new VoidActionCallback(callback, false));
+                } else {
+                    reportHttpError(response, callback, false);
+                }
+            }
+            @Override
+            public void onFailure(Call<AuthResponseDto> call, Throwable t) {
+                reportFailure(t, callback);
+            }
+        });
     }
     public boolean refreshSync() {
         String currentRefreshToken = this.refreshToken;
@@ -188,16 +219,51 @@ public class AuthManager {
             Result<Void> result = errorMapper.mapThrowable(t);
             callback.onError(((Result.Error<Void>) result).message);
         }
-        @Nullable
-        private String readErrorBodySafely(retrofit2.Response<?> response) {
-            if (response.errorBody() == null) {
-                return null;
+    }
+    //Callback cho lời gọi trả Call<Void> (recover, updateUser): thân phản hồi không dùng nên chỉ cần HTTP 2xx là thành công
+    private class VoidActionCallback implements Callback<Void> {
+        private final ActionCallback callback;
+        private final boolean unauthorizedMeansSessionExpired;
+        VoidActionCallback(ActionCallback callback, boolean unauthorizedMeansSessionExpired) {
+            this.callback = callback;
+            this.unauthorizedMeansSessionExpired = unauthorizedMeansSessionExpired;
+        }
+        @Override
+        public void onResponse(Call<Void> call, retrofit2.Response<Void> response) {
+            if (response.isSuccessful()) {
+                callback.onSuccess();
+            } else {
+                reportHttpError(response, callback, unauthorizedMeansSessionExpired);
             }
-            try {
-                return response.errorBody().string();
-            } catch (IOException e) {
-                return null;
-            }
+        }
+        @Override
+        public void onFailure(Call<Void> call, Throwable t) {
+            reportFailure(t, callback);
+        }
+    }
+    //Lỗi HTTP của các luồng quên/đổi mật khẩu đều đi qua ErrorMapper; khi unauthorizedMeansSessionExpired bật thì 401 báo phiên đã hết hạn
+    private void reportHttpError(retrofit2.Response<?> response, ActionCallback callback, boolean unauthorizedMeansSessionExpired) {
+        Result<Void> result;
+        if (unauthorizedMeansSessionExpired && response.code() == 401) {
+            result = errorMapper.mapHttpCode(401);
+        } else {
+            result = errorMapper.mapAuthHttpCode(response.code(), readErrorBodySafely(response));
+        }
+        callback.onError(((Result.Error<Void>) result).message);
+    }
+    private void reportFailure(Throwable t, ActionCallback callback) {
+        Result<Void> result = errorMapper.mapThrowable(t);
+        callback.onError(((Result.Error<Void>) result).message);
+    }
+    @Nullable
+    private String readErrorBodySafely(retrofit2.Response<?> response) {
+        if (response.errorBody() == null) {
+            return null;
+        }
+        try {
+            return response.errorBody().string();
+        } catch (IOException e) {
+            return null;
         }
     }
     private static class ApiKeyInterceptor implements Interceptor {
