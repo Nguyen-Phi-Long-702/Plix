@@ -16,6 +16,7 @@ public class SyncPreferences {
     private static final String KEY_LAST_HEALTH_CALL_AT = "last_health_call_at";
     private static final String KEY_LAST_ERROR = "last_error";
     private static final String KEY_PULL_CURSOR_PREFIX = "pull_cursor_";
+    private static final String KEY_LAST_SUCCESS_AT_PREFIX = "last_success_at_";
 
     private final SharedPreferences prefs;
 
@@ -68,5 +69,23 @@ public class SyncPreferences {
             }
         }
         editor.apply();
+    }
+
+    //Thời điểm đồng bộ thành công gần nhất theo từng user_id (mili giây). Chưa có thì trả về 0
+    public long getLastSuccessAt(String userId) {
+        return prefs.getLong(lastSuccessAtKey(userId), 0L);
+    }
+
+    public void setLastSuccessAt(String userId, long timeMillis) {
+        prefs.edit().putLong(lastSuccessAtKey(userId), timeMillis).apply();
+    }
+
+    //Đăng xuất phải xoá luôn mốc này của user đó (NF-11), cùng lúc với con trỏ kéo
+    public void clearLastSuccessAt(String userId) {
+        prefs.edit().remove(lastSuccessAtKey(userId)).apply();
+    }
+
+    private static String lastSuccessAtKey(String userId) {
+        return KEY_LAST_SUCCESS_AT_PREFIX + userId;
     }
 }
