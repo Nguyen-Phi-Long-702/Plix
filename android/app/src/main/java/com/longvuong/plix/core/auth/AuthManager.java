@@ -53,6 +53,8 @@ public class AuthManager {
     //Lưu tạm access, refresh token trong RAM
     private volatile String accessToken;
     private volatile String refreshToken;
+    //Access token mới nhận được khi xác minh mật khẩu hiện tại: chỉ nằm trong RAM, dùng 1 lần cho changePassword, không lưu vào EncryptedTokenStore
+    private volatile String verifiedAccessToken;
     //livedata phát tín hiệu khi phiên đăng nhập cần đăng nhập lại (refresh cũng thất bại)
     private final MutableLiveData<Boolean> sessionExpiredLiveData = new MutableLiveData<>(false);
     //Bật trong lúc đồng bộ lần cuối khi đăng xuất: refresh token thất bại thì không đá người dùng ra màn hình đăng nhập, để hộp thoại xác nhận hiện ra đúng kế hoạch
@@ -103,6 +105,33 @@ public class AuthManager {
                 reportFailure(t, callback);
             }
         });
+    }
+    //Đổi mật khẩu, bước 1: xác minh mật khẩu hiện tại bằng cách đăng nhập lại bằng email của tài khoản đang đăng nhập
+    //Giữ token mới trong verifiedAccessToken (RAM), không lưu phiên (AUTH-16)
+    public void verifyCurrentPassword(String currentPassword, ActionCallback callback) {
+        String email = getCurrentUserEmail();
+        authApiService.login("password", new LoginRequestDto(email, currentPassword)).enqueue(new Callback<AuthResponseDto>() {
+            @Override
+            public void onResponse(Call<AuthResponseDto> call, retrofit2.Response<AuthResponseDto> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    verifiedAccessToken = response.body().accessToken;
+                    callback.onSuccess();
+                } else {
+                    reportHttpError(response, callback, false);
+                }
+            }
+            @Override
+            public void onFailure(Call<AuthResponseDto> call, Throwable t) {
+                reportFailure(t, callback);
+            }
+        });
+    }
+    //Đổi mật khẩu, bước 2: dùng token của lần xác minh (token đã lưu có thể đã quá hạn vì Supabase Retrofit không tự làm mới); dùng xong đặt về null
+    //Phiên hiện tại giữ nguyên; 401 báo phiên đã hết hạn và không tự đăng xuất
+    public void changePassword(String newPassword, ActionCallback callback) {
+        String token = verifiedAccessToken != null ? verifiedAccessToken : getAccessToken();
+        verifiedAccessToken = null;
+        authApiService.updateUser("Bearer " + token, new UpdateUserRequestDto(newPassword)).enqueue(new VoidActionCallback(callback, true));
     }
     public boolean refreshSync() {
         String currentRefreshToken = this.refreshToken;
