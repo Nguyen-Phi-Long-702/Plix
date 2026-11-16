@@ -51,6 +51,16 @@ public class SyncScheduler {
                 SyncWorker.UNIQUE_ONE_TIME_WORK_NAME, ExistingWorkPolicy.REPLACE, request);
     }
 
+    //Chạy ngay không trễ, dùng cho kéo để làm mới. KEEP: không huỷ lượt đang chạy hoặc đang chờ, kéo liên tiếp chỉ còn 1 lượt
+    public void requestSyncNow() {
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(SyncWorker.class)
+                .setConstraints(connectedConstraints())
+                .addTag(SyncWorker.TAG)
+                .build();
+        WorkManager.getInstance(context).enqueueUniqueWork(
+                SyncWorker.UNIQUE_ONE_TIME_WORK_NAME, ExistingWorkPolicy.KEEP, request);
+    }
+    
     private Constraints connectedConstraints() {
         return new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
     }
