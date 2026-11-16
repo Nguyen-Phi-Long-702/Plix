@@ -157,7 +157,7 @@
                             android:layout_height="@dimen/fab_mini_icon_size"
                             android:layout_gravity="center"
                             android:importantForAccessibility="no"
-                            android:src="@drawable/ic_cardpay"
+                            android:src="@drawable/ic_camera"
                             android:tint="@color/primary_dark" />
                     </FrameLayout>
                 </LinearLayout>

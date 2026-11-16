@@ -47,6 +47,10 @@ public class HomeFragment extends Fragment {
         expandableFab.setOnQuickAddClickListener(v ->
                 Navigation.findNavController(view)
                         .navigate(R.id.action_homeFragment_to_quickAddNlFragment));
+        //nav_graph.xml chưa có action từ Home sang Quét hoá đơn nên đi thẳng tới màn đích theo id; mục này hiện cả khi offline
+        expandableFab.setOnScanReceiptClickListener(v ->
+                Navigation.findNavController(view)
+                        .navigate(R.id.receiptScanFragment));
         viewModel.getQuickAddVisible().observe(getViewLifecycleOwner(), visible ->
                 expandableFab.setQuickAddVisible(visible));
 

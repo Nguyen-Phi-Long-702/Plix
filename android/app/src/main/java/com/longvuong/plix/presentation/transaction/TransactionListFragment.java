@@ -117,6 +117,9 @@ public class TransactionListFragment extends Fragment {
         //nav_graph.xml chưa có action từ danh sách sang Nhập nhanh (file này chỉ Long sửa) nên đi thẳng tới màn đích theo id
         fabExpandable.setOnQuickAddClickListener(v ->
                 Navigation.findNavController(requireView()).navigate(R.id.quickAddNlFragment));
+        //Giống Nhập nhanh: nav_graph.xml không có action từ danh sách sang Quét hoá đơn nên đi thẳng tới màn đích theo id; mục này hiện cả khi offline
+        fabExpandable.setOnScanReceiptClickListener(v ->
+                Navigation.findNavController(requireView()).navigate(R.id.receiptScanFragment));
         viewModel.getQuickAddVisible().observe(getViewLifecycleOwner(), visible ->
                 fabExpandable.setQuickAddVisible(Boolean.TRUE.equals(visible)));
     }

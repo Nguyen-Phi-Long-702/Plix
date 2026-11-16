@@ -65,7 +65,7 @@ public class ExpandableFabView extends FrameLayout {
     public void setOnAddTransactionClickListener(@Nullable View.OnClickListener listener) {
         cardAddTransaction.setOnClickListener(v -> onItemClicked(v, listener));
     }
-    
+
     //Mục "Quét hoá đơn" luôn hiện kể cả khi offline (đọc chữ chạy trên máy) nên không có hàm ẩn/hiện riêng
     public void setOnScanReceiptClickListener(@Nullable View.OnClickListener listener) {
         cardScanReceipt.setOnClickListener(v -> onItemClicked(v, listener));
