@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.longvuong.plix.R;
 
-//FAB mở rộng dùng chung: nút chính (+) mở menu "Nhập nhanh (AI)" / "Thêm giao dịch" kèm lớp phủ. Chỉ giữ trạng thái đóng/mở của giao diện; hành động bấm do Fragment gắn listener
+//FAB mở rộng dùng chung: nút chính (+) mở menu "Nhập nhanh (AI)" / "Thêm giao dịch" / "Quét hoá đơn" kèm lớp phủ. Chỉ giữ trạng thái đóng/mở của giao diện; hành động bấm do Fragment gắn listener
 public class ExpandableFabView extends FrameLayout {
     private static final float EXPANDED_ROTATION = 45f;
     private static final long ROTATION_DURATION_MS = 200L;
@@ -21,6 +21,7 @@ public class ExpandableFabView extends FrameLayout {
     private final View menu;
     private final View cardQuickAdd;
     private final View cardAddTransaction;
+    private final View cardScanReceipt;
     private final FloatingActionButton fabMain;
     private boolean expanded = false;
 
@@ -40,6 +41,7 @@ public class ExpandableFabView extends FrameLayout {
         menu = findViewById(R.id.layoutFabMenu);
         cardQuickAdd = findViewById(R.id.cardFabQuickAdd);
         cardAddTransaction = findViewById(R.id.cardFabAddTransaction);
+        cardScanReceipt = findViewById(R.id.cardFabScanReceipt);
         fabMain = findViewById(R.id.fabMain);
 
         //Thiết kế: FAB bo góc vuông-tròn thay vì tròn hẳn; lấy cỡ bo từ token radius_large
@@ -62,6 +64,11 @@ public class ExpandableFabView extends FrameLayout {
 
     public void setOnAddTransactionClickListener(@Nullable View.OnClickListener listener) {
         cardAddTransaction.setOnClickListener(v -> onItemClicked(v, listener));
+    }
+    
+    //Mục "Quét hoá đơn" luôn hiện kể cả khi offline (đọc chữ chạy trên máy) nên không có hàm ẩn/hiện riêng
+    public void setOnScanReceiptClickListener(@Nullable View.OnClickListener listener) {
+        cardScanReceipt.setOnClickListener(v -> onItemClicked(v, listener));
     }
 
     public void collapse() {
