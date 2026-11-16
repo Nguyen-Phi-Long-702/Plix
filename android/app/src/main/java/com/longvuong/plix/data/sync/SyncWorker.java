@@ -96,6 +96,7 @@ public class SyncWorker extends Worker {
                 return Result.retry(); //bị huỷ giữa chừng khi đang kéo, kết quả này sẽ bị bỏ qua
             }
             syncPreferences.clearLastError();
+            syncPreferences.setLastSuccessAt(userId, System.currentTimeMillis()); //chỉ ghi khi cả đẩy và kéo đã thành công và không bị dừng (SYNC-12)
             Timber.d("Đồng bộ xong");
             return Result.success();
         } catch (HttpException e) {
