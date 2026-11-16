@@ -45,3 +45,19 @@ Lệnh: `gradlew.bat :app:dependencies --configuration debugRuntimeClasspath` (t
 - Build debug (`assembleDebug`) sau khi thêm 3 thư viện: BUILD SUCCESSFUL.
 - Mở app sau khi thêm 3 thư viện: mở được, không crash.
 - Phiên bản thay thế: Không có.
+
+
+## Kết quả test thủ công quét hoá đơn (DP-8-L2)
+
+**Ngày chạy:** 18/11/2026
+**Thiết bị:** Samsung A15
+
+| Mã | Kết quả | Ghi chú |
+|---|---|---|
+| TN2-M01 | Đạt | camera hệ thống mở; không có hộp thoại xin quyền CAMERA |
+| TN2-M02 | Đạt | không xin quyền đọc ảnh; ảnh gốc còn nguyên |
+| TN2-M05 | Đạt | tình huống 1: rỗng; tình huống 2: rỗng; tình huống 3: rỗng |
+
+### Lỗi tìm thấy (DP-8-L2)
+
+- Không có lỗi mới.
