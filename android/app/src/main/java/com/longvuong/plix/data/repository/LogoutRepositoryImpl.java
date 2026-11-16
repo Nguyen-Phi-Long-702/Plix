@@ -145,6 +145,7 @@ public class LogoutRepositoryImpl implements LogoutRepository {
                     appDatabase.correctionDao().deleteAllByUserId(userId);
                 });
                 syncPreferences.clearPullCursors(userId);
+                syncPreferences.clearLastSuccessAt(userId);
             }
             //Mỗi tính năng tự đăng ký bộ dọn của mình; gọi cả khi userId null, trước khi xoá token (NF-11)
             UserSessionCleaners.clearAll(userSessionCleaners, userId);
