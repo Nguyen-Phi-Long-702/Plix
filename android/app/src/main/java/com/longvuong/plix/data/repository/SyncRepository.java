@@ -13,6 +13,12 @@ public interface SyncRepository {
 
     void requestSync();
 
+    void requestSyncNow();
+
+    long getLastSuccessAt();
+
+    boolean isOnline();
+
     LiveData<Boolean> getDeletedCategoryNotice();
 
     void onDeletedCategoryNoticeHandled();

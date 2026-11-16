@@ -13,6 +13,8 @@ import com.longvuong.plix.data.sync.SyncPreferences;
 import com.longvuong.plix.data.sync.SyncStatus;
 import com.longvuong.plix.data.sync.SyncWorker;
 import com.longvuong.plix.data.sync.SyncScheduler;
+import com.longvuong.plix.core.auth.AuthManager;
+import com.longvuong.plix.core.network.NetworkObserver;
 
 import java.util.List;
 
@@ -26,13 +28,17 @@ public class SyncRepositoryImpl implements SyncRepository {
     private final SyncPreferences syncPreferences;
     private final SyncScheduler syncScheduler;
     private final DeletedCategoryNotice deletedCategoryNotice;
+    private final NetworkObserver networkObserver;
+    private final AuthManager authManager;
     private final LiveData<SyncStatus> syncStatus;
 
     @Inject
-    public SyncRepositoryImpl(@ApplicationContext Context context, SyncPreferences syncPreferences, SyncScheduler syncScheduler, DeletedCategoryNotice deletedCategoryNotice) {
+    public SyncRepositoryImpl(@ApplicationContext Context context, SyncPreferences syncPreferences, SyncScheduler syncScheduler, DeletedCategoryNotice deletedCategoryNotice, NetworkObserver networkObserver, AuthManager authManager) {
         this.syncPreferences = syncPreferences;
         this.syncScheduler = syncScheduler;
         this.deletedCategoryNotice = deletedCategoryNotice;
+        this.networkObserver = networkObserver;
+        this.authManager = authManager;
         LiveData<List<WorkInfo>> workInfos = WorkManager.getInstance(context).getWorkInfosByTagLiveData(SyncWorker.TAG);
         this.syncStatus = Transformations.map(workInfos, infos -> toSyncStatus(infos));
     }
@@ -50,6 +56,26 @@ public class SyncRepositoryImpl implements SyncRepository {
 
     public void requestSync() {
         syncScheduler.requestSync();
+    }
+
+    @Override
+    public void requestSyncNow() {
+        syncScheduler.requestSyncNow();
+    }
+
+    @Override
+    public long getLastSuccessAt() {
+        String userId = authManager.getCurrentUserId();
+        if (userId == null) {
+            return 0L; //chưa có người dùng thì coi như chưa có lần đồng bộ nào
+        }
+        return syncPreferences.getLastSuccessAt(userId);
+    }
+
+    @Override
+    public boolean isOnline() {
+        //Chưa có giá trị thì coi như không có mạng, giống LogoutRepositoryImpl.isOnline
+        return Boolean.TRUE.equals(networkObserver.getIsConnected().getValue());
     }
 
     @Override
