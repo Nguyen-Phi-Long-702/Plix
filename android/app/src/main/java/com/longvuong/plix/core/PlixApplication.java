@@ -12,7 +12,9 @@ import androidx.work.WorkManager;
 import com.longvuong.plix.data.sync.RecurringTransactionWorker;
 import com.longvuong.plix.BuildConfig;
 import com.longvuong.plix.core.error.GlobalExceptionHandler;
+import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.data.local.AppDatabase;
+import com.longvuong.plix.data.ocr.ReceiptImageStore;
 import com.longvuong.plix.data.sync.ForegroundSyncObserver;
 import com.longvuong.plix.data.sync.SyncScheduler;
 
@@ -39,6 +41,12 @@ public class PlixApplication extends Application implements Configuration.Provid
     @Inject
     ForegroundSyncObserver foregroundSyncObserver;
 
+    @Inject
+    ReceiptImageStore receiptImageStore;
+
+    @Inject
+    AppExecutors appExecutors;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -50,6 +58,7 @@ public class PlixApplication extends Application implements Configuration.Provid
         scheduleRecurringTransactionWorker();
         syncScheduler.schedulePeriodicSync();
         ProcessLifecycleOwner.get().getLifecycle().addObserver(foregroundSyncObserver);
+        appExecutors.diskIO().execute(receiptImageStore::deleteAll); //dọn ảnh hoá đơn tạm còn sót sau khi tiến trình bị dừng (SEC-10)
     }
 
     private void scheduleRecurringTransactionWorker() {
