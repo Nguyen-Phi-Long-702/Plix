@@ -72,11 +72,16 @@
             app:chipIconVisible="true"
             app:closeIconVisible="false" />
 
-        <FrameLayout
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="@dimen/spacing_8"
             android:layout_weight="1">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerTransactions"
@@ -101,6 +106,7 @@
                 app:emptyMessage="Nhấn nút + để bắt đầu ghi chép thu chi."
                 app:emptyTitle="Chưa có giao dịch nào" />
         </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </LinearLayout>
 
     <com.longvuong.plix.presentation.common.ExpandableFabView
