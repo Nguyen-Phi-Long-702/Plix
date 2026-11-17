@@ -13,6 +13,7 @@ import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -23,6 +24,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.GoalEntity;
 import com.longvuong.plix.presentation.common.UiState;
+import com.longvuong.plix.presentation.sync.SyncRefreshViewModel;
 
 import java.util.List;
 
@@ -30,6 +32,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class GoalListFragment extends Fragment {
+    private static final long REFRESH_TIMEOUT_MS = 8_000L;
+    private SwipeRefreshLayout swipeRefresh;
+    private Runnable refreshTimeoutRunnable;
     private GoalListViewModel viewModel;
     private GoalAdapter adapter;
     private RecyclerView recyclerGoals;
@@ -52,6 +57,7 @@ public class GoalListFragment extends Fragment {
         bindViews(view);
         setupTabToggle();
         setupRecyclerView();
+        setupSwipeRefresh(view);
         fabAddGoal.setOnClickListener(v -> navigateToAddGoal());
         viewEmptyState.setOnActionClickListener(v -> navigateToAddGoal());
         viewModel.getGoalListState().observe(getViewLifecycleOwner(), this::renderState);
@@ -74,6 +80,37 @@ public class GoalListFragment extends Fragment {
             NavOptions options = new NavOptions.Builder().setPopUpTo(R.id.goalListFragment, true).build();
             Navigation.findNavController(requireView()).navigate(R.id.action_goalListFragment_to_budgetGoalFragment, null, options);
         });
+    }
+
+    private void setupSwipeRefresh(View view) {
+        SyncRefreshViewModel syncRefreshViewModel = new ViewModelProvider(this).get(SyncRefreshViewModel.class);
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+        swipeRefresh.setColorSchemeResources(R.color.primary);
+        //chỉ cho kéo khi danh sách đang ở đầu; recycler đang ẩn (Loading/Empty) coi như ở đầu nên danh sách trống vẫn kéo được
+        swipeRefresh.setOnChildScrollUpCallback((parent, child) ->
+                recyclerGoals.getVisibility() == View.VISIBLE && recyclerGoals.canScrollVertically(-1));
+        refreshTimeoutRunnable = syncRefreshViewModel::onRefreshTimeout;
+        swipeRefresh.setOnRefreshListener(() -> {
+            syncRefreshViewModel.requestRefresh();
+            //offline: ViewModel không bật refreshing nên vòng quay do thao tác kéo phải được tắt tại đây
+            swipeRefresh.setRefreshing(Boolean.TRUE.equals(syncRefreshViewModel.getRefreshing().getValue()));
+            swipeRefresh.postDelayed(refreshTimeoutRunnable, REFRESH_TIMEOUT_MS);
+        });
+        syncRefreshViewModel.getRefreshing().observe(getViewLifecycleOwner(), refreshing ->
+                swipeRefresh.setRefreshing(Boolean.TRUE.equals(refreshing)));
+        syncRefreshViewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
+            if (event == null) {
+                return;
+            }
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), event.message, Snackbar.LENGTH_SHORT).show();
+            syncRefreshViewModel.onEventHandled();
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        swipeRefresh.removeCallbacks(refreshTimeoutRunnable);
+        super.onDestroyView();
     }
 
     private void setupRecyclerView() {
