@@ -3,6 +3,7 @@ package com.longvuong.plix.core;
 import android.app.Application;
 
 import androidx.hilt.work.HiltWorkerFactory;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.Configuration;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
@@ -12,6 +13,7 @@ import com.longvuong.plix.data.sync.RecurringTransactionWorker;
 import com.longvuong.plix.BuildConfig;
 import com.longvuong.plix.core.error.GlobalExceptionHandler;
 import com.longvuong.plix.data.local.AppDatabase;
+import com.longvuong.plix.data.sync.ForegroundSyncObserver;
 import com.longvuong.plix.data.sync.SyncScheduler;
 
 import javax.inject.Inject;
@@ -34,6 +36,9 @@ public class PlixApplication extends Application implements Configuration.Provid
     @Inject
     SyncScheduler syncScheduler;
 
+    @Inject
+    ForegroundSyncObserver foregroundSyncObserver;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -44,6 +49,7 @@ public class PlixApplication extends Application implements Configuration.Provid
         }
         scheduleRecurringTransactionWorker();
         syncScheduler.schedulePeriodicSync();
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(foregroundSyncObserver);
     }
 
     private void scheduleRecurringTransactionWorker() {
