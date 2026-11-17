@@ -13,12 +13,15 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.longvuong.plix.R;
 import com.longvuong.plix.presentation.common.EmptyStateView;
 import com.longvuong.plix.presentation.common.ExpandableFabView;
 import com.longvuong.plix.presentation.common.UiState;
+import com.longvuong.plix.presentation.sync.SyncRefreshViewModel;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -27,6 +30,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class HomeFragment extends Fragment {
+    private static final long REFRESH_TIMEOUT_MS = 8_000L;
+    private SwipeRefreshLayout swipeRefresh;
+    private Runnable refreshTimeoutRunnable;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -39,6 +45,7 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         HomeViewModel viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        setupSwipeRefresh(view);
 
         ExpandableFabView expandableFab = view.findViewById(R.id.expandableFab);
         expandableFab.setOnAddTransactionClickListener(v ->
@@ -77,10 +84,39 @@ public class HomeFragment extends Fragment {
             layoutLoading.setVisibility(state instanceof UiState.Loading ? View.VISIBLE : View.GONE);
             emptyHome.setVisibility(state instanceof UiState.Empty ? View.VISIBLE : View.GONE);
             scrollHome.setVisibility(state instanceof UiState.Success ? View.VISIBLE : View.GONE);
+            swipeRefresh.setEnabled(state instanceof UiState.Success);
             if (state instanceof UiState.Success) {
                 bindHome(view, ((UiState.Success<HomeUiModel>) state).data, recentAdapter);
             }
         });
+    }
+
+    private void setupSwipeRefresh(View view) {
+        SyncRefreshViewModel syncRefreshViewModel = new ViewModelProvider(this).get(SyncRefreshViewModel.class);
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+        swipeRefresh.setColorSchemeResources(R.color.primary);
+        refreshTimeoutRunnable = syncRefreshViewModel::onRefreshTimeout;
+        swipeRefresh.setOnRefreshListener(() -> {
+            syncRefreshViewModel.requestRefresh();
+            //offline: ViewModel không bật refreshing nên vòng quay do thao tác kéo phải được tắt tại đây
+            swipeRefresh.setRefreshing(Boolean.TRUE.equals(syncRefreshViewModel.getRefreshing().getValue()));
+            swipeRefresh.postDelayed(refreshTimeoutRunnable, REFRESH_TIMEOUT_MS);
+        });
+        syncRefreshViewModel.getRefreshing().observe(getViewLifecycleOwner(), refreshing ->
+                swipeRefresh.setRefreshing(Boolean.TRUE.equals(refreshing)));
+        syncRefreshViewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
+            if (event == null) {
+                return;
+            }
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), event.message, Snackbar.LENGTH_SHORT).show();
+            syncRefreshViewModel.onEventHandled();
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        swipeRefresh.removeCallbacks(refreshTimeoutRunnable);
+        super.onDestroyView();
     }
 
     private void bindHome(View view, HomeUiModel model, RecentTransactionAdapter recentAdapter) {
