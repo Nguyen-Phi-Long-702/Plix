@@ -21,6 +21,11 @@
         app:emptyMessage="Bạn chưa có giao dịch nào.\nNhấn nút + để ghi lại khoản thu/chi đầu tiên."
         app:emptyTitle="Chào mừng đến với Plix" />
 
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <ScrollView
         android:id="@+id/scrollHome"
         android:layout_width="match_parent"
@@ -314,6 +319,7 @@
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <com.longvuong.plix.presentation.common.ExpandableFabView
         android:id="@+id/expandableFab"

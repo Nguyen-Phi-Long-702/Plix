@@ -12,11 +12,16 @@
 
         <include layout="@layout/partial_budget_goal_tabs" />
 
-        <FrameLayout
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="@dimen/spacing_12"
             android:layout_weight="1">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerGoals"
@@ -49,6 +54,7 @@
                 app:emptyMessage="Tạo mục tiêu để biết cần tiết kiệm bao nhiêu mỗi tháng."
                 app:emptyTitle="Chưa có mục tiêu tiết kiệm" />
         </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -28,6 +29,7 @@ import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.presentation.common.CategoryIconMapper;
 import com.longvuong.plix.presentation.common.ExpandableFabView;
 import com.longvuong.plix.presentation.common.UiState;
+import com.longvuong.plix.presentation.sync.SyncRefreshViewModel;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -42,6 +44,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class TransactionListFragment extends Fragment {
+    private static final long REFRESH_TIMEOUT_MS = 8_000L;
+    private SwipeRefreshLayout swipeRefresh;
+    private Runnable refreshTimeoutRunnable;
     private TransactionListViewModel viewModel;
     private TransactionAdapter adapter;
     private RecyclerView recyclerTransactions;
@@ -74,6 +79,7 @@ public class TransactionListFragment extends Fragment {
         setupDateRangeChip();
         setupSearchField();
         setupFab();
+        setupSwipeRefresh(view);
 
         viewModel.getTransactionListState().observe(getViewLifecycleOwner(), this::renderState);
         viewModel.getActiveCategories().observe(getViewLifecycleOwner(), categories -> {
@@ -236,6 +242,37 @@ public class TransactionListFragment extends Fragment {
                 viewModel.setSearchQuery(s.toString());
             }
         });
+    }
+
+    private void setupSwipeRefresh(View view) {
+        SyncRefreshViewModel syncRefreshViewModel = new ViewModelProvider(this).get(SyncRefreshViewModel.class);
+        swipeRefresh = view.findViewById(R.id.swipeRefresh);
+        swipeRefresh.setColorSchemeResources(R.color.primary);
+        //chỉ cho kéo khi danh sách đang ở đầu; recycler đang ẩn (Loading/Empty) coi như ở đầu nên danh sách trống vẫn kéo được
+        swipeRefresh.setOnChildScrollUpCallback((parent, child) ->
+                recyclerTransactions.getVisibility() == View.VISIBLE && recyclerTransactions.canScrollVertically(-1));
+        refreshTimeoutRunnable = syncRefreshViewModel::onRefreshTimeout;
+        swipeRefresh.setOnRefreshListener(() -> {
+            syncRefreshViewModel.requestRefresh();
+            //offline: ViewModel không bật refreshing nên vòng quay do thao tác kéo phải được tắt tại đây
+            swipeRefresh.setRefreshing(Boolean.TRUE.equals(syncRefreshViewModel.getRefreshing().getValue()));
+            swipeRefresh.postDelayed(refreshTimeoutRunnable, REFRESH_TIMEOUT_MS);
+        });
+        syncRefreshViewModel.getRefreshing().observe(getViewLifecycleOwner(), refreshing ->
+                swipeRefresh.setRefreshing(Boolean.TRUE.equals(refreshing)));
+        syncRefreshViewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
+            if (event == null) {
+                return;
+            }
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), event.message, Snackbar.LENGTH_SHORT).show();
+            syncRefreshViewModel.onEventHandled();
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        swipeRefresh.removeCallbacks(refreshTimeoutRunnable);
+        super.onDestroyView();
     }
 
     private void renderState(UiState<List<TransactionListItem>> state) {
