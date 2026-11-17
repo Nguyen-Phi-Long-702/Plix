@@ -24,10 +24,15 @@
             tools:text="Kỳ: Tháng 10/2026"
             tools:visibility="visible" />
 
-        <FrameLayout
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerBudgets"
@@ -63,6 +68,7 @@
                 app:emptyMessage="Tạo ngân sách đầu tiên để theo dõi chi tiêu theo tháng."
                 app:emptyTitle="Chưa có ngân sách" />
         </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
