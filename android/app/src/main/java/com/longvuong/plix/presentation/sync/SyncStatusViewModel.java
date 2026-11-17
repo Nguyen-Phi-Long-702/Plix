@@ -29,6 +29,10 @@ public class SyncStatusViewModel extends ViewModel {
         return syncRepository.getLastSyncError();
     }
 
+    public long getLastSuccessAt() {
+        return syncRepository.getLastSuccessAt();
+    }
+
     public LiveData<Boolean> getDeletedCategoryNotice() {
         return syncRepository.getDeletedCategoryNotice();
     }

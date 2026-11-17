@@ -22,6 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.sync.SyncStatus;
 
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -124,6 +125,7 @@ public class SyncIndicatorMenuProvider implements MenuProvider {
                 message = "Không có lỗi đồng bộ. Các thay đổi trên máy sẽ tự được gửi lên máy chủ khi có mạng.";
                 break;
         }
-        new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_Plix_MaterialAlertDialog).setTitle("Trạng thái đồng bộ").setMessage(message).setPositiveButton("Đóng", null).show();
+        String lastSyncLine = "Đồng bộ lần cuối: " + LastSyncFormatter.format(viewModel.getLastSuccessAt(), ZoneId.systemDefault());
+        new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_Plix_MaterialAlertDialog).setTitle("Trạng thái đồng bộ").setMessage(message + "\n" + lastSyncLine).setPositiveButton("Đóng", null).show();
     }
 }
