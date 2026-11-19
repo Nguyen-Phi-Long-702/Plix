@@ -8,6 +8,7 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,12 +19,23 @@ import java.util.Set;
 import javax.inject.Inject;
 
 //Phát hiện khoản lặp hằng tháng từ lịch sử giao dịch (FIN-17). Java thuần, không phụ thuộc Android.
-//Hiện mới có phần 1 (lọc, gom nhóm, loại nhóm đã có mẫu, tháng đơn, neo); phần 2 (đi lùi theo tháng, dung sai, sắp xếp) làm ở DP-6-V1
+//Quy tắc theo DP_02 mục 7.3: lọc, gom nhóm, loại nhóm đã có mẫu, tháng đơn, neo, đi lùi theo tháng với dung sai, bỏ qua, sắp xếp
 public class DetectRecurringCandidatesUseCase {
     private static final int MIN_CONSECUTIVE_MONTHS = 3;
     private static final int AMOUNT_TOLERANCE_PERCENT = 10;
     private static final int DAY_TOLERANCE_DAYS = 3;
     private static final int LOOKBACK_MONTHS = 12;
+
+    //Thứ tự kết quả: số tháng liên tiếp giảm dần, rồi số tiền giảm dần, rồi key tăng dần
+    private static final Comparator<RecurringCandidate> CANDIDATE_ORDER = (a, b) -> {
+        if (a.consecutiveMonths != b.consecutiveMonths) {
+            return Integer.compare(b.consecutiveMonths, a.consecutiveMonths);
+        }
+        if (a.amount != b.amount) {
+            return Long.compare(b.amount, a.amount);
+        }
+        return a.getKey().compareTo(b.getKey());
+    };
 
     @Inject
     public DetectRecurringCandidatesUseCase() {
@@ -47,8 +59,15 @@ public class DetectRecurringCandidatesUseCase {
             if (reference == null) {
                 continue; //tháng gần nhất không phải tháng hiện tại/tháng trước hoặc không phải tháng đơn
             }
-            //Phần 2 (DP-6-V1): đi lùi từ tháng của reference, tạo RecurringCandidate, bỏ dismissedKeys, sắp xếp
+            int consecutiveMonths = countConsecutiveMonths(byMonth, reference, zone);
+            if (consecutiveMonths < MIN_CONSECUTIVE_MONTHS || dismissedKeys.contains(group.getKey())) {
+                continue; //chuỗi quá ngắn, hoặc người dùng đã bấm "Bỏ qua" cho loại và danh mục này
+            }
+            candidates.add(new RecurringCandidate(reference.type, reference.categoryId, reference.amount,
+                    localDateOf(reference, zone).getDayOfMonth(), reference.note, consecutiveMonths,
+                    reference.occurredAt));
         }
+        candidates.sort(CANDIDATE_ORDER);
         return candidates;
     }
 
@@ -116,5 +135,38 @@ public class DetectRecurringCandidatesUseCase {
         }
         List<TransactionEntity> inLatest = byMonth.get(latest);
         return inLatest.size() == 1 ? inLatest.get(0) : null;
+    }
+
+    //Đi lùi từng tháng liền trước tháng của giao dịch tham chiếu. Mỗi tháng phải là tháng đơn, số tiền lệch tối đa
+    //AMOUNT_TOLERANCE_PERCENT% so với tham chiếu và ngày lệch tối đa DAY_TOLERANCE_DAYS so với min(ngày tham chiếu, số ngày của tháng).
+    //Dừng ở tháng đầu tiên không khớp hoặc khi đã xét đủ LOOKBACK_MONTHS tháng (kể cả tháng neo). Trả về độ dài chuỗi, tính cả tháng neo
+    private static int countConsecutiveMonths(Map<YearMonth, List<TransactionEntity>> byMonth,
+                                              TransactionEntity reference, ZoneId zone) {
+        LocalDate referenceDate = localDateOf(reference, zone);
+        YearMonth anchorMonth = YearMonth.from(referenceDate);
+        int months = 1; //tháng neo
+        while (months < LOOKBACK_MONTHS) {
+            YearMonth month = anchorMonth.minusMonths(months);
+            List<TransactionEntity> inMonth = byMonth.get(month);
+            if (inMonth == null || inMonth.size() != 1) {
+                break; //thiếu tháng hoặc tháng không đơn
+            }
+            TransactionEntity transaction = inMonth.get(0);
+            int expectedDay = Math.min(referenceDate.getDayOfMonth(), month.lengthOfMonth());
+            boolean amountMatches = Math.abs(transaction.amount - reference.amount) * 100
+                    <= reference.amount * AMOUNT_TOLERANCE_PERCENT;
+            boolean dayMatches = Math.abs(localDateOf(transaction, zone).getDayOfMonth() - expectedDay)
+                    <= DAY_TOLERANCE_DAYS;
+            if (!amountMatches || !dayMatches) {
+                break;
+            }
+            months++;
+        }
+        return months;
+    }
+
+    //Ngày địa phương của giao dịch theo múi giờ zone
+    private static LocalDate localDateOf(TransactionEntity transaction, ZoneId zone) {
+        return Instant.ofEpochMilli(transaction.occurredAt).atZone(zone).toLocalDate();
     }
 }
