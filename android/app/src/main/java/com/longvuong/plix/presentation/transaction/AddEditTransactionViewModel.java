@@ -157,8 +157,37 @@ public class AddEditTransactionViewModel extends ViewModel {
         savedStateHandle.set(KEY_NOTE, "");
         savedStateHandle.set(KEY_RECURRING, false);
         savedStateHandle.set(KEY_RECURRING_DAY, LocalDate.now().getDayOfMonth());
+        applyPrefill();
         savedStateHandle.set(KEY_LOADED, true);
         formReady.setValue(true);
+    }
+
+    private void applyPrefill() {
+        Long amount = savedStateHandle.get(TransactionPrefillArgs.KEY_AMOUNT);
+        if (amount != null && amount > 0) {
+            savedStateHandle.set(KEY_AMOUNT, amount);
+        }
+        String type = savedStateHandle.get(TransactionPrefillArgs.KEY_TYPE);
+        if (type != null && !type.isEmpty()) {
+            savedStateHandle.set(KEY_TYPE, type);
+        }
+        Long occurredAt = savedStateHandle.get(TransactionPrefillArgs.KEY_OCCURRED_AT);
+        if (occurredAt != null && occurredAt > 0) {
+            savedStateHandle.set(KEY_OCCURRED_AT, occurredAt);
+        }
+        String categoryId = savedStateHandle.get(TransactionPrefillArgs.KEY_CATEGORY_ID);
+        if (categoryId != null && !categoryId.isEmpty()) {
+            savedStateHandle.set(KEY_CATEGORY_ID, categoryId);
+        }
+        Integer recurringDay = savedStateHandle.get(TransactionPrefillArgs.KEY_RECURRING_DAY);
+        if (recurringDay != null && recurringDay > 0) {
+            savedStateHandle.set(KEY_RECURRING, true);
+            savedStateHandle.set(KEY_RECURRING_DAY, recurringDay);
+        }
+        String note = savedStateHandle.get(TransactionPrefillArgs.KEY_NOTE);
+        if (note != null && !note.isEmpty()) {
+            setNote(note);
+        }
     }
 
     private void loadExistingTransaction(TransactionRepository transactionRepository, String id) {
