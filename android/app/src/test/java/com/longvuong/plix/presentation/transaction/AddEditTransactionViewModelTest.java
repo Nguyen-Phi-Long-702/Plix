@@ -9,6 +9,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 import androidx.lifecycle.SavedStateHandle;
 
 import com.longvuong.plix.core.auth.AuthManager;
+import com.longvuong.plix.core.error.RepositoryCallback;
 import com.longvuong.plix.data.local.entity.CategoryEntity;
 import com.longvuong.plix.data.local.entity.TransactionEntity;
 import com.longvuong.plix.data.repository.AnomalyResult;
@@ -694,5 +695,102 @@ public class AddEditTransactionViewModelTest {
         viewModel.dismissCategorySuggestion();
 
         assertTrue(viewModel.getCategorySuggestionState().getValue() instanceof UiState.Empty);
+    }
+
+    private static class CountingAiRepository extends FakeAiRepository {
+        volatile int categorizeCallCount;
+        volatile String lastCategorizeNote;
+
+        @Override
+        public void categorize(String note, RepositoryCallback<CategorySuggestion> callback) {
+            lastCategorizeNote = note;
+            categorizeCallCount++;
+            super.categorize(note, callback);
+        }
+    }
+
+    /**
+     * TNX-U04
+     * SavedStateHandle: prefillAmount=135000, prefillType='expense', prefillOccurredAt=T, prefillNote='HIGHLANDS COFFEE': form Thêm điền sẵn số tiền, loại, ngày, ghi chú; công tắc định kỳ vẫn tắt.
+     */
+    @Test
+    public void addMode_prefillAmountTypeDateAndNote_fillsDraftFields() {
+        long occurredAt = 1_700_000_000_000L;
+        Map<String, Object> args = new HashMap<>();
+        args.put("prefillAmount", 135_000L);
+        args.put("prefillType", "expense");
+        args.put("prefillOccurredAt", occurredAt);
+        args.put("prefillNote", "HIGHLANDS COFFEE");
+
+        AddEditTransactionViewModel viewModel = createViewModel(args);
+
+        assertEquals(135_000L, viewModel.getAmount());
+        assertEquals("expense", viewModel.getType());
+        assertEquals(occurredAt, viewModel.getOccurredAt());
+        assertEquals("HIGHLANDS COFFEE", viewModel.getNote());
+        assertTrue(!viewModel.isRecurring());
+    }
+
+    /**
+     * TNX-U05
+     * SavedStateHandle: prefillRecurringDay=5: công tắc định kỳ bật và ngày lặp là 5.
+     */
+    @Test
+    public void addMode_prefillRecurringDay_turnsRecurringOnWithThatDay() {
+        Map<String, Object> args = new HashMap<>();
+        args.put("prefillRecurringDay", 5);
+
+        AddEditTransactionViewModel viewModel = createViewModel(args);
+
+        assertTrue(viewModel.isRecurring());
+        assertEquals(5, viewModel.getRecurringDay());
+    }
+
+    /**
+     * TNX-U06
+     * transactionId='tx-1' kèm prefillAmount=999: chế độ Sửa bỏ qua prefill, ViewModel nạp giao dịch tx-1 và số tiền là của tx-1.
+     */
+    @Test
+    public void editMode_prefillArguments_areIgnored() {
+        TransactionEntity existing = existingTransaction("tx-1");
+        Map<String, Object> args = new HashMap<>();
+        args.put(AddEditTransactionViewModel.ARG_TRANSACTION_ID, "tx-1");
+        args.put("prefillAmount", 999L);
+
+        AddEditTransactionViewModel viewModel = createViewModel(args);
+
+        assertTrue(viewModel.isEditMode());
+        assertEquals(existing.amount, viewModel.getAmount());
+    }
+
+    /**
+     * TNX-U07
+     * Không có khoá prefill*: giữ mặc định hiện có (số tiền 0, loại 'expense', định kỳ tắt, ngày lặp là ngày hôm nay).
+     */
+    @Test
+    public void addMode_noPrefillArguments_keepsDefaults() {
+        AddEditTransactionViewModel viewModel = createViewModel(new HashMap<>());
+
+        assertEquals(0L, viewModel.getAmount());
+        assertEquals("expense", viewModel.getType());
+        assertTrue(!viewModel.isRecurring());
+        assertEquals(LocalDate.now().getDayOfMonth(), viewModel.getRecurringDay());
+    }
+
+    /**
+     * TNX-U08
+     * prefillNote='HIGHLANDS COFFEE', tiến thời gian qua debounce: FakeAiRepository.categorize được gọi đúng 1 lần với 'HIGHLANDS COFFEE'.
+     */
+    @Test
+    public void addMode_prefillNote_triggersCategorizeOnce() throws InterruptedException {
+        CountingAiRepository aiRepository = new CountingAiRepository();
+        Map<String, Object> args = new HashMap<>();
+        args.put("prefillNote", "HIGHLANDS COFFEE");
+
+        createViewModel(args, aiRepository);
+        waitUntil(() -> aiRepository.categorizeCalled, 2000);
+
+        assertEquals(1, aiRepository.categorizeCallCount);
+        assertEquals("HIGHLANDS COFFEE", aiRepository.lastCategorizeNote);
     }
 }

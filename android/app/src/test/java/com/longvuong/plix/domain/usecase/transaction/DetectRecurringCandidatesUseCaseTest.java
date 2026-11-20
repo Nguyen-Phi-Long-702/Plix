@@ -7,6 +7,7 @@ import com.longvuong.plix.data.local.entity.TransactionEntity;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public class DetectRecurringCandidatesUseCaseTest {
     private static final String USER_A = "user-A";
     private static final String USER_B = "user-B";
     private static final String CAT_ENT = "cat-ent";
+    private static final String CAT_RENT = "cat-rent";
+    private static final String CAT_SALARY = "cat-salary";
 
     private DetectRecurringCandidatesUseCase useCase;
 
@@ -56,13 +59,55 @@ public class DetectRecurringCandidatesUseCaseTest {
 
     private static void assertSingleCandidate(List<RecurringCandidate> result, long amount, int dayOfMonth,
                                               int consecutiveMonths) {
+        assertSingleCandidate(result, "expense", CAT_ENT, amount, dayOfMonth, consecutiveMonths);
+    }
+
+    private static void assertSingleCandidate(List<RecurringCandidate> result, String type, String categoryId,
+                                              long amount, int dayOfMonth, int consecutiveMonths) {
         assertEquals(1, result.size());
         RecurringCandidate candidate = result.get(0);
-        assertEquals("expense", candidate.type);
-        assertEquals(CAT_ENT, candidate.categoryId);
+        assertEquals(type, candidate.type);
+        assertEquals(categoryId, candidate.categoryId);
         assertEquals(amount, candidate.amount);
         assertEquals(dayOfMonth, candidate.dayOfMonth);
         assertEquals(consecutiveMonths, candidate.consecutiveMonths);
+    }
+
+    private List<RecurringCandidate> detect(List<TransactionEntity> all, LocalDate today, ZoneId zone) {
+        return useCase.execute(all, Collections.<TransactionEntity>emptyList(), Collections.<String>emptySet(),
+                USER_A, today, zone);
+    }
+
+    private static long noonOf(int year, int month, int day) {
+        return LocalDate.of(year, month, day).atTime(12, 0).atZone(ZONE).toInstant().toEpochMilli();
+    }
+
+    private static TransactionEntity transactionAt(String id, String type, String categoryId, long occurredAt,
+                                                   long amount) {
+        TransactionEntity entity = new TransactionEntity();
+        entity.id = id;
+        entity.userId = USER_A;
+        entity.type = type;
+        entity.categoryId = categoryId;
+        entity.amount = amount;
+        entity.occurredAt = occurredAt;
+        return entity;
+    }
+
+    private static List<TransactionEntity> dataBd14() {
+        List<TransactionEntity> all = new ArrayList<>();
+        all.add(transactionAt("t-07", "expense", CAT_ENT, Instant.parse("2026-07-31T17:30:00Z").toEpochMilli(), 90_000L));
+        all.add(transactionAt("t-08", "expense", CAT_ENT, Instant.parse("2026-08-31T17:30:00Z").toEpochMilli(), 90_000L));
+        all.add(transactionAt("t-09", "expense", CAT_ENT, Instant.parse("2026-09-30T17:30:00Z").toEpochMilli(), 90_000L));
+        return all;
+    }
+
+    private static List<TransactionEntity> dataBd19() {
+        List<TransactionEntity> all = new ArrayList<>();
+        all.add(transactionAt("t-09", "expense", CAT_ENT, noonOf(2026, 9, 5), 100_000L));
+        all.add(transactionAt("t-10", "expense", CAT_ENT, noonOf(2026, 10, 5), 100_000L));
+        all.add(transactionAt("t-11", "expense", CAT_ENT, noonOf(2026, 11, 5), 100_000L));
+        return all;
     }
 
     /**
@@ -229,5 +274,115 @@ public class DetectRecurringCandidatesUseCaseTest {
         }
 
         assertEquals(0, detect(all).size());
+    }
+    /**
+     * TN6-U13
+     * BD13: today 2027-04-10; cat-rent 5.000.000 vào 31/01, 28/02, 31/03/2027: tháng 2 có hiệu lực ngày min(31, 28) = 28, lệch 0; 1 ứng viên ngày 31, 3 tháng.
+     */
+    @Test
+    public void execute_dayThirtyOneClampedToShortMonth_returnsCandidateOnDayThirtyOne() {
+        List<TransactionEntity> all = new ArrayList<>();
+        all.add(transactionAt("t-01", "expense", CAT_RENT, noonOf(2027, 1, 31), 5_000_000L));
+        all.add(transactionAt("t-02", "expense", CAT_RENT, noonOf(2027, 2, 28), 5_000_000L));
+        all.add(transactionAt("t-03", "expense", CAT_RENT, noonOf(2027, 3, 31), 5_000_000L));
+
+        assertSingleCandidate(detect(all, LocalDate.of(2027, 4, 10), ZONE), "expense", CAT_RENT, 5_000_000L, 31, 3);
+    }
+
+    /**
+     * TN6-U14
+     * BD14: cat-ent 90.000 tại 2026-07-31T17:30Z, 2026-08-31T17:30Z, 2026-09-30T17:30Z; zone Asia/Ho_Chi_Minh: giờ địa phương là 01/08, 01/09, 01/10; 1 ứng viên ngày 1, 3 tháng.
+     */
+    @Test
+    public void execute_utcPlusSevenTimestamps_usesLocalDatesAndReturnsCandidateOnDayOne() {
+        assertSingleCandidate(detect(dataBd14(), TODAY, ZONE), 90_000L, 1, 3);
+    }
+
+    /**
+     * TN6-U15
+     * BD15: như BD14 nhưng zone UTC: tháng 07, 08, 09; tháng gần nhất là 09, không phải tháng 10 hay 11 nên không có neo, không có ứng viên.
+     */
+    @Test
+    public void execute_sameTimestampsInUtc_returnsNoCandidate() {
+        assertEquals(0, detect(dataBd14(), TODAY, ZoneId.of("UTC")).size());
+    }
+
+    /**
+     * TN6-U16
+     * BD16: income cat-salary 15.000.000 ngày 10 các tháng 08, 09, 10/2026: 1 ứng viên income, 15.000.000, ngày 10, 3 tháng.
+     */
+    @Test
+    public void execute_incomeThreeConsecutiveMonths_returnsIncomeCandidate() {
+        List<TransactionEntity> all = new ArrayList<>();
+        all.add(transactionAt("t-08", "income", CAT_SALARY, noonOf(2026, 8, 10), 15_000_000L));
+        all.add(transactionAt("t-09", "income", CAT_SALARY, noonOf(2026, 9, 10), 15_000_000L));
+        all.add(transactionAt("t-10", "income", CAT_SALARY, noonOf(2026, 10, 10), 15_000_000L));
+
+        assertSingleCandidate(detect(all), "income", CAT_SALARY, 15_000_000L, 10, 3);
+    }
+
+    /**
+     * TN6-U17
+     * BD17: dữ liệu BD1 nhưng categoryId = null: bị loại ở bước 1, không có ứng viên.
+     */
+    @Test
+    public void execute_transactionsWithoutCategory_returnsNoCandidate() {
+        List<TransactionEntity> all = dataBd1();
+        for (TransactionEntity entity : all) {
+            entity.categoryId = null;
+        }
+
+        assertEquals(0, detect(all).size());
+    }
+
+    /**
+     * TN6-U18
+     * BD18: dữ liệu BD1 và dismissedKeys = {'expense|cat-ent'}: bị loại ở bước 8, không có ứng viên.
+     */
+    @Test
+    public void execute_groupKeyIsDismissed_returnsNoCandidate() {
+        List<RecurringCandidate> result = useCase.execute(dataBd1(), Collections.<TransactionEntity>emptyList(),
+                Collections.singleton("expense|cat-ent"), USER_A, TODAY, ZONE);
+
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * TN6-U19
+     * BD19: today 2026-11-08; cat-ent 100.000 ngày 5 các tháng 09, 10, 11/2026: 05/11 không sau cuối ngày 08/11 nên được xét; neo là tháng hiện tại; 1 ứng viên, 3 tháng.
+     */
+    @Test
+    public void execute_anchorInCurrentMonth_returnsCandidate() {
+        assertSingleCandidate(detect(dataBd19()), 100_000L, 5, 3);
+    }
+
+    /**
+     * TN6-U20
+     * BD20: như BD19 nhưng today 2026-11-04: 05/11 sau cuối ngày 04/11 nên bị loại; neo tháng 10, chuỗi chỉ còn tháng 10 và 09 (2), không có ứng viên.
+     */
+    @Test
+    public void execute_transactionInFuture_isExcludedAndReturnsNoCandidate() {
+        assertEquals(0, detect(dataBd19(), LocalDate.of(2026, 11, 4), ZONE).size());
+    }
+
+    /**
+     * TN6-U21
+     * Thứ tự: BD1 (260.000, 3 tháng) cộng cat-rent 5.000.000 ngày 1 các tháng 07, 08, 09, 10/2026 (4 tháng): cat-rent đứng trước vì 4 > 3.
+     */
+    @Test
+    public void execute_twoCandidates_ordersByConsecutiveMonthsDescending() {
+        List<TransactionEntity> all = dataBd1();
+        all.add(transactionAt("r-07", "expense", CAT_RENT, noonOf(2026, 7, 1), 5_000_000L));
+        all.add(transactionAt("r-08", "expense", CAT_RENT, noonOf(2026, 8, 1), 5_000_000L));
+        all.add(transactionAt("r-09", "expense", CAT_RENT, noonOf(2026, 9, 1), 5_000_000L));
+        all.add(transactionAt("r-10", "expense", CAT_RENT, noonOf(2026, 10, 1), 5_000_000L));
+
+        List<RecurringCandidate> result = detect(all);
+
+        assertEquals(2, result.size());
+        assertEquals(CAT_RENT, result.get(0).categoryId);
+        assertEquals(4, result.get(0).consecutiveMonths);
+        assertEquals(CAT_ENT, result.get(1).categoryId);
+        assertEquals(3, result.get(1).consecutiveMonths);
     }
 }
