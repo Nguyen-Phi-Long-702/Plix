@@ -2,13 +2,15 @@ package com.longvuong.plix.presentation.auth;
 
 import com.longvuong.plix.core.auth.AuthManager;
 
-//AuthManager giả cho test luồng quên mật khẩu: không gọi mạng, trả ngay thành công hoặc lỗi đã đặt sẵn và ghi lại số lần gọi cùng tham số nhận được
+//AuthManager giả cho test luồng quên mật khẩu và đổi mật khẩu: không gọi mạng, trả ngay thành công hoặc lỗi đã đặt sẵn và ghi lại số lần gọi cùng tham số nhận được
 class FakeAuthManagerForRecovery extends AuthManager {
     //null = các lời gọi trả thành công; khác null = các lời gọi trả onError(errorMessage)
     String errorMessage;
 
     int recoverCalls;
     int resetCalls;
+    int verifyCalls;
+    int changeCalls;
     String lastEmail;
     String lastCode;
     String lastNewPassword;
@@ -30,6 +32,17 @@ class FakeAuthManagerForRecovery extends AuthManager {
         lastEmail = email;
         lastCode = code;
         lastNewPassword = newPassword;
+        respond(callback);
+    }
+    @Override
+    public void verifyCurrentPassword(String currentPassword, ActionCallback callback) {
+        verifyCalls++;
+        respond(callback);
+    }
+
+    @Override
+    public void changePassword(String newPassword, ActionCallback callback) {
+        changeCalls++;
         respond(callback);
     }
 
