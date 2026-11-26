@@ -80,3 +80,22 @@ Lệnh: `gradlew.bat :app:dependencies --configuration debugRuntimeClasspath` (t
 ### Lỗi tìm thấy (DP-13-L1)
 
 - Không có lỗi mới. (Ghi chú hành vi đã biết theo DP_02 mục 6.7: ở lần kéo làm mới ngay sau khi Render vừa Resume trong lúc `SyncWorker` trước đó đang chờ retry sau lỗi 503, app hiện Snackbar `'Không thể đồng bộ lúc này, thử lại sau'`.)
+
+
+## Kết quả tích hợp quét hoá đơn với form có prefill (DP-13-L2)
+
+**Ngày chạy:** 26/11/2026
+**Thiết bị:** Pixel 4 (AVD `emulator-5554`, Android 10)
+**Bản build:** debug, nhánh dp/long đã gộp `dev` có `DP-7-V2`
+
+| Mã | Kết quả | Ghi chú |
+|---|---|---|
+| TN2-M03 | Đạt | Offline (chờ `NetworkObserver` chuyển offline, `cardFabQuickAdd` ẩn, `cardFabScanReceipt` vẫn hiện), HD1 (`hd1.png` qua Chọn từ thư viện): số tiền `135.000`, ngày `08/11/2026`, ghi chú `HIGHLANDS COFFEE`; khối gợi ý danh mục: không có; chọn tay danh mục `Di chuyển` và lưu: được, hiện trong Giao dịch (đã xoá giao dịch thử sau khi kiểm tra). Lưu ý: nếu vừa bật máy bay <3 giây trước khi `NetworkObserver` nhận `onLost()`, form vẫn kịp gọi `/categorize` và hiện `'Không lấy được gợi ý, nhập tay'` |
+| TN2-M04 | Đạt | Online, HD1 (`hd1.png` qua Chọn từ thư viện): form điền sẵn `135.000`, `08/11/2026`, `HIGHLANDS COFFEE`, loại Chi tiêu; gợi ý danh mục hiện sau ~500 ms là `'Độ tin cậy thấp · 20%'` (`sys_an_uong`) kèm `'Vui lòng kiểm tra lại danh mục.'`; Back không lưu thì danh sách không có giao dịch mới |
+| TN2-M06 | Đạt | Kiểm tra trên Android Studio Network Inspector khi quét online HD1: số request `categorize`: 1 (`POST https://plix-7jfp.onrender.com/api/v1/categorize`, 27 bytes); thân request chỉ có `{"note":"HIGHLANDS COFFEE"}`: Có; request mang ảnh hoặc `parse-nl`: Không có (chỉ có 1 request telemetry nội bộ `datatransport/2.3.3` tới `firebaselogging.googleapis.com` của Google Play services/ML Kit) |
+| TN2-M07 | Đạt | HD4 (`hd4.png` qua Chọn từ thư viện): số tiền `45.000`, ngày hôm nay `26/11/2026`, ghi chú `QUAN COM TAM`; Snackbar cảnh báo nguyên văn: `'Số tiền chưa chắc chắn, vui lòng kiểm tra'`; Back không lưu |
+| TN2-M08 | Đạt | Chụp ảnh + `adb shell am kill com.longvuong.plix` (dừng PID 4161) rồi xác nhận ảnh: Plix khởi tạo lại tiến trình (PID 10133), không văng, quay về màn `Quét hoá đơn` (hiện `'Không có kết nối mạng'` và nút `'Nhập tay'`); `cache/receipts` sau `am force-stop` và mở lại app: rỗng |
+
+### Lỗi tìm thấy (DP-13-L2)
+
+- Không có lỗi mới.
