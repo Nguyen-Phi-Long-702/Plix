@@ -61,3 +61,22 @@ Lệnh: `gradlew.bat :app:dependencies --configuration debugRuntimeClasspath` (t
 ### Lỗi tìm thấy (DP-8-L2)
 
 - Không có lỗi mới.
+
+
+## Kết quả test thủ công TN-5 (DP-13-L1)
+
+**Ngày chạy:** 26/11/2026
+**Thiết bị:** Pixel 4 (AVD `emulator-5554`, Android 10); máy thứ hai do thành viên tạo dữ liệu trên tài khoản A
+**Bản build:** debug, nhánh dp/long
+
+| Mã | Kết quả | Ghi chú |
+|---|---|---|
+| TN5-M01 | Đạt | Trang chủ: Snackbar 'Đã đồng bộ', `SyncWorker: Đồng bộ xong`; Giao dịch: Snackbar 'Đã đồng bộ', `SyncWorker: Đồng bộ xong`; Ngân sách: Snackbar 'Đã đồng bộ', `SyncWorker: Đồng bộ xong` và số 'Đã chi' cập nhật lên `2.840.499đ` sau khi đồng bộ 2 giao dịch mới (`Dp13 m01 lan 1`, `Dp13 m01 lan 2`); Mục tiêu: Snackbar 'Đã đồng bộ', `SyncWorker: Đồng bộ xong`; Thống kê: không có `swipeRefresh`, kéo xuống không kích hoạt đồng bộ và không hiện Snackbar (vòng quay hiển thị rất ngắn khi đồng bộ xong nhanh) |
+| TN5-M02 | Đạt | Máy bay: Snackbar `'Không có mạng, dữ liệu sẽ đồng bộ khi có mạng'`, vòng quay tắt ngay không quay mãi; danh sách đã cuộn (Giao dịch): chỉ cuộn nội dung (`01/11/2026` di chuyển trong danh sách), không kích hoạt `SyncWorker` và không hiện Snackbar |
+| TN5-M03 | Đạt | Mốc đầu `T0 = 15:17 26/11/2026`. Lần 1 (92 giây nền): có đồng bộ tự động (bằng chứng: hộp thoại hiện `'Đang đồng bộ dữ liệu lên máy chủ...'`, logcat `SyncWorker: Đồng bộ xong`, mốc đổi thành `15:19 26/11/2026`); lần 2 (20 giây nền ngay sau đó): không kích hoạt `SyncWorker` trong 10 giây, mốc giữ `15:19 26/11/2026`; xoay màn hình (sau hơn 70 giây ở foreground, xoay ngang/dọc 2 lần): không kích hoạt `SyncWorker` trong 10 giây, mốc giữ `15:19 26/11/2026` |
+| TN5-M04 | Đạt | IDLE: `'Không có lỗi đồng bộ. Các thay đổi trên máy sẽ tự được gửi lên máy chủ khi có mạng.'` + `'Đồng bộ lần cuối: 15:11 26/11/2026'` (cùng các mốc `15:17`, `15:19`, `17:45`); SYNCING: `'Đang đồng bộ dữ liệu lên máy chủ...'` + `'Đồng bộ lần cuối: chưa có'` (lần đăng nhập đầu); ERROR (sau khi Suspend Render): `'Đồng bộ thất bại: Máy chủ phản hồi lỗi (mã 503). Dữ liệu vẫn an toàn trên máy - Plix sẽ tự thử lại khi có thể.'` + `'Đồng bộ lần cuối: 17:45 26/11/2026'` (không ghi đè mốc thành công); tài khoản B mới (khi server đang Suspend): `'Đồng bộ lần cuối: chưa có'` |
+| TN5-M05 | Đạt | D1 (còn pending, có mạng): đăng xuất về màn Đăng nhập không hiện hộp thoại, đăng nhập lại A vẫn còn giao dịch `DP13 M05 D1`; D2 (offline): hộp thoại `'Còn dữ liệu chưa đồng bộ'` hiện `N=1` (`'Bạn có 1 thay đổi chưa đồng bộ lên cloud...'`), Back và chạm ngoài không đóng được, chọn Huỷ vẫn ở Cài đặt và còn `DP13 M05 D2`, chọn Vẫn đăng xuất về màn Đăng nhập và đăng nhập lại A thì `DP13 M05 D2` không còn; D3 (kéo làm mới rồi bấm Đăng xuất ngay): không văng hay treo, đồng bộ kịp và thoát về màn Đăng nhập; sau đăng xuất/đăng nhập lại A khi server đang Suspend: `'Đồng bộ lần cuối: chưa có'` |
+
+### Lỗi tìm thấy (DP-13-L1)
+
+- Không có lỗi mới. (Ghi chú hành vi đã biết theo DP_02 mục 6.7: ở lần kéo làm mới ngay sau khi Render vừa Resume trong lúc `SyncWorker` trước đó đang chờ retry sau lỗi 503, app hiện Snackbar `'Không thể đồng bộ lúc này, thử lại sau'`.)
