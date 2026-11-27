@@ -27,7 +27,7 @@ import javax.inject.Singleton;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
 @Singleton
-public class NotificationHelper implements BudgetThresholdNotifier {
+public class NotificationHelper implements BudgetThresholdNotifier, NotificationPermissionChecker {
     private static final String CHANNEL_ID = "budget_warning";
     private static final String PREF_NAME = "notification_prefs";
     private static final String KEY_PERMISSION_ASKED = "notification_permission_asked";
@@ -57,11 +57,7 @@ public class NotificationHelper implements BudgetThresholdNotifier {
     @Override
     public void notifyThresholdCrossed(BudgetEntity budget, long spentAfterAmount) {
         if (!isNotificationPermissionGranted()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                    && !hasAskedPermissionBefore()
-                    && !Boolean.TRUE.equals(permissionRequestNeeded.getValue())) {
-                permissionRequestNeeded.postValue(true);
-            }
+            requestPermissionIfNeeded();
             return;
         }
         String content = "Đã đạt " + budget.thresholdPercent + "% ngưỡng — chi tiêu "
@@ -75,8 +71,21 @@ public class NotificationHelper implements BudgetThresholdNotifier {
         NotificationManagerCompat.from(context).notify(budget.id.hashCode(), builder.build());
     }
 
+    @Override
     public boolean isNotificationPermissionGranted() {
         return NotificationManagerCompat.from(context).areNotificationsEnabled();
+    }
+
+    //Nếu đang thiếu quyền thông báo thì yêu cầu hiện hộp thoại xin quyền (MainActivity quan sát LiveData để hiện); chỉ hỏi 1 lần (KEY_PERMISSION_ASKED)
+    public void requestPermissionIfNeeded() {
+        if (isNotificationPermissionGranted()) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && !hasAskedPermissionBefore()
+                && !Boolean.TRUE.equals(permissionRequestNeeded.getValue())) {
+            permissionRequestNeeded.postValue(true);
+        }
     }
 
     public LiveData<Boolean> getPermissionRequestNeededLiveData() {
