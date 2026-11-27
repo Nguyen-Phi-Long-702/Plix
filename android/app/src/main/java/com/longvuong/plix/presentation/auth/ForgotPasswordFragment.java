@@ -1,6 +1,7 @@
 package com.longvuong.plix.presentation.auth;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +45,8 @@ public class ForgotPasswordFragment extends Fragment {
     private TextView textBackToLogin;
 
     private boolean busy; //đang gửi mã hoặc đang đặt lại mật khẩu
+    private CountDownTimer resendTimer;
+    private long resendRemainingMillis; //số mili giây còn phải chờ để được gửi lại mã (0 = được gửi ngay)
 
     @Nullable
     @Override
@@ -96,6 +99,7 @@ public class ForgotPasswordFragment extends Fragment {
             if (enterCode) {
                 textStepCodeDescription.setText(
                         "Đã gửi mã tới " + viewModel.getEmail() + ". Nhập mã và mật khẩu mới");
+                startResendCountdown(); //cũng chạy lại khi xoay màn hình hoặc process death: thời gian còn lại tính từ lastSentAt
             }
         });
 
@@ -105,6 +109,10 @@ public class ForgotPasswordFragment extends Fragment {
             buttonSendCode.setText(loading ? "" : sendCodeLabel); //đang gửi: chữ nhường chỗ cho vòng xoay
             progressSendCode.setVisibility(loading ? View.VISIBLE : View.GONE);
             showError(state instanceof UiState.Error ? ((UiState.Error<Void>) state).message : null);
+
+            if (state instanceof UiState.Success) {
+                startResendCountdown(); //gửi mã hoặc gửi lại mã thành công: bắt đầu khoá 60 giây
+            }
         });
 
         viewModel.getResetState().observe(getViewLifecycleOwner(), state -> {
@@ -121,6 +129,12 @@ public class ForgotPasswordFragment extends Fragment {
         });
     }
 
+    @Override
+    public void onDestroyView() {
+        cancelResendTimer(); //tránh timer chạy tiếp sau khi view bị huỷ
+        super.onDestroyView();
+    }
+
     //Đang xử lý: khoá các ô nhập và nút; nội dung các ô được giữ nguyên
     private void setBusy(boolean busy) {
         this.busy = busy;
@@ -130,7 +144,48 @@ public class ForgotPasswordFragment extends Fragment {
         editNewPassword.setEnabled(!busy);
         editConfirmNewPassword.setEnabled(!busy);
         buttonResetPassword.setEnabled(!busy);
-        textResendCode.setEnabled(!busy);
+        refreshResendLink();
+    }
+
+    //Đếm ngược khoá nút gửi lại mã; thời gian còn lại lấy từ ViewModel nên không bị lệch sau khi xoay màn hình
+    private void startResendCountdown() {
+        cancelResendTimer();
+        resendRemainingMillis = viewModel.getResendRemainingMillis(System.currentTimeMillis());
+        refreshResendLink();
+        if (resendRemainingMillis <= 0L) {
+            return;
+        }
+        resendTimer = new CountDownTimer(resendRemainingMillis, 1000L) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                resendRemainingMillis = millisUntilFinished;
+                refreshResendLink();
+            }
+
+            @Override
+            public void onFinish() {
+                resendRemainingMillis = 0L;
+                refreshResendLink();
+            }
+        }.start();
+    }
+
+    private void cancelResendTimer() {
+        if (resendTimer != null) {
+            resendTimer.cancel();
+            resendTimer = null;
+        }
+    }
+
+    //Liên kết gửi lại mã: hiện số giây còn lại khi đang khoá; chỉ bấm được khi hết thời gian chờ và không đang xử lý
+    private void refreshResendLink() {
+        if (resendRemainingMillis > 0L) {
+            long seconds = (resendRemainingMillis + 999L) / 1000L; //làm tròn lên để không hiện "0 giây"
+            textResendCode.setText("Gửi lại sau " + seconds + " giây");
+        } else {
+            textResendCode.setText("Gửi lại mã");
+        }
+        textResendCode.setEnabled(!busy && resendRemainingMillis <= 0L);
     }
 
     //Thông báo lỗi dùng chung cho cả hai bước; message = null thì ẩn
