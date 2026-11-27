@@ -2,6 +2,7 @@ package com.longvuong.plix.core.notification;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.longvuong.plix.MainActivity;
 import com.longvuong.plix.R;
 import com.longvuong.plix.data.local.entity.BudgetEntity;
 import com.longvuong.plix.domain.usecase.budget.BudgetThresholdNotifier;
@@ -29,6 +31,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext;
 @Singleton
 public class NotificationHelper implements BudgetThresholdNotifier, NotificationPermissionChecker {
     private static final String CHANNEL_ID = "budget_warning";
+    private static final String REMINDER_CHANNEL_ID = "reminders";
     private static final String PREF_NAME = "notification_prefs";
     private static final String KEY_PERMISSION_ASKED = "notification_permission_asked";
 
@@ -49,6 +52,8 @@ public class NotificationHelper implements BudgetThresholdNotifier, Notification
             NotificationManager manager = context.getSystemService(NotificationManager.class);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
+                manager.createNotificationChannel(new NotificationChannel(
+                        REMINDER_CHANNEL_ID, "Nhắc nhở", NotificationManager.IMPORTANCE_DEFAULT));
             }
         }
     }
@@ -69,6 +74,26 @@ public class NotificationHelper implements BudgetThresholdNotifier, Notification
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
         NotificationManagerCompat.from(context).notify(budget.id.hashCode(), builder.build());
+    }
+
+    //Phát thông báo nhắc nhở trên kênh "reminders" (FIN-10, FIN-11, FIN-12); không ghi log nội dung vì có thể chứa ghi chú và số tiền (SEC-08)
+    @SuppressLint("MissingPermission")
+    public void notifyReminder(int notificationId, String title, String text) {
+        if (!isNotificationPermissionGranted()) {
+            return; //quyền bị thu hồi: không phát, không văng (DP_02 mục 3.7)
+        }
+        Intent openAppIntent = new Intent(context, MainActivity.class);
+        openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); //Activity được mở từ thông báo, ngoài ngữ cảnh của một Activity
+        PendingIntent contentIntent = PendingIntent.getActivity(
+                context, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, REMINDER_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_stat_reminder)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        NotificationManagerCompat.from(context).notify(notificationId, builder.build());
     }
 
     @Override
