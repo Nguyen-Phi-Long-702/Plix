@@ -59,6 +59,7 @@ Lệnh: `gradlew.bat :app:dependencies --configuration debugRuntimeClasspath` (t
 - Kiểm chứng thực tế (thiết bị: Pixel 4 AVD Android 10 `emulator-5554`, bản build debug nhánh `dp/long`): đặt giờ nhắc cách thời điểm mở app 2 phút (khởi động lúc 13:51, giờ đích 13:53), thông báo "Nhắc ghi chép" ("Hôm nay bạn đã ghi chi tiêu chưa?", icon `ic_stat_reminder`, chạm mở `MainActivity`) hiện lúc 13:53: Có.
 - Trạng thái WorkManager (`androidx.work.workdb` bảng `WorkSpec`/`WorkName`) sau khi thông báo hiện (13:53:01.788): lượt vừa chạy (`reminder_daily_alt`) Succeeded (`state = 2`); lượt mới cho ngày kế tiếp (`reminder_daily`, `initial_delay = 86398279 ms`) Enqueued (`state = 0`): Có.
 - Đăng xuất: lượt đang chờ (`reminder_daily`) chuyển sang Cancelled (`state = 5`): Có.
+- Mở rộng ở DP-18-L1: nhắc định kỳ và mục tiêu (`reminder_due`) cũng dùng hai tên xen kẽ `reminder_due` và `reminder_due_alt` theo ngày chẵn/lẻ của lần nhắc kế tiếp, và `ReminderSchedulerImpl.applyForCurrentUser` không huỷ trước khi xếp, để lời gọi trong `PlixApplication.onCreate` không huỷ lượt đang tới giờ chạy khi WorkManager khởi động lại tiến trình. Khi đổi giờ nhắc, `ReminderSettingsViewModel.setDailyTime` gọi `cancelDaily()` trước `applyForCurrentUser()`.
 
 
 ## Kết quả test thủ công quét hoá đơn (DP-8-L2)
