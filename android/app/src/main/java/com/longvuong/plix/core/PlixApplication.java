@@ -15,6 +15,7 @@ import com.longvuong.plix.core.error.GlobalExceptionHandler;
 import com.longvuong.plix.core.executor.AppExecutors;
 import com.longvuong.plix.data.local.AppDatabase;
 import com.longvuong.plix.data.ocr.ReceiptImageStore;
+import com.longvuong.plix.data.reminder.ReminderScheduler;
 import com.longvuong.plix.data.sync.ForegroundSyncObserver;
 import com.longvuong.plix.data.sync.SyncScheduler;
 
@@ -47,6 +48,9 @@ public class PlixApplication extends Application implements Configuration.Provid
     @Inject
     AppExecutors appExecutors;
 
+    @Inject
+    ReminderScheduler reminderScheduler;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -57,6 +61,7 @@ public class PlixApplication extends Application implements Configuration.Provid
         }
         scheduleRecurringTransactionWorker();
         syncScheduler.schedulePeriodicSync();
+        reminderScheduler.applyForCurrentUser(); //nối lại chuỗi nhắc nhở mỗi lần mở app, không huỷ lượt đang chờ (FIN-10, FIN-13)
         ProcessLifecycleOwner.get().getLifecycle().addObserver(foregroundSyncObserver);
         appExecutors.diskIO().execute(receiptImageStore::deleteAll); //dọn ảnh hoá đơn tạm còn sót sau khi tiến trình bị dừng (SEC-10)
     }
