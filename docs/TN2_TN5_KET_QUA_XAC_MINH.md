@@ -46,6 +46,17 @@ Lệnh: `gradlew.bat :app:dependencies --configuration debugRuntimeClasspath` (t
 - Mở app sau khi thêm 3 thư viện: mở được, không crash.
 - Phiên bản thay thế: Không có.
 
+## CXM-13. Xếp lượt kế tiếp bằng REPLACE từ bên trong chính Worker đang chạy
+
+**Ngày chạy:** 27/11/2026
+**Nguồn:** developer.android.com, trang "Managing work" (`/develop/background-work/background-tasks/persistent/how-to/manage-work`), các phần "Conflict resolution policy" và "Stop a running Worker".
+
+- `ExistingWorkPolicy.REPLACE`: thay công việc hiện có bằng công việc mới và huỷ công việc hiện có.
+- Khi enqueue `WorkRequest` mới với `REPLACE` cho unique work, `WorkRequest` cũ lập tức bị coi là đã huỷ; Worker đang chạy bị dừng và `Result` của nó bị WorkManager bỏ qua.
+- Trang không có câu nào nêu trường hợp gọi `enqueueUniqueWork(REPLACE)` từ bên trong chính Worker cùng tên, nên không xác nhận được lượt mới có được giữ lại hay không.
+- Kết luận theo tài liệu: Không xác nhận được.
+- Cách xử lý đã chọn (theo DP_04 DP-17-L1 việc 5 và DP_02 mục 3.1): dùng hai tên xen kẽ `reminder_daily` và `reminder_daily_alt`; lượt kế tiếp luôn xếp ở tên khác với lượt đang chạy, chọn theo ngày chẵn/lẻ của lần nhắc kế tiếp.
+
 
 ## Kết quả test thủ công quét hoá đơn (DP-8-L2)
 
