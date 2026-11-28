@@ -26,7 +26,7 @@ public class ReminderPreferencesInstrumentedTest {
     @Before
     public void setUp() {
         Context context = ApplicationProvider.getApplicationContext();
-        preferences = new ReminderPreferences(context);
+        preferences = new ReminderPreferences(context, NoOpReminderScheduler::new);
         cleanUp(); //bắt đầu từ trạng thái sạch, không phụ thuộc lần chạy trước
     }
 
@@ -80,5 +80,28 @@ public class ReminderPreferencesInstrumentedTest {
         //userId null không làm văng và không đổi gì (hợp đồng C1)
         preferences.clearForUser(null);
         assertTrue(preferences.isGoalEnabled(USER_B));
+    }
+
+    //Bản giả không làm gì: test này chỉ kiểm tra cách ly cấu hình theo người dùng, không đụng WorkManager
+    private static class NoOpReminderScheduler implements ReminderScheduler {
+        @Override
+        public void applyForCurrentUser() {
+        }
+
+        @Override
+        public void scheduleNextDaily() {
+        }
+
+        @Override
+        public void cancelDaily() {
+        }
+
+        @Override
+        public void cancelDue() {
+        }
+
+        @Override
+        public void cancelAll() {
+        }
     }
 }

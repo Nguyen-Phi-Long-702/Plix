@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import com.longvuong.plix.core.auth.UserSessionCleaner;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
@@ -23,10 +24,12 @@ public class ReminderPreferences implements UserSessionCleaner {
     private static final int DEFAULT_DAILY_MINUTES = 1200; //20:00 (20 x 60 phút)
 
     private final SharedPreferences prefs;
+    private final Provider<ReminderScheduler> reminderSchedulerProvider; //dùng Provider để tránh vòng phụ thuộc: ReminderSchedulerImpl cũng cần ReminderPreferences
 
     @Inject
-    public ReminderPreferences(@ApplicationContext Context context) {
+    public ReminderPreferences(@ApplicationContext Context context, Provider<ReminderScheduler> reminderSchedulerProvider) {
         this.prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        this.reminderSchedulerProvider = reminderSchedulerProvider;
     }
 
     public boolean isDailyEnabled(String userId) {
@@ -62,18 +65,18 @@ public class ReminderPreferences implements UserSessionCleaner {
         prefs.edit().putBoolean(key(userId, KEY_GOAL_ENABLED), enabled).apply();
     }
 
-    //Xoá bốn khoá của người dùng (hợp đồng C1). userId null thì không có gì để xoá
+    //Xoá bốn khoá của người dùng (hợp đồng C1) rồi huỷ mọi lịch nhắc (DP_02 mục 3.7). userId null thì không có khoá để xoá nhưng vẫn huỷ lịch
     @Override
     public void clearForUser(@Nullable String userId) {
-        if (userId == null) {
-            return;
+        if (userId != null) {
+            prefs.edit()
+                    .remove(key(userId, KEY_DAILY_ENABLED))
+                    .remove(key(userId, KEY_DAILY_MINUTES))
+                    .remove(key(userId, KEY_RECURRING_ENABLED))
+                    .remove(key(userId, KEY_GOAL_ENABLED))
+                    .apply();
         }
-        prefs.edit()
-                .remove(key(userId, KEY_DAILY_ENABLED))
-                .remove(key(userId, KEY_DAILY_MINUTES))
-                .remove(key(userId, KEY_RECURRING_ENABLED))
-                .remove(key(userId, KEY_GOAL_ENABLED))
-                .apply();
+        reminderSchedulerProvider.get().cancelAll();
     }
 
     //Khoá có dạng <userId>_daily_enabled (DP_02 mục 3.5)
