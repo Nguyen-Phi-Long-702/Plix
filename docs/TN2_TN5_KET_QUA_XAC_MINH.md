@@ -56,6 +56,9 @@ Lệnh: `gradlew.bat :app:dependencies --configuration debugRuntimeClasspath` (t
 - Trang không có câu nào nêu trường hợp gọi `enqueueUniqueWork(REPLACE)` từ bên trong chính Worker cùng tên, nên không xác nhận được lượt mới có được giữ lại hay không.
 - Kết luận theo tài liệu: Không xác nhận được.
 - Cách xử lý đã chọn (theo DP_04 DP-17-L1 việc 5 và DP_02 mục 3.1): dùng hai tên xen kẽ `reminder_daily` và `reminder_daily_alt`; lượt kế tiếp luôn xếp ở tên khác với lượt đang chạy, chọn theo ngày chẵn/lẻ của lần nhắc kế tiếp.
+- Kiểm chứng thực tế (thiết bị: Pixel 4 AVD Android 10 `emulator-5554`, bản build debug nhánh `dp/long`): đặt giờ nhắc cách thời điểm mở app 2 phút (khởi động lúc 13:51, giờ đích 13:53), thông báo "Nhắc ghi chép" ("Hôm nay bạn đã ghi chi tiêu chưa?", icon `ic_stat_reminder`, chạm mở `MainActivity`) hiện lúc 13:53: Có.
+- Trạng thái WorkManager (`androidx.work.workdb` bảng `WorkSpec`/`WorkName`) sau khi thông báo hiện (13:53:01.788): lượt vừa chạy (`reminder_daily_alt`) Succeeded (`state = 2`); lượt mới cho ngày kế tiếp (`reminder_daily`, `initial_delay = 86398279 ms`) Enqueued (`state = 0`): Có.
+- Đăng xuất: lượt đang chờ (`reminder_daily`) chuyển sang Cancelled (`state = 5`): Có.
 
 
 ## Kết quả test thủ công quét hoá đơn (DP-8-L2)
